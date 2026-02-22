@@ -18,6 +18,8 @@ int sessionStepIndex = 0;
 bool sessionRunning = false;
 unsigned long sessionStepStartMs = 0;
 bool sessionCompleteShown = false;
+int sessionStepDurationSec = 0;
+int sessionStepTotalSec = 0;
 
 const char *menuItems[] = {"Start Session", "Session", "Start",
                            "Set time",      "WiFi",    "About"};

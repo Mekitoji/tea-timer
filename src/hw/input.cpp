@@ -5,50 +5,43 @@
 #include <app/app_state.h>
 #include <hw/pins.h>
 
-bool buttonPressedEvent() {
-  static bool lastStable = HIGH;
-  static bool lastRead = HIGH;
-  static unsigned long lastChange = 0;
+namespace {
+struct ButtonDebounceState {
+  bool lastStable = HIGH;
+  bool lastRead = HIGH;
+  unsigned long lastChange = 0;
+};
+
+bool pressedEventForPin(int pin, ButtonDebounceState &state) {
   const unsigned long DEBOUNCE = appcfg::INPUT_DEBOUNCE_MS;
 
-  bool r = digitalRead(ENC_SW);
+  bool r = digitalRead(pin);
   unsigned long t = millis();
 
-  if (r != lastRead) {
-    lastRead = r;
-    lastChange = t;
+  if (r != state.lastRead) {
+    state.lastRead = r;
+    state.lastChange = t;
   }
 
-  if ((t - lastChange) > DEBOUNCE && lastStable != lastRead) {
-    lastStable = lastRead;
-    if (lastStable == LOW) {
+  if ((t - state.lastChange) > DEBOUNCE && state.lastStable != state.lastRead) {
+    state.lastStable = state.lastRead;
+    if (state.lastStable == LOW)
       return true;
-    }
   }
+
   return false;
 }
 
+} // namespace
+
+bool buttonPressedEvent() {
+  static ButtonDebounceState encState;
+  return pressedEventForPin(ENC_SW, encState);
+}
+
 bool backButtonPressedEvent() {
-  static bool lastStable = HIGH;
-  static bool lastRead = HIGH;
-  static unsigned long lastChange = 0;
-  const unsigned long DEBOUNCE = appcfg::INPUT_DEBOUNCE_MS;
-
-  bool r = digitalRead(BACK_SW);
-  unsigned long t = millis();
-
-  if (r != lastRead) {
-    lastRead = r;
-    lastChange = t;
-  }
-
-  if ((t - lastChange) > DEBOUNCE && lastStable != lastRead) {
-    lastStable = lastRead;
-    if (lastStable == LOW) {
-      return true;
-    }
-  }
-  return false;
+  static ButtonDebounceState backState;
+  return pressedEventForPin(BACK_SW, backState);
 }
 
 EncoderStep readEncoderStep() {

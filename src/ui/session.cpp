@@ -92,7 +92,13 @@ void drawSessionRun(int remaining) {
   else
     display.print("Infuse ");
 
-  display.print(SESSION_STEPS[sessionStepIndex]);
+  int totalSec =
+      sessionStepTotalSec > 0
+          ? sessionStepTotalSec
+          : (sessionStepDurationSec > 0 ? sessionStepDurationSec
+                                        : SESSION_STEPS[sessionStepIndex]);
+
+  display.print(totalSec);
   display.print("s");
 
   // ---- TIMER BIG ----
@@ -108,7 +114,7 @@ void drawSessionRun(int remaining) {
 
   display.drawRect(x, y, w, h, SSD1306_WHITE);
 
-  int total = SESSION_STEPS[sessionStepIndex];
+  int total = totalSec;
   int elapsed = total - remaining;
   if (elapsed < 0)
     elapsed = 0;

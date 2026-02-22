@@ -13,6 +13,7 @@ namespace {
 unsigned long swHoldStartMs = 0;
 bool swWasDown = false;
 unsigned long lastStepMs = 0;
+bool sessionLongPressFired = false;
 } // namespace
 
 void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
@@ -51,6 +52,16 @@ void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
           sessionTeaIndex = 0;
         drawSessionMenu();
       }
+    } else if (currentScreen == SCREEN_SESSION_RUN) {
+      if (!sessionRunning && sessionStepIndex < SESSION_STEP_COUNT) {
+        sessionStepDurationSec += stepPlus ? 1 : -1;
+        if (sessionStepDurationSec < 1)
+          sessionStepDurationSec = 1;
+        if (sessionStepDurationSec > MAX_TIME)
+          sessionStepDurationSec = MAX_TIME;
+        sessionStepTotalSec = sessionStepDurationSec;
+        drawSessionRun(sessionStepTotalSec);
+      }
     }
   }
 }
@@ -79,9 +90,27 @@ void handleSelectButton() {
 
       if (sessionStepIndex >= SESSION_STEP_COUNT) {
         goToMenu();
-      } else if (!sessionRunning) {
+      } else if (sessionRunning) {
+        int stepSec = sessionStepDurationSec > 0
+                          ? sessionStepDurationSec
+                          : SESSION_STEPS[sessionStepIndex];
+        unsigned long elapsed = (millis() - sessionStepStartMs) / 1000;
+        int remaining = stepSec - (int)elapsed;
+        if (remaining < 0)
+          remaining = 0;
+
+        sessionStepDurationSec = remaining;
+        sessionRunning = false;
+        drawSessionRun(sessionStepDurationSec);
+      } else { // resume or start step
+        if (sessionStepDurationSec <= 0)
+          sessionStepDurationSec = SESSION_STEPS[sessionStepIndex];
+        if (sessionStepTotalSec <= 0)
+          sessionStepTotalSec = sessionStepDurationSec;
+
         sessionRunning = true;
         sessionStepStartMs = millis();
+        drawSessionRun(sessionStepDurationSec);
       }
     } else {
       goToMenu();
@@ -90,26 +119,46 @@ void handleSelectButton() {
 }
 
 void handleSessionLongPress() {
-  if (currentScreen == SCREEN_SESSION_RUN) {
-    bool down = (digitalRead(ENC_SW) == LOW);
-
-    if (down && !swWasDown) {
-      swWasDown = true;
-      swHoldStartMs = millis();
-    }
-
-    if (!down && swWasDown) {
-      swWasDown = false;
-    }
-
-    if (down && swWasDown &&
-        (millis() - swHoldStartMs >= appcfg::SESSION_HOLD_MS)) {
-      while (digitalRead(ENC_SW) == LOW)
-        delay(appcfg::SESSION_RELEASE_POLL_MS);
-      delay(appcfg::SESSION_RELEASE_SETTLE_MS);
-
-      sessionRunning = false;
-      goToMenu();
-    }
+  if (currentScreen != SCREEN_SESSION_RUN) {
+    swWasDown = false;
+    sessionLongPressFired = false;
+    return;
   }
+
+  bool down = (digitalRead(ENC_SW) == LOW);
+
+  if (down && !swWasDown) {
+    swWasDown = true;
+    swHoldStartMs = millis();
+    sessionLongPressFired = false;
+  }
+
+  if (!down && swWasDown) {
+    swWasDown = false;
+    sessionLongPressFired = false;
+    return;
+  }
+
+  if (!down || !swWasDown || sessionLongPressFired)
+    return;
+
+  if (millis() - swHoldStartMs < appcfg::SESSION_HOLD_MS)
+    return;
+
+  sessionLongPressFired = true;
+
+  sessionStepIndex++;
+  sessionCompleteShown = false;
+
+  if (sessionStepIndex >= SESSION_STEP_COUNT) {
+    sessionRunning = false;
+    drawSessionComplete();
+    sessionCompleteShown = true;
+    return;
+  }
+
+  sessionStepDurationSec = SESSION_STEPS[sessionStepIndex];
+  sessionStepTotalSec = sessionStepDurationSec;
+  sessionRunning = false;
+  drawSessionRun(sessionStepDurationSec);
 }

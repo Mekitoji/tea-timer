@@ -25,6 +25,8 @@ extern int sessionStepIndex;
 extern bool sessionRunning;
 extern unsigned long sessionStepStartMs;
 extern bool sessionCompleteShown;
+extern int sessionStepDurationSec;
+extern int sessionStepTotalSec;
 
 extern const char *TEAS[];
 extern const int TEA_COUNT;

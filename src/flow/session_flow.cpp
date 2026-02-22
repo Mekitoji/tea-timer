@@ -7,10 +7,14 @@
 #include <hw/pins.h>
 #include <ui.h>
 
+namespace {
+int lastRemaining = -1;
+}
+
+void resetSessionFlowState() { lastRemaining = -1; }
+
 void updateSessionRun() {
   if (currentScreen == SCREEN_SESSION_RUN) {
-    static int lastRemaining = -1;
-
     if (sessionStepIndex >= SESSION_STEP_COUNT) {
       if (!sessionCompleteShown) {
         drawSessionComplete();
@@ -19,7 +23,8 @@ void updateSessionRun() {
       return;
     }
 
-    int stepSec = SESSION_STEPS[sessionStepIndex];
+    int stepSec = sessionStepDurationSec > 0 ? sessionStepDurationSec
+                                             : SESSION_STEPS[sessionStepIndex];
     int remaining = stepSec;
 
     if (sessionRunning) {
@@ -67,7 +72,9 @@ void updateSessionRun() {
           return;
         }
 
-        drawSessionRun(SESSION_STEPS[sessionStepIndex]);
+        sessionStepDurationSec = SESSION_STEPS[sessionStepIndex];
+        sessionStepTotalSec = sessionStepDurationSec;
+        drawSessionRun(sessionStepDurationSec);
       }
 
       lastRemaining = remaining;

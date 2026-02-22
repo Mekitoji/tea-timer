@@ -14,6 +14,5 @@ inline constexpr int ENC_STEP_MEDIUM = 5;
 inline constexpr int ENC_STEP_FAST = 10;
 
 inline constexpr unsigned long SESSION_HOLD_MS = 1200;
-inline constexpr unsigned long SESSION_RELEASE_POLL_MS = 5;
 inline constexpr unsigned long SESSION_RELEASE_SETTLE_MS = 10;
 } // namespace appcfg
