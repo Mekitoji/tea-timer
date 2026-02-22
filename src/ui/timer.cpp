@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <app/app_state.h>
+#include <ui/header.h>
 
 void drawProgressBar(int remaining, int total) {
   int x = 6, y = 54, w = 116, h = 8;
@@ -24,12 +25,7 @@ void drawProgressBar(int remaining, int total) {
 
 void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds) {
   display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-
-  display.setCursor(0, 0);
-  display.print(title);
-  display.drawLine(0, 10, 128, 10, SSD1306_WHITE);
+  drawHeader(title);
 
   display.setTextSize(3);
   display.setCursor(40, 22);
@@ -43,12 +39,7 @@ void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds) {
 
 void drawSetTime() {
   display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-
-  display.setCursor(0, 0);
-  display.print("Set Time");
-  display.drawLine(0, 10, 128, 10, SSD1306_WHITE);
+  drawHeader("Set Time");
 
   int mm = editTimeValue / 60;
   int ss = editTimeValue % 60;
