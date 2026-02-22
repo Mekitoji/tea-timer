@@ -28,3 +28,26 @@ extern bool sessionCompleteShown;
 
 extern const char *TEAS[];
 extern const int TEA_COUNT;
+
+void goToMenu();
+
+enum ScreenState {
+  SCREEN_MENU,
+  SCREEN_ABOUT,
+  SCREEN_WIFI,
+  SCREEN_TIMER,
+  SCREEN_SET_TIME,
+  SCREEN_SESSION_MENU,
+  SCREEN_SESSION_RUN
+};
+
+enum MenuIndex {
+  MENU_START_SESSION,
+  MENU_SESSION,
+  MENU_START,
+  MENU_SET_TIME,
+  MENU_WIFI,
+  MENU_ABOUT
+};
+
+extern ScreenState currentScreen;

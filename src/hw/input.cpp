@@ -1,12 +1,15 @@
-#include "input.h"
+#include "hw/input.h"
+
 #include <Arduino.h>
-#include <pins.h>
+#include <app/app_config.h>
+#include <app/app_state.h>
+#include <hw/pins.h>
 
 bool buttonPressedEvent() {
   static bool lastStable = HIGH;
   static bool lastRead = HIGH;
   static unsigned long lastChange = 0;
-  const unsigned long DEBOUNCE = 30;
+  const unsigned long DEBOUNCE = appcfg::INPUT_DEBOUNCE_MS;
 
   bool r = digitalRead(ENC_SW);
   unsigned long t = millis();
@@ -19,9 +22,6 @@ bool buttonPressedEvent() {
   if ((t - lastChange) > DEBOUNCE && lastStable != lastRead) {
     lastStable = lastRead;
     if (lastStable == LOW) {
-      while (digitalRead(ENC_SW) == LOW)
-        delay(5);
-      delay(10);
       return true;
     }
   }
@@ -32,7 +32,7 @@ bool backButtonPressedEvent() {
   static bool lastStable = HIGH;
   static bool lastRead = HIGH;
   static unsigned long lastChange = 0;
-  const unsigned long DEBOUNCE = 30;
+  const unsigned long DEBOUNCE = appcfg::INPUT_DEBOUNCE_MS;
 
   bool r = digitalRead(BACK_SW);
   unsigned long t = millis();
@@ -45,9 +45,6 @@ bool backButtonPressedEvent() {
   if ((t - lastChange) > DEBOUNCE && lastStable != lastRead) {
     lastStable = lastRead;
     if (lastStable == LOW) {
-      while (digitalRead(BACK_SW) == LOW)
-        delay(5);
-      delay(10);
       return true;
     }
   }
