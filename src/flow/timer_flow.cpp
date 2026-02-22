@@ -6,9 +6,12 @@
 #include <hw/pins.h>
 #include <ui.h>
 
+namespace {
+int lastRemaining = -1;
+}
+
 void updateSingleTimer() {
   if (currentScreen == SCREEN_TIMER) {
-    static int lastRemaining = -1;
 
     unsigned long elapsed = (millis() - timerStartMillis) / 1000;
     int remaining = timerDuration - (int)elapsed;
@@ -40,3 +43,5 @@ void updateSingleTimer() {
     }
   }
 }
+
+void resetSingleTimerFlowState() { lastRemaining = -1; }

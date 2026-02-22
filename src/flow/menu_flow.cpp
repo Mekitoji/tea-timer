@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
+#include <flow/timer_flow.h>
 #include <ui.h>
 
 // ----------- menu select handler ----------
@@ -17,6 +18,7 @@ void handleMenuSelect() {
     currentScreen = SCREEN_SESSION_MENU;
     drawSessionMenu();
   } else if (selected == MENU_START) {
+    resetSingleTimerFlowState();
     currentScreen = SCREEN_TIMER;
     timerStartMillis = millis();
   } else if (selected == MENU_SET_TIME) {
