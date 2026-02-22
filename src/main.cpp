@@ -82,43 +82,35 @@ void goToMenu() {
   drawMenu();
 }
 
-// ---------- setup ----------
-void setup() {
-  Wire.begin(SDA_PIN, SCL_PIN);
-  display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
-  display.setRotation(0);
-
-  pinMode(ENC_A, INPUT_PULLUP);
-  pinMode(ENC_B, INPUT_PULLUP);
-  pinMode(ENC_SW, INPUT_PULLUP);
-  pinMode(BACK_SW, INPUT_PULLUP);
-
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
-
-  pinMode(BUZZER_PIN, OUTPUT);
-  digitalWrite(BUZZER_PIN, LOW);
-
-  // Load saved timer duration (NVS)
-  prefs.begin("tea_timer", false);
-  timerDuration = prefs.getInt("dur_sec", 10);
-  if (timerDuration < MIN_TIME)
-    timerDuration = MIN_TIME;
-  if (timerDuration > MAX_TIME)
-    timerDuration = MAX_TIME;
-  editTimeValue = timerDuration;
-
-  drawMenu();
+// ----------- menu select handler ----------
+void handleMenuSelect() {
+  if (selected == MENU_START_SESSION) {
+    sessionStepIndex = 0;
+    sessionRunning = false;
+    sessionCompleteShown = false;
+    currentScreen = SCREEN_SESSION_RUN;
+    drawSessionRun(SESSION_STEPS[0]);
+  } else if (selected == MENU_SESSION) {
+    currentScreen = SCREEN_SESSION_MENU;
+    drawSessionMenu();
+  } else if (selected == MENU_START) {
+    currentScreen = SCREEN_TIMER;
+    timerStartMillis = millis();
+  } else if (selected == MENU_SET_TIME) {
+    currentScreen = SCREEN_SET_TIME;
+    editTimeValue = timerDuration;
+    drawSetTime();
+  } else if (selected == MENU_WIFI) {
+    currentScreen = SCREEN_WIFI;
+    drawWiFi();
+  } else if (selected == MENU_ABOUT) {
+    currentScreen = SCREEN_ABOUT;
+    drawAbout();
+  }
 }
 
-// ---------- loop ----------
-void loop() {
-
-  EncoderStep step = readEncoderStep();
-  bool stepPlus = step.plus;
-  bool stepMinus = step.minus;
-
-  // ---- apply encoder steps by screen ----
+// ---- apply encoder steps by screen ----
+void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
   if (stepPlus || stepMinus) {
     if (currentScreen == SCREEN_MENU) {
       selected += stepPlus ? 1 : -1;
@@ -156,8 +148,9 @@ void loop() {
       }
     }
   }
+}
 
-  // ---- dedicated back button ----
+void handleBackButton() {
   if (backButtonPressedEvent()) {
     if (currentScreen != SCREEN_MENU) {
       if (currentScreen == SCREEN_SESSION_RUN)
@@ -165,33 +158,12 @@ void loop() {
       goToMenu();
     }
   }
+}
 
-  // ---- button press event ----
+void handleSelectButton() {
   if (buttonPressedEvent()) {
     if (currentScreen == SCREEN_MENU) {
-      if (selected == MENU_START_SESSION) {
-        sessionStepIndex = 0;
-        sessionRunning = false;
-        sessionCompleteShown = false;
-        currentScreen = SCREEN_SESSION_RUN;
-        drawSessionRun(SESSION_STEPS[0]);
-      } else if (selected == MENU_SESSION) {
-        currentScreen = SCREEN_SESSION_MENU;
-        drawSessionMenu();
-      } else if (selected == MENU_START) {
-        currentScreen = SCREEN_TIMER;
-        timerStartMillis = millis();
-      } else if (selected == MENU_SET_TIME) {
-        currentScreen = SCREEN_SET_TIME;
-        editTimeValue = timerDuration;
-        drawSetTime();
-      } else if (selected == MENU_WIFI) {
-        currentScreen = SCREEN_WIFI;
-        drawWiFi();
-      } else if (selected == MENU_ABOUT) {
-        currentScreen = SCREEN_ABOUT;
-        drawAbout();
-      }
+      handleMenuSelect();
     } else if (currentScreen == SCREEN_SET_TIME) {
       timerDuration = editTimeValue;
       prefs.putInt("dur_sec", timerDuration); // save
@@ -210,8 +182,9 @@ void loop() {
       goToMenu();
     }
   }
+}
 
-  // ---- non-blocking long press exit (only in session run) ----
+void handleSessionLongPress() {
   if (currentScreen == SCREEN_SESSION_RUN) {
     bool down = (digitalRead(ENC_SW) == LOW);
 
@@ -233,8 +206,77 @@ void loop() {
       goToMenu();
     }
   }
+}
 
-  // ---- single timer update ----
+void updateSessionRun() {
+  if (currentScreen == SCREEN_SESSION_RUN) {
+    static int lastRemaining = -1;
+
+    if (sessionStepIndex >= SESSION_STEP_COUNT) {
+      if (!sessionCompleteShown) {
+        drawSessionComplete();
+        sessionCompleteShown = true;
+      }
+      return;
+    }
+
+    int stepSec = SESSION_STEPS[sessionStepIndex];
+    int remaining = stepSec;
+
+    if (sessionRunning) {
+      unsigned long elapsed = (millis() - sessionStepStartMs) / 1000;
+      remaining = stepSec - (int)elapsed;
+      if (remaining < 0)
+        remaining = 0;
+    }
+
+    if (remaining != lastRemaining) {
+      drawSessionRun(remaining);
+
+      if (sessionRunning && remaining <= 3 && remaining > 0) {
+        digitalWrite(LED_PIN, HIGH);
+        beep(2200, 60);
+        digitalWrite(LED_PIN, LOW);
+      }
+
+      if (sessionRunning && remaining == 0) {
+        for (int i = 0; i < 2; i++) {
+          digitalWrite(LED_PIN, HIGH);
+          buzzerOn(2500);
+          delay(70);
+          buzzerOff();
+          digitalWrite(LED_PIN, LOW);
+          delay(120);
+        }
+
+        sessionRunning = false;
+        sessionStepIndex++;
+
+        if (sessionStepIndex >= SESSION_STEP_COUNT) {
+          for (int i = 0; i < 3; i++) {
+            digitalWrite(LED_PIN, HIGH);
+            buzzerOn(3000);
+            delay(120);
+            buzzerOff();
+            digitalWrite(LED_PIN, LOW);
+            delay(160);
+          }
+
+          drawSessionComplete();
+          sessionCompleteShown = true;
+          lastRemaining = -999;
+          return;
+        }
+
+        drawSessionRun(SESSION_STEPS[sessionStepIndex]);
+      }
+
+      lastRemaining = remaining;
+    }
+  }
+}
+
+void updateSingleTimer() {
   if (currentScreen == SCREEN_TIMER) {
     static int lastRemaining = -1;
 
@@ -267,73 +309,44 @@ void loop() {
       lastRemaining = remaining;
     }
   }
+}
 
-  // ---- session run update ----
-  if (currentScreen == SCREEN_SESSION_RUN) {
-    static int lastRemaining = -1;
+// ---------- setup ----------
+void setup() {
+  Wire.begin(SDA_PIN, SCL_PIN);
+  display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
+  display.setRotation(0);
 
-    if (sessionStepIndex >= SESSION_STEP_COUNT) {
-      if (!sessionCompleteShown) {
-        drawSessionComplete();
-        sessionCompleteShown = true;
-      }
-      return;
-    }
+  pinMode(ENC_A, INPUT_PULLUP);
+  pinMode(ENC_B, INPUT_PULLUP);
+  pinMode(ENC_SW, INPUT_PULLUP);
+  pinMode(BACK_SW, INPUT_PULLUP);
 
-    int stepSec = SESSION_STEPS[sessionStepIndex];
-    int remaining = stepSec;
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
 
-    if (sessionRunning) {
-      unsigned long elapsed = (millis() - sessionStepStartMs) / 1000;
-      remaining = stepSec - (int)elapsed;
-      if (remaining < 0)
-        remaining = 0;
-    }
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
 
-    if (remaining != lastRemaining) {
-      drawSessionRun(remaining);
+  // Load saved timer duration (NVS)
+  prefs.begin("tea_timer", false);
+  timerDuration = prefs.getInt("dur_sec", 10);
+  if (timerDuration < MIN_TIME)
+    timerDuration = MIN_TIME;
+  if (timerDuration > MAX_TIME)
+    timerDuration = MAX_TIME;
+  editTimeValue = timerDuration;
 
-      if (sessionRunning && remaining <= 3 && remaining > 0) {
-        digitalWrite(LED_PIN, HIGH);
-        beep(2200, 60);
-        digitalWrite(LED_PIN, LOW);
-      }
+  drawMenu();
+}
 
-      if (sessionRunning && remaining == 0) {
-        // finish step
-        for (int i = 0; i < 2; i++) {
-          digitalWrite(LED_PIN, HIGH);
-          buzzerOn(2500);
-          delay(70);
-          buzzerOff();
-          digitalWrite(LED_PIN, LOW);
-          delay(120);
-        }
-
-        sessionRunning = false;
-        sessionStepIndex++;
-
-        if (sessionStepIndex >= SESSION_STEP_COUNT) {
-          for (int i = 0; i < 3; i++) {
-            digitalWrite(LED_PIN, HIGH);
-            buzzerOn(3000);
-            delay(120);
-            buzzerOff();
-            digitalWrite(LED_PIN, LOW);
-            delay(160);
-          }
-
-          drawSessionComplete();
-          sessionCompleteShown = true;
-          lastRemaining = -999;
-          return;
-        }
-
-        // show next step ready
-        drawSessionRun(SESSION_STEPS[sessionStepIndex]);
-      }
-
-      lastRemaining = remaining;
-    }
-  }
+// ---------- loop ----------
+void loop() {
+  EncoderStep step = readEncoderStep();
+  handleEncoderByScreen(step.plus, step.minus);
+  handleBackButton();
+  handleSelectButton();
+  handleSessionLongPress();
+  updateSingleTimer();
+  updateSessionRun();
 }

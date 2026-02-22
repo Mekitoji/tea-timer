@@ -1,22 +1,10 @@
 #include "ui.h"
+#include <app_state.h>
 
 #include <Adafruit_SSD1306.h>
 #include <Arduino.h>
 #include <WiFi.h>
 #include <tea_config.h>
-
-extern Adafruit_SSD1306 display;
-extern const char *menuItems[];
-extern const int menuCount;
-extern int selected;
-
-extern int editTimeValue;
-extern int wifiCount;
-
-// session state
-extern int sessionTeaIndex;
-extern int sessionStepIndex;
-extern const char *TEAS[];
 
 void drawProgressBar(int remaining, int total) {
   int x = 6, y = 54, w = 116, h = 8;
