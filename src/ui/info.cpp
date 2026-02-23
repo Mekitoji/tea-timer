@@ -80,5 +80,5 @@ void drawWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   WiFi.scanDelete();
-  WiFi.scanNetworks(true); // async
+  WiFi.scanNetworks(true);
 }

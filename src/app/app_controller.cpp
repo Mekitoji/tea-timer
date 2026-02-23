@@ -62,17 +62,31 @@ void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
         sessionStepTotalSec = sessionStepDurationSec;
         drawSessionRun(sessionStepTotalSec);
       }
+    } else if (currentScreen == SCREEN_SETTINGS) {
+      settingsSelected += stepPlus ? 1 : -1;
+      if (settingsSelected < 0)
+        settingsSelected = settingsMenuCount - 1;
+      if (settingsSelected >= settingsMenuCount)
+        settingsSelected = 0;
+      drawSettingsMenu();
     }
   }
 }
 
 void handleBackButton() {
-  if (backButtonPressedEvent()) {
-    if (currentScreen != SCREEN_MENU) {
-      if (currentScreen == SCREEN_SESSION_RUN)
-        sessionRunning = false;
-      goToMenu();
-    }
+  if (!backButtonPressedEvent())
+    return;
+
+  if (currentScreen == SCREEN_WIFI || currentScreen == SCREEN_ABOUT) {
+    currentScreen = SCREEN_SETTINGS;
+    drawSettingsMenu();
+    return;
+  }
+
+  if (currentScreen != SCREEN_MENU) {
+    if (currentScreen == SCREEN_SESSION_RUN)
+      sessionRunning = false;
+    goToMenu();
   }
 }
 
@@ -112,6 +126,11 @@ void handleSelectButton() {
         sessionStepStartMs = millis();
         drawSessionRun(sessionStepDurationSec);
       }
+    } else if (currentScreen == SCREEN_SETTINGS) {
+      handleSettingsSelect();
+    } else if (currentScreen == SCREEN_WIFI || currentScreen == SCREEN_ABOUT) {
+      currentScreen = SCREEN_SETTINGS;
+      drawSettingsMenu();
     } else {
       goToMenu();
     }

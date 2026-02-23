@@ -10,6 +10,9 @@ extern Preferences prefs;
 extern const char *menuItems[];
 extern const int menuCount;
 extern int selected;
+extern const char *settingsItems[];
+extern const int settingsMenuCount;
+extern int settingsSelected;
 
 // general state
 extern int editTimeValue;
@@ -31,10 +34,9 @@ extern int sessionStepTotalSec;
 extern const char *TEAS[];
 extern const int TEA_COUNT;
 
-void goToMenu();
-
 enum ScreenState {
   SCREEN_MENU,
+  SCREEN_SETTINGS,
   SCREEN_ABOUT,
   SCREEN_WIFI,
   SCREEN_TIMER,
@@ -48,8 +50,9 @@ enum MenuIndex {
   MENU_SESSION,
   MENU_START,
   MENU_SET_TIME,
-  MENU_WIFI,
-  MENU_ABOUT
+  MENU_SETTINGS
 };
+
+enum SettingsMenuIndex { SETTINGS_WIFI, SETTINGS_ABOUT };
 
 extern ScreenState currentScreen;

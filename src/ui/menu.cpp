@@ -27,3 +27,27 @@ void drawMenu() {
 
   display.display();
 }
+
+void drawSettingsMenu() {
+  display.clearDisplay();
+
+  drawHeader("SETTINGS");
+
+  // items in blue zone
+  display.setTextSize(1);
+  for (int i = 0; i < settingsMenuCount; i++) {
+    int y = 17 + i * 8;
+
+    if (i == settingsSelected) {
+      display.fillRect(0, y - 1, 128, 8, SSD1306_WHITE);
+      display.setTextColor(SSD1306_BLACK);
+    } else {
+      display.setTextColor(SSD1306_WHITE);
+    }
+
+    display.setCursor(4, y);
+    display.print(settingsItems[i]);
+  }
+
+  display.display();
+}

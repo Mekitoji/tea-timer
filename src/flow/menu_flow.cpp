@@ -29,11 +29,27 @@ void handleMenuSelect() {
     currentScreen = SCREEN_SET_TIME;
     editTimeValue = timerDuration;
     drawSetTime();
-  } else if (selected == MENU_WIFI) {
+  } else if (selected == MENU_SETTINGS) {
+    currentScreen = SCREEN_SETTINGS;
+    settingsSelected = 0;
+    drawSettingsMenu();
+  }
+}
+
+// ----------- settings select handler ----------
+void handleSettingsSelect() {
+  if (settingsSelected == SETTINGS_WIFI) {
     currentScreen = SCREEN_WIFI;
+    wifiCount = 0;
     drawWiFi();
-  } else if (selected == MENU_ABOUT) {
+  } else if (settingsSelected == SETTINGS_ABOUT) {
     currentScreen = SCREEN_ABOUT;
     drawAbout();
   }
+}
+
+// ----------- go back to menu ----------
+void goToMenu() {
+  currentScreen = SCREEN_MENU;
+  drawMenu();
 }

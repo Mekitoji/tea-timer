@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <app/app_state.h>
+#include <flow/menu_flow.h>
 #include <hw/audio.h>
 #include <hw/pins.h>
 #include <ui.h>
