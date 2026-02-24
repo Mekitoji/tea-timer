@@ -3,10 +3,12 @@
 #include <Arduino.h>
 #include <app/app_state.h>
 #include <ui/header.h>
+#include <ui/layout.h>
 
 void drawProgressBar(int remaining, int total) {
-  int x = 6, y = 54, w = 116, h = 8;
-  display.drawRect(x, y, w, h, SSD1306_WHITE);
+  display.drawRect(ui::layout::PROGRESS_X, ui::layout::TIMER_PROGRESS_Y,
+                   ui::layout::PROGRESS_W, ui::layout::PROGRESS_H,
+                   SSD1306_WHITE);
 
   int elapsed = total - remaining;
   if (elapsed < 0)
@@ -14,13 +16,15 @@ void drawProgressBar(int remaining, int total) {
   if (elapsed > total)
     elapsed = total;
 
-  int fill = (total == 0) ? 0 : (elapsed * (w - 2)) / total;
+  int fill =
+      (total == 0) ? 0 : (elapsed * (ui::layout::PROGRESS_W - 2)) / total;
   if (fill < 0)
     fill = 0;
-  if (fill > w - 2)
-    fill = w - 2;
+  if (fill > ui::layout::PROGRESS_W - 2)
+    fill = ui::layout::PROGRESS_W - 2;
 
-  display.fillRect(x + 1, y + 1, fill, h - 2, SSD1306_WHITE);
+  display.fillRect(ui::layout::PROGRESS_X + 1, ui::layout::TIMER_PROGRESS_Y + 1,
+                   fill, ui::layout::PROGRESS_H - 2, SSD1306_WHITE);
 }
 
 void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds) {
@@ -28,7 +32,7 @@ void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds) {
   drawHeader(title);
 
   display.setTextSize(3);
-  display.setCursor(40, 22);
+  display.setCursor(ui::layout::TIMER_VALUE_X, ui::layout::TIMER_VALUE_Y);
   display.print(secondsLeft);
 
   display.setTextSize(1);
@@ -45,7 +49,7 @@ void drawSetTime() {
   int ss = editTimeValue % 60;
 
   display.setTextSize(2);
-  display.setCursor(10, 28);
+  display.setCursor(ui::layout::SET_TIME_VALUE_X, ui::layout::SET_TIME_VALUE_Y);
   if (mm < 10)
     display.print('0');
   display.print(mm);
@@ -55,7 +59,7 @@ void drawSetTime() {
   display.print(ss);
 
   display.setTextSize(1);
-  display.setCursor(0, 54);
+  display.setCursor(ui::layout::SET_TIME_HINT_X, ui::layout::SET_TIME_HINT_Y);
   display.print("Press to save");
 
   display.display();

@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <app/app_state.h>
 #include <ui/header.h>
+#include <ui/layout.h>
 
 namespace {
 bool wifiScanPending = false;
@@ -14,19 +15,21 @@ void drawAbout() {
   display.clearDisplay();
   drawHeader("About Device");
 
-  display.setCursor(0, UI_HEADER_CONTENT_Y);
+  display.setCursor(0, ui::layout::INFO_ROW1_Y);
   display.print("Chip: ESP32-C3");
 
-  display.setCursor(0, UI_HEADER_CONTENT_Y + 10);
+  display.setCursor(0, ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y);
   display.print("Flash: ");
   display.print(ESP.getFlashChipSize() / 1024 / 1024);
   display.print("MB");
 
-  display.setCursor(0, UI_HEADER_CONTENT_Y + 20);
+  display.setCursor(0,
+                    ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 2);
   display.print("Heap: ");
   display.print(ESP.getFreeHeap());
 
-  display.setCursor(0, UI_HEADER_CONTENT_Y + 30);
+  display.setCursor(0,
+                    ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 3);
   display.print("FW: v1.0.0");
 
   display.display();
@@ -51,12 +54,13 @@ void updateWiFiScreen() {
   drawHeader("WiFi Found:");
 
   for (int i = 0; i < wifiCount && i < 4; i++) {
-    display.setCursor(0, UI_HEADER_CONTENT_Y + 1 + i * 10);
+    display.setCursor(0, ui::layout::WIFI_LIST_START_Y +
+                             i * ui::layout::WIFI_LIST_STEP_Y);
     display.print(WiFi.SSID(i));
   }
 
   if (wifiCount == 0) {
-    display.setCursor(0, UI_HEADER_CONTENT_Y + 5);
+    display.setCursor(0, ui::layout::WIFI_EMPTY_Y);
     display.print("No networks");
   }
 
@@ -73,7 +77,7 @@ void drawWiFi() {
 
   display.clearDisplay();
   drawHeader("Wi-Fi");
-  display.setCursor(0, UI_HEADER_CONTENT_Y + 6);
+  display.setCursor(0, ui::layout::WIFI_SCAN_MSG_Y);
   display.print("Scanning...");
   display.display();
 

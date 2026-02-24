@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <app/app_state.h>
 #include <ui/header.h>
+#include <ui/layout.h>
 
 void drawMenu() {
   display.clearDisplay();
@@ -12,16 +13,18 @@ void drawMenu() {
   // items in blue zone
   display.setTextSize(1);
   for (int i = 0; i < menuCount; i++) {
-    int y = 17 + i * 8;
+    int y = ui::layout::MENU_LIST_START_Y + i * ui::layout::MENU_LIST_STEP_Y;
 
     if (i == selected) {
-      display.fillRect(0, y - 1, 128, 8, SSD1306_WHITE);
+      display.fillRect(ui::layout::MENU_ITEM_BG_X, y - 1,
+                       ui::layout::MENU_ITEM_BG_W, ui::layout::MENU_ITEM_H,
+                       SSD1306_WHITE);
       display.setTextColor(SSD1306_BLACK);
     } else {
       display.setTextColor(SSD1306_WHITE);
     }
 
-    display.setCursor(4, y);
+    display.setCursor(ui::layout::MENU_ITEM_X, y);
     display.print(menuItems[i]);
   }
 
@@ -36,16 +39,19 @@ void drawSettingsMenu() {
   // items in blue zone
   display.setTextSize(1);
   for (int i = 0; i < settingsMenuCount; i++) {
-    int y = 17 + i * 8;
+    int y = ui::layout::MENU_LIST_START_Y + i * ui::layout::MENU_LIST_STEP_Y;
 
     if (i == settingsSelected) {
-      display.fillRect(0, y - 1, 128, 8, SSD1306_WHITE);
+
+      display.fillRect(ui::layout::MENU_ITEM_BG_X, y - 1,
+                       ui::layout::MENU_ITEM_BG_W, ui::layout::MENU_ITEM_H,
+                       SSD1306_WHITE);
       display.setTextColor(SSD1306_BLACK);
     } else {
       display.setTextColor(SSD1306_WHITE);
     }
 
-    display.setCursor(4, y);
+    display.setCursor(ui::layout::MENU_ITEM_X, y);
     display.print(settingsItems[i]);
   }
 

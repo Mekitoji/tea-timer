@@ -4,6 +4,7 @@
 #include <app/app_state.h>
 #include <app/tea_config.h>
 #include <ui/header.h>
+#include <ui/layout.h>
 
 namespace {
 enum class SessionRunStatus { Ready, Running, Paused };
@@ -38,15 +39,16 @@ void drawSessionComplete() {
 
   // Body
   display.setTextSize(2);
-  display.setCursor(8, 24);
+  display.setCursor(ui::layout::SESSION_COMPLETE_TITLE_X,
+                    ui::layout::SESSION_COMPLETE_TITLE_Y);
   display.print("COMPLETE");
 
   display.setTextSize(1);
-  display.setCursor(0, 42);
+  display.setCursor(0, ui::layout::SESSION_COMPLETE_TEA_Y);
   display.print("Tea: ");
   display.print(TEAS[sessionTeaIndex]);
 
-  display.setCursor(0, 54);
+  display.setCursor(0, ui::layout::SESSION_COMPLETE_HINT_Y);
   display.print("Press to exit");
 
   display.display();
@@ -56,18 +58,20 @@ void drawSessionMenu() {
   display.clearDisplay();
   drawHeader("Session");
 
-  display.setCursor(0, 18);
+  display.setCursor(0, ui::layout::SESSION_MENU_TEA_Y);
   display.print("Tea:");
-  display.setCursor(30, 18);
+  display.setCursor(ui::layout::SESSION_MENU_TEA_VALUE_X,
+                    ui::layout::SESSION_MENU_TEA_Y);
   display.print(TEAS[sessionTeaIndex]);
 
-  display.setCursor(0, 34);
+  display.setCursor(0, ui::layout::SESSION_MENU_STEPS_Y);
   display.print("Steps:");
-  display.setCursor(45, 34);
+  display.setCursor(ui::layout::SESSION_MENU_STEPS_VALUE_X,
+                    ui::layout::SESSION_MENU_STEPS_Y);
   display.print(SESSION_STEP_COUNT);
   display.print(" infusions");
 
-  display.setCursor(0, 54);
+  display.setCursor(0, ui::layout::SESSION_MENU_HINT_Y);
   display.print("Press: back");
 
   display.display();
@@ -94,18 +98,19 @@ void drawSessionRun(int remaining) {
   // ---- INFO BLOCK ----
   display.setTextSize(1);
 
-  display.setCursor(0, 18);
+  display.setCursor(0, ui::layout::SESSION_RUN_TEA_Y);
   display.print("Tea:");
-  display.setCursor(28, 18);
+  display.setCursor(ui::layout::SESSION_RUN_TEA_VALUE_X,
+                    ui::layout::SESSION_RUN_TEA_Y);
   display.print(TEAS[sessionTeaIndex]);
 
-  display.setCursor(0, 28);
+  display.setCursor(0, ui::layout::SESSION_RUN_STEP_Y);
   display.print("Step ");
   display.print(sessionStepIndex + 1);
   display.print("/");
   display.print(SESSION_STEP_COUNT);
 
-  display.setCursor(0, 38);
+  display.setCursor(0, ui::layout::SESSION_RUN_INFUSE_Y);
   if (sessionStepIndex == 0)
     display.print("Rinse ");
   else
@@ -116,7 +121,8 @@ void drawSessionRun(int remaining) {
 
   // ---- TIMER BIG ----
   display.setTextSize(2);
-  display.setCursor(78, 28);
+  display.setCursor(ui::layout::SESSION_RUN_TIMER_X,
+                    ui::layout::SESSION_RUN_TIMER_Y);
   display.print(remaining);
 
   // ---- STATUS ----
@@ -126,22 +132,17 @@ void drawSessionRun(int remaining) {
       resolveSessionRunStatus(sessionRunning, remaining, totalSec);
   const char *statusLabel = statusText(status);
 
-  const int statusX = 74;
-  const int statusY = 1;
-  const int statusW = 52;
-  const int statusH = 11;
-
-  display.drawRect(statusX, statusY, statusW, statusH, SSD1306_WHITE);
-  display.setCursor(statusX + 3, statusY + 2);
+  display.drawRect(ui::layout::SESSION_STATUS_X, ui::layout::SESSION_STATUS_Y,
+                   ui::layout::SESSION_STATUS_W, ui::layout::SESSION_STATUS_H,
+                   SSD1306_WHITE);
+  display.setCursor(ui::layout::SESSION_STATUS_X + 3,
+                    ui::layout::SESSION_STATUS_Y + 2);
   display.print(statusLabel);
 
   // ---- PROGRESS BAR ----
-  int x = 6;
-  int y = 46;
-  int w = 116;
-  int h = 8;
-
-  display.drawRect(x, y, w, h, SSD1306_WHITE);
+  display.drawRect(ui::layout::PROGRESS_X, ui::layout::SESSION_PROGRESS_Y,
+                   ui::layout::PROGRESS_W, ui::layout::PROGRESS_H,
+                   SSD1306_WHITE);
 
   int total = totalSec;
   int elapsed = total - remaining;
@@ -150,12 +151,15 @@ void drawSessionRun(int remaining) {
   if (elapsed > total)
     elapsed = total;
 
-  int fill = (total == 0) ? 0 : (elapsed * (w - 2)) / total;
-  display.fillRect(x + 1, y + 1, fill, h - 2, SSD1306_WHITE);
+  int fill =
+      (total == 0) ? 0 : (elapsed * (ui::layout::PROGRESS_W - 2)) / total;
+  display.fillRect(ui::layout::PROGRESS_X + 1,
+                   ui::layout::SESSION_PROGRESS_Y + 1, fill,
+                   ui::layout::PROGRESS_H - 2, SSD1306_WHITE);
 
   // ---- helper text ----
   display.setTextSize(1);
-  display.setCursor(0, 56);
+  display.setCursor(0, ui::layout::SESSION_RUN_HINT_Y);
   if (sessionRunning)
     display.print("Press:Pause Hold:Skip");
   else
