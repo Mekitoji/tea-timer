@@ -21,10 +21,14 @@ constexpr int SESSION_PROGRESS_Y = 46;
 // Timer screen
 constexpr int TIMER_VALUE_X = 40;
 constexpr int TIMER_VALUE_Y = 22;
-constexpr int SET_TIME_VALUE_X = 10;
-constexpr int SET_TIME_VALUE_Y = 28;
-constexpr int SET_TIME_HINT_X = 0;
-constexpr int SET_TIME_HINT_Y = 54;
+
+// Timer status badge
+constexpr int TIMER_STATUS_X = 82;
+constexpr int TIMER_STATUS_Y = 1;
+constexpr int TIMER_STATUS_W = 44;
+constexpr int TIMER_STATUS_H = 11;
+constexpr int TIMER_STATUS_TEXT_X = 85;
+constexpr int TIMER_STATUS_TEXT_Y = 3;
 
 // Header
 constexpr int UI_HEADER_LINE_Y = 15;

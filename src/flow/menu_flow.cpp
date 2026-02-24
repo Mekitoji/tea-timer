@@ -21,14 +21,15 @@ void handleMenuSelect() {
   } else if (selected == MENU_SESSION) {
     currentScreen = SCREEN_SESSION_MENU;
     drawSessionMenu();
-  } else if (selected == MENU_START) {
+  } else if (selected == MENU_TIMER) {
     resetSingleTimerFlowState();
     currentScreen = SCREEN_TIMER;
-    timerStartMillis = millis();
-  } else if (selected == MENU_SET_TIME) {
-    currentScreen = SCREEN_SET_TIME;
+    singleTimerRunning = false;
+    singleTimerStarted = false;
+    timerIgnoreReleaseAfterEnter = true;
     editTimeValue = timerDuration;
-    drawSetTime();
+    timerTotalSec = editTimeValue;
+    drawTimerScreen("Timer", editTimeValue, timerTotalSec);
   } else if (selected == MENU_SETTINGS) {
     currentScreen = SCREEN_SETTINGS;
     settingsSelected = 0;

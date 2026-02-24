@@ -2,10 +2,28 @@
 
 #include <Arduino.h>
 #include <app/app_state.h>
+#include <cstdio>
 #include <ui/header.h>
 #include <ui/layout.h>
 
+namespace {
+const char *timerStatusText() {
+  if (singleTimerRunning)
+    return "START";
+  if (singleTimerStarted)
+    return "PAUSE";
+  return "STOP";
+}
+} // namespace
+
 void drawProgressBar(int remaining, int total) {
+  if (total < 1)
+    total = 1;
+  if (remaining < 0)
+    remaining = 0;
+  if (remaining > total)
+    remaining = total;
+
   display.drawRect(ui::layout::PROGRESS_X, ui::layout::TIMER_PROGRESS_Y,
                    ui::layout::PROGRESS_W, ui::layout::PROGRESS_H,
                    SSD1306_WHITE);
@@ -31,36 +49,31 @@ void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds) {
   display.clearDisplay();
   drawHeader(title);
 
+  display.setTextSize(1);
+  display.drawRect(ui::layout::TIMER_STATUS_X, ui::layout::TIMER_STATUS_Y,
+                   ui::layout::TIMER_STATUS_W, ui::layout::TIMER_STATUS_H,
+                   SSD1306_WHITE);
+  display.setCursor(ui::layout::TIMER_STATUS_TEXT_X,
+                    ui::layout::TIMER_STATUS_TEXT_Y);
+  display.print(timerStatusText());
+
   display.setTextSize(3);
   display.setCursor(ui::layout::TIMER_VALUE_X, ui::layout::TIMER_VALUE_Y);
-  display.print(secondsLeft);
 
-  display.setTextSize(1);
-  drawProgressBar(secondsLeft, totalSeconds);
+  int shown = secondsLeft;
+  if (shown < 0)
+    shown = 0;
+  if (shown > 999)
+    shown = 999;
 
-  display.display();
-}
+  char secBuf[5];
+  snprintf(secBuf, sizeof(secBuf), "%3d", shown); // fix w, maybe %03d ?
+  display.print(secBuf);
 
-void drawSetTime() {
-  display.clearDisplay();
-  drawHeader("Set Time");
-
-  int mm = editTimeValue / 60;
-  int ss = editTimeValue % 60;
-
-  display.setTextSize(2);
-  display.setCursor(ui::layout::SET_TIME_VALUE_X, ui::layout::SET_TIME_VALUE_Y);
-  if (mm < 10)
-    display.print('0');
-  display.print(mm);
-  display.print(':');
-  if (ss < 10)
-    display.print('0');
-  display.print(ss);
-
-  display.setTextSize(1);
-  display.setCursor(ui::layout::SET_TIME_HINT_X, ui::layout::SET_TIME_HINT_Y);
-  display.print("Press to save");
+  if (singleTimerStarted) {
+    display.setTextSize(1);
+    drawProgressBar(secondsLeft, totalSeconds);
+  }
 
   display.display();
 }

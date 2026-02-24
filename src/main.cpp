@@ -46,6 +46,7 @@ void loop() {
   handleBackButton();
   handleSelectButton();
   handleSessionLongPress();
+  handleTimerButton();
   if (currentScreen == SCREEN_WIFI) {
     updateWiFiScreen();
   }

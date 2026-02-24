@@ -18,6 +18,10 @@ extern int settingsSelected;
 extern int editTimeValue;
 extern int timerDuration;
 extern unsigned long timerStartMillis;
+extern bool singleTimerRunning;
+extern bool singleTimerStarted;
+extern bool timerIgnoreReleaseAfterEnter;
+extern int timerTotalSec;
 
 // wifi
 extern int wifiCount;
@@ -40,18 +44,11 @@ enum ScreenState {
   SCREEN_ABOUT,
   SCREEN_WIFI,
   SCREEN_TIMER,
-  SCREEN_SET_TIME,
   SCREEN_SESSION_MENU,
   SCREEN_SESSION_RUN
 };
 
-enum MenuIndex {
-  MENU_START_SESSION,
-  MENU_SESSION,
-  MENU_START,
-  MENU_SET_TIME,
-  MENU_SETTINGS
-};
+enum MenuIndex { MENU_START_SESSION, MENU_SESSION, MENU_TIMER, MENU_SETTINGS };
 
 enum SettingsMenuIndex { SETTINGS_WIFI, SETTINGS_ABOUT };
 

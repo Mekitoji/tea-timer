@@ -11,6 +11,10 @@ Preferences prefs;
 unsigned long timerStartMillis = 0;
 int timerDuration = appcfg::DEFAULT_TIMER_DURATION;
 int editTimeValue = appcfg::DEFAULT_TIMER_DURATION;
+bool singleTimerRunning = false;
+bool singleTimerStarted = false;
+bool timerIgnoreReleaseAfterEnter = false;
+int timerTotalSec = appcfg::DEFAULT_TIMER_DURATION;
 
 int wifiCount = 0;
 
@@ -24,8 +28,7 @@ int sessionStepDurationSec = 0;
 int sessionStepTotalSec = 0;
 
 // menu state
-const char *menuItems[] = {"Start Session", "Session", "Start", "Set time",
-                           "Settings"};
+const char *menuItems[] = {"Start Session", "Session", "Timer", "Settings"};
 const int menuCount = sizeof(menuItems) / sizeof(menuItems[0]);
 
 const char *settingsItems[] = {"WiFi", "About"};

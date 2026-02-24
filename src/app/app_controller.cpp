@@ -5,6 +5,7 @@
 #include <app/app_state.h>
 #include <app/tea_config.h>
 #include <flow/menu_flow.h>
+#include <flow/timer_flow.h>
 #include <hw/input.h>
 #include <hw/pins.h>
 #include <ui.h>
@@ -14,6 +15,9 @@ unsigned long swHoldStartMs = 0;
 bool swWasDown = false;
 unsigned long lastStepMs = 0;
 bool sessionLongPressFired = false;
+unsigned long timerHoldStartMs = 0;
+bool timerWasDown = false;
+bool timerLongPressFired = false;
 } // namespace
 
 void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
@@ -25,24 +29,27 @@ void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
       if (selected >= menuCount)
         selected = 0;
       drawMenu();
-    } else if (currentScreen == SCREEN_SET_TIME) {
-      unsigned long now = millis();
-      unsigned long dt = now - lastStepMs;
-      lastStepMs = now;
+    } else if (currentScreen == SCREEN_TIMER) {
+      if (!singleTimerRunning && !singleTimerStarted) {
+        unsigned long now = millis();
+        unsigned long dt = now - lastStepMs;
+        lastStepMs = now;
 
-      int step = appcfg::ENC_STEP_NORMAL;
-      if (dt < appcfg::ENC_ACCEL_FAST_MS)
-        step = appcfg::ENC_STEP_FAST;
-      else if (dt < appcfg::ENC_ACCEL_MEDIUM_MS)
-        step = appcfg::ENC_STEP_MEDIUM;
+        int step = appcfg::ENC_STEP_NORMAL;
+        if (dt < appcfg::ENC_ACCEL_FAST_MS)
+          step = appcfg::ENC_STEP_FAST;
+        else if (dt < appcfg::ENC_ACCEL_MEDIUM_MS)
+          step = appcfg::ENC_STEP_MEDIUM;
 
-      editTimeValue += (stepPlus ? step : -step);
-      if (editTimeValue < MIN_TIME)
-        editTimeValue = MIN_TIME;
-      if (editTimeValue > MAX_TIME)
-        editTimeValue = MAX_TIME;
+        editTimeValue += (stepPlus ? step : -step);
+        if (editTimeValue < MIN_TIME)
+          editTimeValue = MIN_TIME;
+        if (editTimeValue > MAX_TIME)
+          editTimeValue = MAX_TIME;
 
-      drawSetTime();
+        timerTotalSec = editTimeValue;
+        drawTimerScreen("Timer", editTimeValue, timerTotalSec);
+      }
     } else if (currentScreen == SCREEN_SESSION_MENU) {
       if (TEA_COUNT > 1) {
         sessionTeaIndex += stepPlus ? 1 : -1;
@@ -83,6 +90,16 @@ void handleBackButton() {
     return;
   }
 
+  if (currentScreen == SCREEN_TIMER) {
+    singleTimerRunning = false;
+    singleTimerStarted = false;
+    if (timerTotalSec > 0) {
+      timerDuration = timerTotalSec;
+      editTimeValue = timerTotalSec;
+    }
+    resetSingleTimerFlowState();
+  }
+
   if (currentScreen != SCREEN_MENU) {
     if (currentScreen == SCREEN_SESSION_RUN)
       sessionRunning = false;
@@ -94,10 +111,8 @@ void handleSelectButton() {
   if (buttonPressedEvent()) {
     if (currentScreen == SCREEN_MENU) {
       handleMenuSelect();
-    } else if (currentScreen == SCREEN_SET_TIME) {
-      timerDuration = editTimeValue;
-      prefs.putInt(appcfg::PREFS_DURATION_KEY, timerDuration);
-      goToMenu();
+    } else if (currentScreen == SCREEN_TIMER) {
+      // handled by handleTimerButton
     } else if (currentScreen == SCREEN_SESSION_MENU) {
       goToMenu();
     } else if (currentScreen == SCREEN_SESSION_RUN) {
@@ -180,4 +195,97 @@ void handleSessionLongPress() {
   sessionStepTotalSec = sessionStepDurationSec;
   sessionRunning = false;
   drawSessionRun(sessionStepDurationSec);
+}
+
+void handleTimerButton() {
+  if (currentScreen != SCREEN_TIMER) {
+    timerIgnoreReleaseAfterEnter = false;
+    timerWasDown = false;
+    timerLongPressFired = false;
+    return;
+  }
+
+  const unsigned long now = millis();
+  const bool down = (digitalRead(ENC_SW) == LOW);
+
+  // Ignore the click that opened the Timer screen from menu.
+  if (timerIgnoreReleaseAfterEnter) {
+    if (!down) {
+      timerIgnoreReleaseAfterEnter = false;
+      timerWasDown = false;
+      timerLongPressFired = false;
+    }
+    return;
+  }
+
+  // Button pressed
+  if (down && !timerWasDown) {
+    timerWasDown = true;
+    timerHoldStartMs = now;
+    timerLongPressFired = false;
+    return;
+  }
+
+  // long press reset timer to initial value and stop
+  if (down && timerWasDown && !timerLongPressFired &&
+      (now - timerHoldStartMs >= appcfg::TIMER_HOLD_MS)) {
+    timerLongPressFired = true;
+
+    singleTimerRunning = false;
+    singleTimerStarted = false;
+
+    timerDuration = timerTotalSec;
+    editTimeValue = timerTotalSec;
+
+    resetSingleTimerFlowState();
+    drawTimerScreen("Timer", editTimeValue, timerTotalSec);
+    return;
+  }
+
+  // button released
+  if (!down && timerWasDown) {
+    timerWasDown = false;
+
+    // if long press is done, short press would be ignored
+    if (timerLongPressFired) {
+      timerLongPressFired = false;
+      return;
+    }
+
+    // Short press
+    if (singleTimerRunning) {
+      // Pause
+      unsigned long elapsed = (now - timerStartMillis) / 1000;
+      int remaining = timerDuration - (int)elapsed;
+      if (remaining < 0)
+        remaining = 0;
+
+      singleTimerRunning = false;
+      timerDuration = remaining;
+      editTimeValue = remaining;
+
+      drawTimerScreen("Timer", remaining, timerTotalSec);
+    } else {
+      // Start or Resume
+      if (!singleTimerStarted) {
+        if (editTimeValue < MIN_TIME)
+          editTimeValue = MIN_TIME;
+        if (editTimeValue > MAX_TIME)
+          editTimeValue = MAX_TIME;
+
+        timerTotalSec = editTimeValue;
+        timerDuration = editTimeValue;
+        singleTimerStarted = true;
+        drawTimerScreen("Timer", timerDuration, timerTotalSec);
+      }
+
+      if (timerDuration <= 0) {
+        timerDuration = timerTotalSec;
+      }
+
+      singleTimerRunning = true;
+      timerStartMillis = now;
+      resetSingleTimerFlowState();
+    }
+  }
 }

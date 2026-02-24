@@ -13,6 +13,8 @@ int lastRemaining = -1;
 
 void updateSingleTimer() {
   if (currentScreen == SCREEN_TIMER) {
+    if (!singleTimerRunning)
+      return;
 
     unsigned long elapsed = (millis() - timerStartMillis) / 1000;
     int remaining = timerDuration - (int)elapsed;
@@ -20,7 +22,7 @@ void updateSingleTimer() {
       remaining = 0;
 
     if (remaining != lastRemaining) {
-      drawTimerScreen("Timer", remaining, timerDuration);
+      drawTimerScreen("Timer", remaining, timerTotalSec);
 
       if (remaining <= 3 && remaining > 0) {
         digitalWrite(LED_PIN, HIGH);
@@ -37,6 +39,12 @@ void updateSingleTimer() {
           digitalWrite(LED_PIN, LOW);
           delay(120);
         }
+
+        singleTimerRunning = false;
+        singleTimerStarted = false;
+        timerDuration = timerTotalSec;
+        editTimeValue = timerTotalSec;
+
         goToMenu();
       }
 
