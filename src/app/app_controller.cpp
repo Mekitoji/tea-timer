@@ -18,6 +18,7 @@ bool sessionLongPressFired = false;
 unsigned long timerHoldStartMs = 0;
 bool timerWasDown = false;
 bool timerLongPressFired = false;
+unsigned long timerReleaseGuardUntilMs = 0;
 } // namespace
 
 void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
@@ -30,7 +31,7 @@ void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
         selected = 0;
       drawMenu();
     } else if (currentScreen == SCREEN_TIMER) {
-      if (!singleTimerRunning && !singleTimerStarted) {
+      if (!singleTimerRunning) {
         unsigned long now = millis();
         unsigned long dt = now - lastStepMs;
         lastStepMs = now;
@@ -41,14 +42,40 @@ void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
         else if (dt < appcfg::ENC_ACCEL_MEDIUM_MS)
           step = appcfg::ENC_STEP_MEDIUM;
 
-        editTimeValue += (stepPlus ? step : -step);
-        if (editTimeValue < MIN_TIME)
-          editTimeValue = MIN_TIME;
-        if (editTimeValue > MAX_TIME)
-          editTimeValue = MAX_TIME;
+        int delta = stepPlus ? step : -step;
 
-        timerTotalSec = editTimeValue;
-        drawTimerScreen("Timer", editTimeValue, timerTotalSec);
+        if (!singleTimerStarted) {
+          editTimeValue += delta;
+          if (editTimeValue < MIN_TIME)
+            editTimeValue = MIN_TIME;
+          if (editTimeValue > MAX_TIME)
+            editTimeValue = MAX_TIME;
+
+          timerTotalSec = editTimeValue;
+          drawTimerScreen("Timer", editTimeValue, timerTotalSec);
+        } else {
+          // Paused state: adjust remaining seconds while keeping elapsed time.
+          int elapsed = timerTotalSec - timerDuration;
+          if (elapsed < 0)
+            elapsed = 0;
+          if (elapsed > MAX_TIME)
+            elapsed = MAX_TIME;
+
+          int maxRemaining = MAX_TIME - elapsed;
+          if (maxRemaining < MIN_TIME)
+            maxRemaining = MIN_TIME;
+
+          int newRemaining = timerDuration + delta;
+          if (newRemaining < MIN_TIME)
+            newRemaining = MIN_TIME;
+          if (newRemaining > maxRemaining)
+            newRemaining = maxRemaining;
+
+          timerDuration = newRemaining;
+          editTimeValue = newRemaining;
+          timerTotalSec = elapsed + newRemaining;
+          drawTimerScreen("Timer", timerDuration, timerTotalSec);
+        }
       }
     } else if (currentScreen == SCREEN_SESSION_MENU) {
       if (TEA_COUNT > 1) {
@@ -91,13 +118,9 @@ void handleBackButton() {
   }
 
   if (currentScreen == SCREEN_TIMER) {
-    singleTimerRunning = false;
-    singleTimerStarted = false;
-    if (timerTotalSec > 0) {
-      timerDuration = timerTotalSec;
-      editTimeValue = timerTotalSec;
-    }
-    resetSingleTimerFlowState();
+    applyTimerPresetSec(timerTotalSec);
+    prefs.putInt(appcfg::PREFS_DURATION_KEY, timerDuration);
+    resetSingleTimerRuntimeState();
   }
 
   if (currentScreen != SCREEN_MENU) {
@@ -202,6 +225,7 @@ void handleTimerButton() {
     timerIgnoreReleaseAfterEnter = false;
     timerWasDown = false;
     timerLongPressFired = false;
+    timerReleaseGuardUntilMs = 0;
     return;
   }
 
@@ -218,6 +242,13 @@ void handleTimerButton() {
     return;
   }
 
+  // After long-press, ignore short bounce transitions around release.
+  if (now < timerReleaseGuardUntilMs) {
+    if (!down)
+      timerWasDown = false;
+    return;
+  }
+
   // Button pressed
   if (down && !timerWasDown) {
     timerWasDown = true;
@@ -230,14 +261,10 @@ void handleTimerButton() {
   if (down && timerWasDown && !timerLongPressFired &&
       (now - timerHoldStartMs >= appcfg::TIMER_HOLD_MS)) {
     timerLongPressFired = true;
-
-    singleTimerRunning = false;
-    singleTimerStarted = false;
-
-    timerDuration = timerTotalSec;
-    editTimeValue = timerTotalSec;
-
-    resetSingleTimerFlowState();
+    timerReleaseGuardUntilMs = now + appcfg::TIMER_RELEASE_GUARD_MS;
+    applyTimerPresetSec(timerTotalSec);
+    prefs.putInt(appcfg::PREFS_DURATION_KEY, timerDuration);
+    resetSingleTimerRuntimeState();
     drawTimerScreen("Timer", editTimeValue, timerTotalSec);
     return;
   }

@@ -1,14 +1,38 @@
 #include "flow/timer_flow.h"
 
 #include <Arduino.h>
+#include <app/app_config.h>
 #include <app/app_state.h>
-#include <flow/menu_flow.h>
+#include <app/tea_config.h>
 #include <hw/audio.h>
 #include <hw/pins.h>
 #include <ui.h>
 
 namespace {
 int lastRemaining = -1;
+}
+
+int normalizeTimerPresetSec(int sec) {
+  if (sec < MIN_TIME)
+    return MIN_TIME;
+  if (sec > MAX_TIME)
+    return MAX_TIME;
+  return sec;
+}
+
+void applyTimerPresetSec(int sec) {
+  int v = normalizeTimerPresetSec(sec);
+  timerDuration = v;
+  editTimeValue = v;
+  timerTotalSec = v;
+}
+
+void resetSingleTimerRuntimeState() {
+  singleTimerRunning = false;
+  singleTimerStarted = false;
+  timerIgnoreReleaseAfterEnter = false;
+  timerStartMillis = 0;
+  lastRemaining = -1;
 }
 
 void updateSingleTimer() {
@@ -40,12 +64,10 @@ void updateSingleTimer() {
           delay(120);
         }
 
-        singleTimerRunning = false;
-        singleTimerStarted = false;
-        timerDuration = timerTotalSec;
-        editTimeValue = timerTotalSec;
-
-        goToMenu();
+        applyTimerPresetSec(timerTotalSec);
+        prefs.putInt(appcfg::PREFS_DURATION_KEY, timerDuration);
+        resetSingleTimerRuntimeState();
+        drawTimerScreen("Timer", editTimeValue, timerTotalSec);
       }
 
       lastRemaining = remaining;

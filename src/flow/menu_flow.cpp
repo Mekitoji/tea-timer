@@ -22,13 +22,10 @@ void handleMenuSelect() {
     currentScreen = SCREEN_SESSION_MENU;
     drawSessionMenu();
   } else if (selected == MENU_TIMER) {
-    resetSingleTimerFlowState();
     currentScreen = SCREEN_TIMER;
-    singleTimerRunning = false;
-    singleTimerStarted = false;
+    applyTimerPresetSec(timerDuration);
+    resetSingleTimerRuntimeState();
     timerIgnoreReleaseAfterEnter = true;
-    editTimeValue = timerDuration;
-    timerTotalSec = editTimeValue;
     drawTimerScreen("Timer", editTimeValue, timerTotalSec);
   } else if (selected == MENU_SETTINGS) {
     currentScreen = SCREEN_SETTINGS;

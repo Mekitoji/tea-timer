@@ -29,13 +29,11 @@ void setup() {
 
   // Load saved timer duration (NVS)
   prefs.begin(appcfg::PREFS_NAMESPACE, false);
-  timerDuration =
+
+  int savedDuration =
       prefs.getInt(appcfg::PREFS_DURATION_KEY, appcfg::DEFAULT_TIMER_DURATION);
-  if (timerDuration < MIN_TIME)
-    timerDuration = MIN_TIME;
-  if (timerDuration > MAX_TIME)
-    timerDuration = MAX_TIME;
-  editTimeValue = timerDuration;
+  applyTimerPresetSec(savedDuration);
+  resetSingleTimerRuntimeState();
 
   drawMenu();
 }
