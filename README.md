@@ -4,6 +4,24 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
 
 ## Features
 
+- Main menu navigation with rotary encoder.
+- Single Timer mode:
+  - adjust seconds with encoder acceleration (`+1 / +5 / +10` by rotation speed),
+  - short press on encoder: start/pause/resume,
+  - long press on encoder: reset to current preset,
+  - back button: return to menu.
+- Session mode:
+  - step-by-step infusion flow,
+  - short press: start/pause/resume current step,
+  - long press: skip current step,
+  - completion screen at the end of session.
+- Runtime status badges in UI (`RUNNING`, `PAUSED`, `STOP`/`READY`).
+- Persistent timer preset via `Preferences` (NVS).
+- Non-blocking input handling with debounce and encoder quadrature decoding.
+- Explicit FSM layers:
+  - `TimerState`: `Stopped/Running/Paused`,
+  - `SessionState`: `Stopped/Running/Paused/Completed`.
+
 ## Requirements
 
 ### Hardware
@@ -37,13 +55,13 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
 pio run
 ```
 
-1. Flash the board:
+2. Flash the board:
 
 ```bash
 pio run -t upload
 ```
 
-1. Open Serial Monitor (`115200`):
+3. Open Serial Monitor (`115200`):
 
 ```bash
 pio device monitor -b 115200
@@ -60,8 +78,10 @@ pio device monitor -b 115200 --port <PORT>
 
 - `src/main.cpp` — app bootstrap (`setup/loop`) and module orchestration.
 - `src/app/app_state.cpp` — shared app state definitions.
+- `src/app/timer_state.cpp` — `TimerState` implementation.
+- `src/app/session_state.cpp` — `SessionState` implementation.
 - `src/app/app_controller.cpp` — input-driven screen/control handlers.
-- `src/hw/input.cpp` — encoder/buttons (debounced, non-blocking).
+- `src/hw/input.cpp` — encoder/buttons (debounced, non-blocking) + encoder acceleration helper.
 - `src/hw/audio.cpp` — buzzer helpers.
 - `src/flow/menu_flow.cpp` — main menu actions and screen transitions.
 - `src/flow/timer_flow.cpp` — single timer runtime logic.
@@ -73,3 +93,7 @@ pio device monitor -b 115200 --port <PORT>
   - `ui/session.cpp`
 - `include/app/app_config.h` — app-level constants (prefs keys, debounce/hold timings, encoder accel).
 - `include/app/app_state.h` — shared app state declarations.
+- `include/app/timer_state.h` — `TimerState` declarations.
+- `include/app/session_state.h` — `SessionState` declarations.
+- `include/flow/timer_flow.h` — timer flow API.
+- `include/flow/session_flow.h` — session flow API.
