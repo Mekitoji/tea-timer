@@ -11,7 +11,7 @@ const char *timerStatusText() {
   if (isTimerRunning())
     return "RUNNING";
   if (isTimerPaused())
-    return "PAUSE";
+    return "PAUSED";
   return "STOP";
 }
 } // namespace

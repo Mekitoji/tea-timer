@@ -1,24 +1,69 @@
 #include "flow/session_flow.h"
 
 #include <Arduino.h>
+#include <app/app_config.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
+#include <flow/menu_flow.h>
 #include <hw/audio.h>
 #include <hw/pins.h>
 #include <ui.h>
 
 namespace {
 int lastRemaining = -1;
-}
+unsigned long sessionHoldStartMs = 0;
+bool sessionWasDown = false;
+bool sessionLongPressFired = false;
+} // namespace
 
 void resetSessionFlowState() { lastRemaining = -1; }
+
+void resetSessionLongPressFlowState() {
+  sessionWasDown = false;
+  sessionLongPressFired = false;
+}
+
+void processSessionLongPressInput(bool down, unsigned long nowMs) {
+  if (down && !sessionWasDown) {
+    sessionWasDown = true;
+    sessionHoldStartMs = nowMs;
+    sessionLongPressFired = false;
+  }
+
+  if (!down && sessionWasDown) {
+    sessionWasDown = false;
+    sessionLongPressFired = false;
+    return;
+  }
+
+  if (!down || !sessionWasDown || sessionLongPressFired)
+    return;
+
+  if (nowMs - sessionHoldStartMs < appcfg::SESSION_HOLD_MS)
+    return;
+
+  sessionLongPressFired = true;
+
+  sessionStepIndex++;
+
+  if (sessionStepIndex >= SESSION_STEP_COUNT) {
+    setSessionStateCompleted();
+    drawSessionComplete();
+    return;
+  }
+
+  sessionStepDurationSec = SESSION_STEPS[sessionStepIndex];
+  sessionStepTotalSec = sessionStepDurationSec;
+  setSessionStatePaused();
+  drawSessionRun(sessionStepDurationSec);
+}
 
 void updateSessionRun() {
   if (currentScreen == SCREEN_SESSION_RUN) {
     if (sessionStepIndex >= SESSION_STEP_COUNT) {
-      if (!sessionCompleteShown) {
+      if (!isSessionCompleted()) {
+        setSessionStateCompleted();
         drawSessionComplete();
-        sessionCompleteShown = true;
       }
       return;
     }
@@ -27,7 +72,7 @@ void updateSessionRun() {
                                              : SESSION_STEPS[sessionStepIndex];
     int remaining = stepSec;
 
-    if (sessionRunning) {
+    if (isSessionRunning()) {
       unsigned long elapsed = (millis() - sessionStepStartMs) / 1000;
       remaining = stepSec - (int)elapsed;
       if (remaining < 0)
@@ -37,13 +82,13 @@ void updateSessionRun() {
     if (remaining != lastRemaining) {
       drawSessionRun(remaining);
 
-      if (sessionRunning && remaining <= 3 && remaining > 0) {
+      if (isSessionRunning() && remaining <= 3 && remaining > 0) {
         digitalWrite(LED_PIN, HIGH);
         beep(2200, 60);
         digitalWrite(LED_PIN, LOW);
       }
 
-      if (sessionRunning && remaining == 0) {
+      if (isSessionRunning() && remaining == 0) {
         for (int i = 0; i < 2; i++) {
           digitalWrite(LED_PIN, HIGH);
           buzzerOn(2500);
@@ -53,7 +98,7 @@ void updateSessionRun() {
           delay(120);
         }
 
-        sessionRunning = false;
+        setSessionStatePaused();
         sessionStepIndex++;
 
         if (sessionStepIndex >= SESSION_STEP_COUNT) {
@@ -66,8 +111,8 @@ void updateSessionRun() {
             delay(160);
           }
 
+          setSessionStateCompleted();
           drawSessionComplete();
-          sessionCompleteShown = true;
           lastRemaining = -999;
           return;
         }
@@ -80,4 +125,39 @@ void updateSessionRun() {
       lastRemaining = remaining;
     }
   }
+}
+
+void sessionToggleRunPauseAt(unsigned long nowMs) {
+  if (sessionStepIndex >= SESSION_STEP_COUNT) {
+    goToMenu();
+    return;
+  }
+
+  if (isSessionRunning()) {
+    int stepSec = sessionStepDurationSec > 0 ? sessionStepDurationSec
+                                             : SESSION_STEPS[sessionStepIndex];
+    unsigned long elapsed = (nowMs - sessionStepStartMs) / 1000;
+    int remaining = stepSec - (int)elapsed;
+    if (remaining < 0)
+      remaining = 0;
+
+    sessionStepDurationSec = remaining;
+    setSessionStatePaused();
+    drawSessionRun(sessionStepDurationSec);
+    return;
+  }
+
+  if (sessionStepDurationSec <= 0)
+    sessionStepDurationSec = SESSION_STEPS[sessionStepIndex];
+  if (sessionStepTotalSec <= 0)
+    sessionStepTotalSec = sessionStepDurationSec;
+
+  setSessionStateRunning();
+  sessionStepStartMs = nowMs;
+  drawSessionRun(sessionStepDurationSec);
+}
+
+void sessionStopAndExitToMenu() {
+  setSessionStateStopped();
+  goToMenu();
 }

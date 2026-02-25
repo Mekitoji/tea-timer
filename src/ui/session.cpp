@@ -129,7 +129,7 @@ void drawSessionRun(int remaining) {
   display.setTextSize(1);
 
   SessionRunStatus status =
-      resolveSessionRunStatus(sessionRunning, remaining, totalSec);
+      resolveSessionRunStatus(isSessionRunning(), remaining, totalSec);
   const char *statusLabel = statusText(status);
 
   display.drawRect(ui::layout::SESSION_STATUS_X, ui::layout::SESSION_STATUS_Y,
@@ -160,7 +160,7 @@ void drawSessionRun(int remaining) {
   // ---- helper text ----
   display.setTextSize(1);
   display.setCursor(0, ui::layout::SESSION_RUN_HINT_Y);
-  if (sessionRunning)
+  if (isSessionRunning())
     display.print("Press:Pause Hold:Skip");
   else
     display.print("Press:Start Hold:Skip");

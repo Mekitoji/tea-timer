@@ -12,8 +12,7 @@ void handleMenuSelect() {
   if (selected == MENU_START_SESSION) {
     resetSessionFlowState();
     sessionStepIndex = 0;
-    sessionRunning = false;
-    sessionCompleteShown = false;
+    setSessionStateStopped();
     currentScreen = SCREEN_SESSION_RUN;
     sessionStepDurationSec = SESSION_STEPS[0];
     sessionStepTotalSec = sessionStepDurationSec;

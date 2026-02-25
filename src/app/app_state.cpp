@@ -19,9 +19,7 @@ int wifiCount = 0;
 // session state
 int sessionTeaIndex = 0;
 int sessionStepIndex = 0;
-bool sessionRunning = false;
 unsigned long sessionStepStartMs = 0;
-bool sessionCompleteShown = false;
 int sessionStepDurationSec = 0;
 int sessionStepTotalSec = 0;
 

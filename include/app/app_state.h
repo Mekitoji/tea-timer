@@ -3,6 +3,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Preferences.h>
 
+#include <app/session_state.h>
 #include <app/timer_state.h>
 
 extern Adafruit_SSD1306 display;
@@ -29,9 +30,7 @@ extern int wifiCount;
 // session
 extern int sessionTeaIndex;
 extern int sessionStepIndex;
-extern bool sessionRunning;
 extern unsigned long sessionStepStartMs;
-extern bool sessionCompleteShown;
 extern int sessionStepDurationSec;
 extern int sessionStepTotalSec;
 
