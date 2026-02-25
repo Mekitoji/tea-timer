@@ -31,7 +31,7 @@ void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
         selected = 0;
       drawMenu();
     } else if (currentScreen == SCREEN_TIMER) {
-      if (!singleTimerRunning) {
+      if (!isTimerRunning()) {
         unsigned long now = millis();
         unsigned long dt = now - lastStepMs;
         lastStepMs = now;
@@ -44,7 +44,7 @@ void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
 
         int delta = stepPlus ? step : -step;
 
-        if (!singleTimerStarted) {
+        if (isTimerStopped()) {
           editTimeValue += delta;
           if (editTimeValue < MIN_TIME)
             editTimeValue = MIN_TIME;
@@ -280,21 +280,21 @@ void handleTimerButton() {
     }
 
     // Short press
-    if (singleTimerRunning) {
+    if (isTimerRunning()) {
       // Pause
       unsigned long elapsed = (now - timerStartMillis) / 1000;
       int remaining = timerDuration - (int)elapsed;
       if (remaining < 0)
         remaining = 0;
 
-      singleTimerRunning = false;
+      setTimerStatePaused();
       timerDuration = remaining;
       editTimeValue = remaining;
 
       drawTimerScreen("Timer", remaining, timerTotalSec);
     } else {
       // Start or Resume
-      if (!singleTimerStarted) {
+      if (isTimerStopped()) {
         if (editTimeValue < MIN_TIME)
           editTimeValue = MIN_TIME;
         if (editTimeValue > MAX_TIME)
@@ -302,7 +302,6 @@ void handleTimerButton() {
 
         timerTotalSec = editTimeValue;
         timerDuration = editTimeValue;
-        singleTimerStarted = true;
         drawTimerScreen("Timer", timerDuration, timerTotalSec);
       }
 
@@ -310,7 +309,7 @@ void handleTimerButton() {
         timerDuration = timerTotalSec;
       }
 
-      singleTimerRunning = true;
+      setTimerStateRunning();
       timerStartMillis = now;
       resetSingleTimerFlowState();
     }

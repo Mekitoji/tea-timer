@@ -28,8 +28,8 @@ void applyTimerPresetSec(int sec) {
 }
 
 void resetSingleTimerRuntimeState() {
-  singleTimerRunning = false;
-  singleTimerStarted = false;
+  setTimerStateStopped();
+
   timerIgnoreReleaseAfterEnter = false;
   timerStartMillis = 0;
   lastRemaining = -1;
@@ -37,7 +37,7 @@ void resetSingleTimerRuntimeState() {
 
 void updateSingleTimer() {
   if (currentScreen == SCREEN_TIMER) {
-    if (!singleTimerRunning)
+    if (!isTimerRunning())
       return;
 
     unsigned long elapsed = (millis() - timerStartMillis) / 1000;

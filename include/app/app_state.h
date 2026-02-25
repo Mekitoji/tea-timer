@@ -3,6 +3,8 @@
 #include <Adafruit_SSD1306.h>
 #include <Preferences.h>
 
+#include <app/timer_state.h>
+
 extern Adafruit_SSD1306 display;
 extern Preferences prefs;
 
@@ -18,8 +20,6 @@ extern int settingsSelected;
 extern int editTimeValue;
 extern int timerDuration;
 extern unsigned long timerStartMillis;
-extern bool singleTimerRunning;
-extern bool singleTimerStarted;
 extern bool timerIgnoreReleaseAfterEnter;
 extern int timerTotalSec;
 

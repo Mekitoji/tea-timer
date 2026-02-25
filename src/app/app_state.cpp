@@ -11,8 +11,6 @@ Preferences prefs;
 unsigned long timerStartMillis = 0;
 int timerDuration = appcfg::DEFAULT_TIMER_DURATION;
 int editTimeValue = appcfg::DEFAULT_TIMER_DURATION;
-bool singleTimerRunning = false;
-bool singleTimerStarted = false;
 bool timerIgnoreReleaseAfterEnter = false;
 int timerTotalSec = appcfg::DEFAULT_TIMER_DURATION;
 

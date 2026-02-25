@@ -8,9 +8,9 @@
 
 namespace {
 const char *timerStatusText() {
-  if (singleTimerRunning)
-    return "START";
-  if (singleTimerStarted)
+  if (isTimerRunning())
+    return "RUNNING";
+  if (isTimerPaused())
     return "PAUSE";
   return "STOP";
 }
@@ -70,7 +70,7 @@ void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds) {
   snprintf(secBuf, sizeof(secBuf), "%3d", shown); // fix w, maybe %03d ?
   display.print(secBuf);
 
-  if (singleTimerStarted) {
+  if (!isTimerStopped()) {
     display.setTextSize(1);
     drawProgressBar(secondsLeft, totalSeconds);
   }
