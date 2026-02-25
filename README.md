@@ -17,6 +17,10 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
   - completion screen at the end of session.
 - Runtime status badges in UI (`RUNNING`, `PAUSED`, `STOP`/`READY`).
 - Persistent timer preset via `Preferences` (NVS).
+- Power Save mode (Settings):
+  - idle OLED off,
+  - optional ESP32 light sleep on longer idle,
+  - first wake input is consumed
 - Non-blocking input handling with debounce and encoder quadrature decoding.
 - Explicit FSM layers:
   - `TimerState`: `Stopped/Running/Paused`,
@@ -55,13 +59,13 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
 pio run
 ```
 
-2. Flash the board:
+1. Flash the board:
 
 ```bash
 pio run -t upload
 ```
 
-3. Open Serial Monitor (`115200`):
+1. Open Serial Monitor (`115200`):
 
 ```bash
 pio device monitor -b 115200
@@ -86,6 +90,7 @@ pio device monitor -b 115200 --port <PORT>
 - `src/flow/menu_flow.cpp` — main menu actions and screen transitions.
 - `src/flow/timer_flow.cpp` — single timer runtime logic.
 - `src/flow/session_flow.cpp` — session runtime logic.
+- `src/flow/power_flow.cpp` — idle display off/light sleep and wake-guard logic.
 - `src/ui/*.cpp` — UI rendering split by domain:
   - `ui/menu.cpp`
   - `ui/timer.cpp`
@@ -97,3 +102,4 @@ pio device monitor -b 115200 --port <PORT>
 - `include/app/session_state.h` — `SessionState` declarations.
 - `include/flow/timer_flow.h` — timer flow API.
 - `include/flow/session_flow.h` — session flow API.
+- `include/flow/power_flow.h` — power-saving flow API.

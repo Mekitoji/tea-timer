@@ -34,6 +34,9 @@ extern unsigned long sessionStepStartMs;
 extern int sessionStepDurationSec;
 extern int sessionStepTotalSec;
 
+extern bool powerSaveEnabled;
+extern bool powerSaveEditEnabled;
+
 extern const char *TEAS[];
 extern const int TEA_COUNT;
 
@@ -44,11 +47,12 @@ enum ScreenState {
   SCREEN_WIFI,
   SCREEN_TIMER,
   SCREEN_SESSION_MENU,
-  SCREEN_SESSION_RUN
+  SCREEN_SESSION_RUN,
+  SCREEN_POWER_SAVE
 };
 
 enum MenuIndex { MENU_START_SESSION, MENU_SESSION, MENU_TIMER, MENU_SETTINGS };
 
-enum SettingsMenuIndex { SETTINGS_WIFI, SETTINGS_ABOUT };
+enum SettingsMenuIndex { SETTINGS_WIFI, SETTINGS_POWER_SAVE, SETTINGS_ABOUT };
 
 extern ScreenState currentScreen;

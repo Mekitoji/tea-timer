@@ -167,6 +167,7 @@ void processTimerButtonInput(bool down, unsigned long nowMs) {
       timerIgnoreReleaseAfterEnter = false;
       timerWasDown = false;
       timerLongPressFired = false;
+      timerReleaseGuardUntilMs = nowMs + appcfg::INPUT_DEBOUNCE_MS * 3;
     }
     return;
   }

@@ -23,11 +23,15 @@ unsigned long sessionStepStartMs = 0;
 int sessionStepDurationSec = 0;
 int sessionStepTotalSec = 0;
 
+// power save settings
+bool powerSaveEnabled = appcfg::DEFAULT_POWER_SAVE_ENABLED;
+bool powerSaveEditEnabled = appcfg::DEFAULT_POWER_SAVE_ENABLED;
+
 // menu state
 const char *menuItems[] = {"Start Session", "Session", "Timer", "Settings"};
 const int menuCount = sizeof(menuItems) / sizeof(menuItems[0]);
 
-const char *settingsItems[] = {"WiFi", "About"};
+const char *settingsItems[] = {"WiFi", "Power Save", "About"};
 const int settingsMenuCount = sizeof(settingsItems) / sizeof(settingsItems[0]);
 
 int settingsSelected = 0;

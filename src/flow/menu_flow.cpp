@@ -42,6 +42,11 @@ void handleSettingsSelect() {
   } else if (settingsSelected == SETTINGS_ABOUT) {
     currentScreen = SCREEN_ABOUT;
     drawAbout();
+  } else if (settingsSelected == SETTINGS_POWER_SAVE) {
+    currentScreen = SCREEN_POWER_SAVE;
+    powerSaveEditEnabled = powerSaveEnabled;
+    drawPowerSave(powerSaveEditEnabled);
+    return;
   }
 }
 

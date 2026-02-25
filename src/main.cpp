@@ -4,6 +4,7 @@
 #include <app/app_controller.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
+#include <flow/power_flow.h>
 #include <flow/session_flow.h>
 #include <flow/timer_flow.h>
 #include <hw/display_config.h>
@@ -29,6 +30,10 @@ void setup() {
 
   // Load saved timer duration (NVS)
   prefs.begin(appcfg::PREFS_NAMESPACE, false);
+  powerSaveEnabled = prefs.getBool(appcfg::PREFS_POWER_SAVE_KEY,
+                                   appcfg::DEFAULT_POWER_SAVE_ENABLED);
+  powerSaveEditEnabled = powerSaveEnabled;
+  setPowerSavingEnabled(powerSaveEnabled);
 
   int savedDuration =
       prefs.getInt(appcfg::PREFS_DURATION_KEY, appcfg::DEFAULT_TIMER_DURATION);
@@ -36,6 +41,9 @@ void setup() {
   resetSingleTimerRuntimeState();
 
   drawMenu();
+
+  initPowerSaving();
+  markUserActivity();
 }
 
 void loop() {
@@ -50,4 +58,5 @@ void loop() {
   }
   updateSingleTimer();
   updateSessionRun();
+  updatePowerSaving();
 }

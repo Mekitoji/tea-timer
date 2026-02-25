@@ -5,6 +5,7 @@
 #include <app/app_state.h>
 #include <app/tea_config.h>
 #include <flow/menu_flow.h>
+#include <flow/power_flow.h>
 #include <flow/session_flow.h>
 #include <flow/timer_flow.h>
 #include <hw/input.h>
@@ -13,6 +14,10 @@
 
 void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
   if (stepPlus || stepMinus) {
+    if (isWakeInputGuardActive())
+      return;
+    if (markUserActivityAndConsumeIfWoke())
+      return;
     if (currentScreen == SCREEN_MENU) {
       selected += stepPlus ? 1 : -1;
       if (selected < 0)
@@ -50,6 +55,9 @@ void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
       if (settingsSelected >= settingsMenuCount)
         settingsSelected = 0;
       drawSettingsMenu();
+    } else if (currentScreen == SCREEN_POWER_SAVE) {
+      powerSaveEditEnabled = !powerSaveEditEnabled;
+      drawPowerSave(powerSaveEditEnabled);
     }
   }
 }
@@ -58,7 +66,13 @@ void handleBackButton() {
   if (!backButtonPressedEvent())
     return;
 
-  if (currentScreen == SCREEN_WIFI || currentScreen == SCREEN_ABOUT) {
+  if (isWakeInputGuardActive())
+    return;
+  if (markUserActivityAndConsumeIfWoke())
+    return;
+
+  if (currentScreen == SCREEN_WIFI || currentScreen == SCREEN_ABOUT ||
+      currentScreen == SCREEN_POWER_SAVE) {
     currentScreen = SCREEN_SETTINGS;
     drawSettingsMenu();
     return;
@@ -82,6 +96,11 @@ void handleBackButton() {
 
 void handleSelectButton() {
   if (buttonPressedEvent()) {
+    if (isWakeInputGuardActive())
+      return;
+    if (markUserActivityAndConsumeIfWoke())
+      return;
+
     if (currentScreen == SCREEN_MENU) {
       handleMenuSelect();
     } else if (currentScreen == SCREEN_TIMER) {
@@ -95,6 +114,12 @@ void handleSelectButton() {
     } else if (currentScreen == SCREEN_WIFI || currentScreen == SCREEN_ABOUT) {
       currentScreen = SCREEN_SETTINGS;
       drawSettingsMenu();
+    } else if (currentScreen == SCREEN_POWER_SAVE) {
+      powerSaveEnabled = powerSaveEditEnabled;
+      setPowerSavingEnabled(powerSaveEnabled);
+      prefs.putBool(appcfg::PREFS_POWER_SAVE_KEY, powerSaveEnabled);
+      currentScreen = SCREEN_SETTINGS;
+      drawSettingsMenu();
     } else {
       goToMenu();
     }
@@ -102,6 +127,8 @@ void handleSelectButton() {
 }
 
 void handleSessionLongPress() {
+  if (isWakeInputGuardActive())
+    return;
   if (currentScreen != SCREEN_SESSION_RUN) {
     resetSessionLongPressFlowState();
     return;
@@ -117,6 +144,9 @@ void handleTimerButton() {
     resetTimerButtonFlowState();
     return;
   }
+
+  if (isWakeInputGuardActive())
+    return;
 
   const unsigned long now = millis();
   const bool down = (digitalRead(ENC_SW) == LOW);
