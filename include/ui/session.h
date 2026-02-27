@@ -1,5 +1,5 @@
 #pragma once
 
+void drawSessionPresetMenu();
 void drawSessionComplete();
-void drawSessionMenu();
 void drawSessionRun(int remaining);

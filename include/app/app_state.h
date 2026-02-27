@@ -3,6 +3,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Preferences.h>
 
+#include <app/session_presets.h>
 #include <app/session_state.h>
 #include <app/timer_state.h>
 
@@ -28,17 +29,22 @@ extern int timerTotalSec;
 extern int wifiCount;
 
 // session
-extern int sessionTeaIndex;
 extern int sessionStepIndex;
 extern unsigned long sessionStepStartMs;
 extern int sessionStepDurationSec;
 extern int sessionStepTotalSec;
 
+extern int sessionPresetIndex;
+extern int sessionStepCount;
+extern int sessionSteps[SESSION_MAX_STEPS];
+extern int sessionRinseSec;
+extern bool sessionRinseActive;
+extern bool sessionEndConfirmActive;
+extern bool sessionEndConfirmYes;
+
+// power settings
 extern bool powerSaveEnabled;
 extern bool powerSaveEditEnabled;
-
-extern const char *TEAS[];
-extern const int TEA_COUNT;
 
 enum ScreenState {
   SCREEN_MENU,
@@ -46,12 +52,12 @@ enum ScreenState {
   SCREEN_ABOUT,
   SCREEN_WIFI,
   SCREEN_TIMER,
-  SCREEN_SESSION_MENU,
+  SCREEN_SESSION_PRESET,
   SCREEN_SESSION_RUN,
   SCREEN_POWER_SAVE
 };
 
-enum MenuIndex { MENU_START_SESSION, MENU_SESSION, MENU_TIMER, MENU_SETTINGS };
+enum MenuIndex { MENU_SESSION, MENU_TIMER, MENU_SETTINGS };
 
 enum SettingsMenuIndex { SETTINGS_WIFI, SETTINGS_POWER_SAVE, SETTINGS_ABOUT };
 

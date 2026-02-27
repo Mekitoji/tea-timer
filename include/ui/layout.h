@@ -22,14 +22,6 @@ constexpr int SESSION_PROGRESS_Y = 46;
 constexpr int TIMER_VALUE_X = 40;
 constexpr int TIMER_VALUE_Y = 22;
 
-// Timer status badge
-constexpr int TIMER_STATUS_X = 82;
-constexpr int TIMER_STATUS_Y = 1;
-constexpr int TIMER_STATUS_W = 44;
-constexpr int TIMER_STATUS_H = 11;
-constexpr int TIMER_STATUS_TEXT_X = 85;
-constexpr int TIMER_STATUS_TEXT_Y = 3;
-
 // Header
 constexpr int UI_HEADER_LINE_Y = 15;
 
@@ -40,13 +32,6 @@ constexpr int WIFI_LIST_START_Y = 18;
 constexpr int WIFI_LIST_STEP_Y = 10;
 constexpr int WIFI_EMPTY_Y = 22;
 constexpr int WIFI_SCAN_MSG_Y = 23;
-
-// Session menu
-constexpr int SESSION_MENU_TEA_Y = 18;
-constexpr int SESSION_MENU_TEA_VALUE_X = 30;
-constexpr int SESSION_MENU_STEPS_Y = 34;
-constexpr int SESSION_MENU_STEPS_VALUE_X = 45;
-constexpr int SESSION_MENU_HINT_Y = 54;
 
 // Session complete
 constexpr int SESSION_COMPLETE_TITLE_X = 8;
@@ -62,14 +47,6 @@ constexpr int SESSION_RUN_INFUSE_Y = 38;
 constexpr int SESSION_RUN_TIMER_X = 78;
 constexpr int SESSION_RUN_TIMER_Y = 28;
 constexpr int SESSION_RUN_HINT_Y = 56;
-
-// Status box
-constexpr int SESSION_STATUS_X = 74;
-constexpr int SESSION_STATUS_Y = 1;
-constexpr int SESSION_STATUS_W = 52;
-constexpr int SESSION_STATUS_H = 11;
-constexpr int SESSION_STATUS_TEXT_X = 77;
-constexpr int SESSION_STATUS_TEXT_Y = 3;
 
 } // namespace layout
 } // namespace ui

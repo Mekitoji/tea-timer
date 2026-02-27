@@ -47,15 +47,7 @@ void drawProgressBar(int remaining, int total) {
 
 void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds) {
   display.clearDisplay();
-  drawHeader(title);
-
-  display.setTextSize(1);
-  display.drawRect(ui::layout::TIMER_STATUS_X, ui::layout::TIMER_STATUS_Y,
-                   ui::layout::TIMER_STATUS_W, ui::layout::TIMER_STATUS_H,
-                   SSD1306_WHITE);
-  display.setCursor(ui::layout::TIMER_STATUS_TEXT_X,
-                    ui::layout::TIMER_STATUS_TEXT_Y);
-  display.print(timerStatusText());
+  drawHeader(title, timerStatusText());
 
   display.setTextSize(3);
   display.setCursor(ui::layout::TIMER_VALUE_X, ui::layout::TIMER_VALUE_Y);

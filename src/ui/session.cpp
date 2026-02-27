@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
+#include <cstdio>
 #include <ui/header.h>
 #include <ui/layout.h>
 
@@ -29,141 +30,209 @@ const char *statusText(SessionRunStatus status) {
     return "READY";
   }
 }
+
+int normalizedPresetIndex() {
+  if (SESSION_PRESET_COUNT <= 0)
+    return -1;
+  if (sessionPresetIndex < 0)
+    return 0;
+  if (sessionPresetIndex >= SESSION_PRESET_COUNT)
+    return SESSION_PRESET_COUNT - 1;
+  return sessionPresetIndex;
+}
+
+const SessionPreset *currentPresetOrNull() {
+  int index = normalizedPresetIndex();
+  if (index < 0)
+    return nullptr;
+  return &SESSION_PRESETS[index];
+}
+
+bool hasVisibleRinse() {
+  return sessionRinseSec > 0;
+}
+
+int currentTotalSec() {
+  if (sessionStepTotalSec > 0)
+    return sessionStepTotalSec;
+  if (sessionStepDurationSec > 0)
+    return sessionStepDurationSec;
+  if (sessionRinseActive && sessionRinseSec > 0)
+    return sessionRinseSec;
+  if (sessionStepIndex >= 0 && sessionStepIndex < sessionStepCount)
+    return sessionSteps[sessionStepIndex];
+  return MIN_TIME;
+}
 } // namespace
+
+void drawSessionPresetMenu() {
+  display.clearDisplay();
+  const SessionPreset *preset = currentPresetOrNull();
+  if (!preset) {
+    drawHeader("SESSION PRESET");
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 24);
+    display.print("No presets");
+    display.display();
+    return;
+  }
+
+  int index = normalizedPresetIndex();
+  char idxBuf[12];
+  snprintf(idxBuf, sizeof(idxBuf), "%d/%d", index + 1, SESSION_PRESET_COUNT);
+  drawHeader("SESSION PRESET", idxBuf);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(0, 18);
+  display.print(preset->name);
+
+  display.setCursor(0, 26);
+  display.print("Dose: ");
+  display.print(preset->dosePer100ml);
+
+  display.setCursor(0, 34);
+  display.print("Temp: ");
+  display.print(preset->tempC);
+
+  int infusions = preset->stepCount;
+  if (infusions < 0)
+    infusions = 0;
+
+  display.setCursor(0, 42);
+  display.print("Infusions: ");
+  display.print(infusions);
+  display.display();
+}
 
 void drawSessionComplete() {
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
-
   drawHeader("SESSION");
 
-  // Body
   display.setTextSize(2);
   display.setCursor(ui::layout::SESSION_COMPLETE_TITLE_X,
                     ui::layout::SESSION_COMPLETE_TITLE_Y);
   display.print("COMPLETE");
 
   display.setTextSize(1);
+  const SessionPreset *preset = currentPresetOrNull();
   display.setCursor(0, ui::layout::SESSION_COMPLETE_TEA_Y);
   display.print("Tea: ");
-  display.print(TEAS[sessionTeaIndex]);
+  if (preset) {
+    display.print(preset->name);
+  } else {
+    display.print("N/A");
+  }
 
   display.setCursor(0, ui::layout::SESSION_COMPLETE_HINT_Y);
   display.print("Press to exit");
-
-  display.display();
-}
-
-void drawSessionMenu() {
-  display.clearDisplay();
-  drawHeader("Session");
-
-  display.setCursor(0, ui::layout::SESSION_MENU_TEA_Y);
-  display.print("Tea:");
-  display.setCursor(ui::layout::SESSION_MENU_TEA_VALUE_X,
-                    ui::layout::SESSION_MENU_TEA_Y);
-  display.print(TEAS[sessionTeaIndex]);
-
-  display.setCursor(0, ui::layout::SESSION_MENU_STEPS_Y);
-  display.print("Steps:");
-  display.setCursor(ui::layout::SESSION_MENU_STEPS_VALUE_X,
-                    ui::layout::SESSION_MENU_STEPS_Y);
-  display.print(SESSION_STEP_COUNT);
-  display.print(" infusions");
-
-  display.setCursor(0, ui::layout::SESSION_MENU_HINT_Y);
-  display.print("Press: back");
-
   display.display();
 }
 
 void drawSessionRun(int remaining) {
-  if (sessionStepIndex >= SESSION_STEP_COUNT) {
+  if (!sessionRinseActive && sessionStepIndex >= sessionStepCount) {
     drawSessionComplete();
     return;
   }
 
-  int totalSec =
-      sessionStepTotalSec > 0
-          ? sessionStepTotalSec
-          : (sessionStepDurationSec > 0 ? sessionStepDurationSec
-                                        : SESSION_STEPS[sessionStepIndex]);
+  int totalSec = currentTotalSec();
+  if (totalSec < MIN_TIME)
+    totalSec = MIN_TIME;
+
+  if (remaining < 0)
+    remaining = 0;
+  if (remaining > totalSec)
+    remaining = totalSec;
+
+  SessionRunStatus status =
+      resolveSessionRunStatus(isSessionRunning(), remaining, totalSec);
 
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
+  drawHeader("SESSION RUN", statusText(status));
 
-  // ---- HEADER ----
-  drawHeader("SESSION RUN");
-
-  // ---- INFO BLOCK ----
+  const SessionPreset *preset = currentPresetOrNull();
   display.setTextSize(1);
-
   display.setCursor(0, ui::layout::SESSION_RUN_TEA_Y);
-  display.print("Tea:");
-  display.setCursor(ui::layout::SESSION_RUN_TEA_VALUE_X,
-                    ui::layout::SESSION_RUN_TEA_Y);
-  display.print(TEAS[sessionTeaIndex]);
+  if (preset) {
+    display.print(preset->name);
+  } else {
+    display.print("Preset N/A");
+  }
+
+  int infusions = sessionStepCount;
+  if (infusions < 0)
+    infusions = 0;
 
   display.setCursor(0, ui::layout::SESSION_RUN_STEP_Y);
-  display.print("Step ");
-  display.print(sessionStepIndex + 1);
-  display.print("/");
-  display.print(SESSION_STEP_COUNT);
+  if (sessionRinseActive && hasVisibleRinse()) {
+    display.print("Rinse 0/");
+    display.print(infusions);
+  } else {
+    display.print("Infuse ");
+    display.print(sessionStepIndex + 1);
+    display.print("/");
+    display.print(infusions);
+  }
 
   display.setCursor(0, ui::layout::SESSION_RUN_INFUSE_Y);
-  if (sessionStepIndex == 0)
-    display.print("Rinse ");
-  else
-    display.print("Infuse ");
-
+  display.print("Step ");
   display.print(totalSec);
   display.print("s");
 
-  // ---- TIMER BIG ----
   display.setTextSize(2);
   display.setCursor(ui::layout::SESSION_RUN_TIMER_X,
                     ui::layout::SESSION_RUN_TIMER_Y);
   display.print(remaining);
 
-  // ---- STATUS ----
   display.setTextSize(1);
 
-  SessionRunStatus status =
-      resolveSessionRunStatus(isSessionRunning(), remaining, totalSec);
-  const char *statusLabel = statusText(status);
-
-  display.drawRect(ui::layout::SESSION_STATUS_X, ui::layout::SESSION_STATUS_Y,
-                   ui::layout::SESSION_STATUS_W, ui::layout::SESSION_STATUS_H,
-                   SSD1306_WHITE);
-  display.setCursor(ui::layout::SESSION_STATUS_X + 3,
-                    ui::layout::SESSION_STATUS_Y + 2);
-  display.print(statusLabel);
-
-  // ---- PROGRESS BAR ----
   display.drawRect(ui::layout::PROGRESS_X, ui::layout::SESSION_PROGRESS_Y,
                    ui::layout::PROGRESS_W, ui::layout::PROGRESS_H,
                    SSD1306_WHITE);
 
-  int total = totalSec;
-  int elapsed = total - remaining;
+  int elapsed = totalSec - remaining;
   if (elapsed < 0)
     elapsed = 0;
-  if (elapsed > total)
-    elapsed = total;
+  if (elapsed > totalSec)
+    elapsed = totalSec;
 
   int fill =
-      (total == 0) ? 0 : (elapsed * (ui::layout::PROGRESS_W - 2)) / total;
+      (elapsed * (ui::layout::PROGRESS_W - 2)) / (totalSec > 0 ? totalSec : 1);
+  if (fill < 0)
+    fill = 0;
+  if (fill > ui::layout::PROGRESS_W - 2)
+    fill = ui::layout::PROGRESS_W - 2;
+
   display.fillRect(ui::layout::PROGRESS_X + 1,
                    ui::layout::SESSION_PROGRESS_Y + 1, fill,
                    ui::layout::PROGRESS_H - 2, SSD1306_WHITE);
 
-  // ---- helper text ----
-  display.setTextSize(1);
   display.setCursor(0, ui::layout::SESSION_RUN_HINT_Y);
   if (isSessionRunning())
     display.print("Press:Pause Hold:Skip");
   else
     display.print("Press:Start Hold:Skip");
+
+  if (sessionEndConfirmActive) {
+    const int x = 10;
+    const int y = 19;
+    const int w = 108;
+    const int h = 24;
+
+    display.fillRect(x, y, w, h, SSD1306_BLACK);
+    display.drawRect(x, y, w, h, SSD1306_WHITE);
+
+    display.setCursor(x + 6, y + 4);
+    display.print("End session?");
+    display.setCursor(x + 6, y + 14);
+    if (sessionEndConfirmYes)
+      display.print("No [YES]");
+    else
+      display.print("[NO] Yes");
+  }
 
   display.display();
 }
