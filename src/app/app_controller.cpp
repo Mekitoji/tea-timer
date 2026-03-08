@@ -4,25 +4,14 @@
 #include <app/app_config.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
+#include <controllers/wifi_controller.h>
 #include <flow/menu_flow.h>
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
 #include <flow/timer_flow.h>
-#include <flow/wifi_flow.h>
 #include <hw/input.h>
 #include <hw/pins.h>
 #include <ui.h>
-
-namespace {
-unsigned long wifiHoldStartMs = 0;
-bool wifiWasDown = false;
-bool wifiLongPressFired = false;
-
-void resetWiFiLongPressFlowState() {
-  wifiWasDown = false;
-  wifiLongPressFired = false;
-}
-} // namespace
 
 void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
   if (stepPlus || stepMinus) {
@@ -83,14 +72,8 @@ void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
       if (settingsSelected >= settingsMenuCount)
         settingsSelected = 0;
       drawSettingsMenu();
-    } else if (currentScreen == SCREEN_WIFI) {
-      if (wifiResetConfirmActive) {
-        if (stepPlus)
-          wifiResetConfirmYes = true;
-        if (stepMinus)
-          wifiResetConfirmYes = false;
-        drawWiFi();
-      }
+    } else if (handleWiFiEncoderInput(stepPlus, stepMinus)) {
+      return;
     } else if (currentScreen == SCREEN_POWER_SAVE) {
       powerSaveEditEnabled = !powerSaveEditEnabled;
       drawPowerSave(powerSaveEditEnabled);
@@ -107,16 +90,7 @@ void handleBackButton() {
   if (markUserActivityAndConsumeIfWoke())
     return;
 
-  if (currentScreen == SCREEN_WIFI) {
-    if (wifiResetConfirmActive) {
-      wifiResetConfirmActive = false;
-      wifiResetConfirmYes = false;
-      drawWiFi();
-      return;
-    }
-    stopWiFiProvisioning();
-    currentScreen = SCREEN_SETTINGS;
-    drawSettingsMenu();
+  if (handleWiFiBackInput()) {
     return;
   }
 
@@ -223,16 +197,8 @@ void handleSelectButton() {
       }
     } else if (currentScreen == SCREEN_SETTINGS) {
       handleSettingsSelect();
-    } else if (currentScreen == SCREEN_WIFI) {
-      if (wifiResetConfirmActive) {
-        bool doReset = wifiResetConfirmYes;
-        wifiResetConfirmActive = false;
-        wifiResetConfirmYes = false;
-        if (doReset) {
-          wifiResetCredentialsAndStartProvisioning();
-        }
-        drawWiFi();
-      }
+    } else if (handleWiFiSelectInput()) {
+      return;
     } else if (currentScreen == SCREEN_ABOUT) {
       currentScreen = SCREEN_SETTINGS;
       drawSettingsMenu();
@@ -264,46 +230,7 @@ void handleSessionLongPress() {
   processSessionLongPressInput(down, millis());
 }
 
-void handleWiFiLongPress() {
-  if (isWakeInputGuardActive())
-    return;
-
-  if (currentScreen != SCREEN_WIFI) {
-    resetWiFiLongPressFlowState();
-    return;
-  }
-
-  if (wifiResetConfirmActive || !wifiProvisionHasSavedCredentials()) {
-    resetWiFiLongPressFlowState();
-    return;
-  }
-
-  const unsigned long now = millis();
-  const bool down = (digitalRead(ENC_SW) == LOW);
-
-  if (down && !wifiWasDown) {
-    wifiWasDown = true;
-    wifiHoldStartMs = now;
-    wifiLongPressFired = false;
-  }
-
-  if (!down && wifiWasDown) {
-    wifiWasDown = false;
-    wifiLongPressFired = false;
-    return;
-  }
-
-  if (!down || !wifiWasDown || wifiLongPressFired)
-    return;
-
-  if (now - wifiHoldStartMs < appcfg::WIFI_HOLD_MS)
-    return;
-
-  wifiLongPressFired = true;
-  wifiResetConfirmActive = true;
-  wifiResetConfirmYes = false;
-  drawWiFi();
-}
+void handleWiFiLongPress() { handleWiFiLongPressInput(); }
 
 void handleTimerButton() {
   if (currentScreen != SCREEN_TIMER) {
