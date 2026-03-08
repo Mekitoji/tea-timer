@@ -1,11 +1,11 @@
-#include "flow/session_flow.h"
+#include <flow/session_flow.h>
 
 #include <Arduino.h>
 #include <app/app_config.h>
 #include <app/app_state.h>
 #include <app/session_presets.h>
 #include <app/tea_config.h>
-#include <flow/menu_flow.h>
+#include <flow/navigation_flow.h>
 #include <hw/audio.h>
 #include <hw/pins.h>
 #include <ui.h>
@@ -189,7 +189,7 @@ void enterSessionRunFromCurrentPreset() {
   applyCurrentStepFromModel();
 
   setSessionStatePaused();
-  currentScreen = SCREEN_SESSION_RUN;
+  navigateTo(SCREEN_SESSION_RUN);
   drawSessionRun(sessionStepDurationSec);
 }
 
@@ -205,7 +205,8 @@ void updateSessionRun() {
 
     int stepSec = sessionStepDurationSec;
     if (stepSec <= 0) {
-      stepSec = sessionRinseActive ? sessionRinseSec : stepSecAt(sessionStepIndex);
+      stepSec =
+          sessionRinseActive ? sessionRinseSec : stepSecAt(sessionStepIndex);
     }
     if (stepSec < MIN_TIME)
       stepSec = MIN_TIME;
@@ -270,14 +271,17 @@ void updateSessionRun() {
 
 void sessionToggleRunPauseAt(unsigned long nowMs) {
   if (!hasCurrentSessionStep()) {
-    goToMenu();
+    navigateTo(SCREEN_MENU);
+    drawMenu();
+
     return;
   }
 
   if (isSessionRunning()) {
     int stepSec = sessionStepDurationSec;
     if (stepSec <= 0) {
-      stepSec = sessionRinseActive ? sessionRinseSec : stepSecAt(sessionStepIndex);
+      stepSec =
+          sessionRinseActive ? sessionRinseSec : stepSecAt(sessionStepIndex);
     }
     if (stepSec < MIN_TIME)
       stepSec = MIN_TIME;

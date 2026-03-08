@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <app/app_config.h>
 #include <app/app_state.h>
+#include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
 #include <flow/wifi_flow.h>
 #include <hw/pins.h>
@@ -46,7 +47,7 @@ bool handleWiFiBackInput() {
   }
 
   stopWiFiProvisioning();
-  currentScreen = SCREEN_SETTINGS;
+  navigateTo(SCREEN_SETTINGS);
   drawSettingsMenu();
   return true;
 }

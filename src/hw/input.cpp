@@ -1,4 +1,4 @@
-#include "hw/input.h"
+#include <hw/input.h>
 
 #include <Arduino.h>
 #include <app/app_config.h>

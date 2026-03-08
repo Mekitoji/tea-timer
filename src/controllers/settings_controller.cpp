@@ -2,9 +2,26 @@
 
 #include <app/app_config.h>
 #include <app/app_state.h>
-#include <flow/menu_flow.h>
+#include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
 #include <ui.h>
+
+namespace {
+void handleSettingsSelect() {
+  if (settingsSelected == SETTINGS_WIFI) {
+    navigateTo(SCREEN_WIFI);
+    drawWiFi();
+  } else if (settingsSelected == SETTINGS_ABOUT) {
+    navigateTo(SCREEN_ABOUT);
+    drawAbout();
+  } else if (settingsSelected == SETTINGS_POWER_SAVE) {
+    navigateTo(SCREEN_POWER_SAVE);
+    powerSaveEditEnabled = powerSaveEnabled;
+    drawPowerSave(powerSaveEditEnabled);
+    return;
+  }
+}
+} // namespace
 
 bool handleSettingsEncoderInput(bool stepPlus, bool stepMinus) {
   if (currentScreen == SCREEN_SETTINGS) {
@@ -33,7 +50,7 @@ bool handleSettingsSelectInput() {
   }
 
   if (currentScreen == SCREEN_ABOUT) {
-    currentScreen = SCREEN_SETTINGS;
+    navigateTo(SCREEN_SETTINGS);
     drawSettingsMenu();
     return true;
   }
@@ -42,7 +59,7 @@ bool handleSettingsSelectInput() {
     powerSaveEnabled = powerSaveEditEnabled;
     setPowerSavingEnabled(powerSaveEnabled);
     prefs.putBool(appcfg::PREFS_POWER_SAVE_KEY, powerSaveEnabled);
-    currentScreen = SCREEN_SETTINGS;
+    navigateTo(SCREEN_SETTINGS);
     drawSettingsMenu();
     return true;
   }
@@ -52,13 +69,14 @@ bool handleSettingsSelectInput() {
 
 bool handleSettingsBackInput() {
   if (currentScreen == SCREEN_ABOUT || currentScreen == SCREEN_POWER_SAVE) {
-    currentScreen = SCREEN_SETTINGS;
+    navigateTo(SCREEN_SETTINGS);
     drawSettingsMenu();
     return true;
   }
 
   if (currentScreen == SCREEN_SETTINGS) {
-    goToMenu();
+    navigateTo(SCREEN_MENU);
+    drawMenu();
     return true;
   }
 

@@ -7,9 +7,10 @@
 #include <controllers/settings_controller.h>
 #include <controllers/timer_controller.h>
 #include <controllers/wifi_controller.h>
-#include <flow/menu_flow.h>
+#include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
 #include <hw/input.h>
+#include <ui/menu.h>
 
 namespace {
 bool shouldIgnoreInputByPowerGuard() {
@@ -68,9 +69,8 @@ void handleBackButton() {
     return;
   }
 
-  if (currentScreen != SCREEN_MENU) {
-    goToMenu();
-  }
+  if (goBack())
+    return;
 }
 
 void handleSelectButton() {
@@ -89,7 +89,8 @@ void handleSelectButton() {
     if (handleWiFiSelectInput())
       return;
 
-    goToMenu();
+    navigateTo(SCREEN_MENU);
+    drawMenu();
   }
 }
 
