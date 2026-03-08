@@ -34,11 +34,11 @@ const char *statusText(SessionRunStatus status) {
 int normalizedPresetIndex() {
   if (SESSION_PRESET_COUNT <= 0)
     return -1;
-  if (sessionPresetIndex < 0)
+  if (app.session.presetIndex < 0)
     return 0;
-  if (sessionPresetIndex >= SESSION_PRESET_COUNT)
+  if (app.session.presetIndex >= SESSION_PRESET_COUNT)
     return SESSION_PRESET_COUNT - 1;
-  return sessionPresetIndex;
+  return app.session.presetIndex;
 }
 
 const SessionPreset *currentPresetOrNull() {
@@ -48,19 +48,17 @@ const SessionPreset *currentPresetOrNull() {
   return &SESSION_PRESETS[index];
 }
 
-bool hasVisibleRinse() {
-  return sessionRinseSec > 0;
-}
+bool hasVisibleRinse() { return app.session.rinseSec > 0; }
 
 int currentTotalSec() {
-  if (sessionStepTotalSec > 0)
-    return sessionStepTotalSec;
-  if (sessionStepDurationSec > 0)
-    return sessionStepDurationSec;
-  if (sessionRinseActive && sessionRinseSec > 0)
-    return sessionRinseSec;
-  if (sessionStepIndex >= 0 && sessionStepIndex < sessionStepCount)
-    return sessionSteps[sessionStepIndex];
+  if (app.session.stepTotalSec > 0)
+    return app.session.stepTotalSec;
+  if (app.session.stepDurationSec > 0)
+    return app.session.stepDurationSec;
+  if (app.session.rinseActive && app.session.rinseSec > 0)
+    return app.session.rinseSec;
+  if (app.session.stepIndex >= 0 && app.session.stepIndex < app.session.stepCount)
+    return app.session.steps[app.session.stepIndex];
   return MIN_TIME;
 }
 } // namespace
@@ -132,7 +130,7 @@ void drawSessionComplete() {
 }
 
 void drawSessionRun(int remaining) {
-  if (!sessionRinseActive && sessionStepIndex >= sessionStepCount) {
+  if (!app.session.rinseActive && app.session.stepIndex >= app.session.stepCount) {
     drawSessionComplete();
     return;
   }
@@ -162,17 +160,17 @@ void drawSessionRun(int remaining) {
     display.print("Preset N/A");
   }
 
-  int infusions = sessionStepCount;
+  int infusions = app.session.stepCount;
   if (infusions < 0)
     infusions = 0;
 
   display.setCursor(0, ui::layout::SESSION_RUN_STEP_Y);
-  if (sessionRinseActive && hasVisibleRinse()) {
+  if (app.session.rinseActive && hasVisibleRinse()) {
     display.print("Rinse 0/");
     display.print(infusions);
   } else {
     display.print("Infuse ");
-    display.print(sessionStepIndex + 1);
+    display.print(app.session.stepIndex + 1);
     display.print("/");
     display.print(infusions);
   }
@@ -216,7 +214,7 @@ void drawSessionRun(int remaining) {
   else
     display.print("Press:Start Hold:Skip");
 
-  if (sessionEndConfirmActive) {
+  if (app.session.endConfirm.active) {
     const int x = 10;
     const int y = 19;
     const int w = 108;
@@ -228,7 +226,7 @@ void drawSessionRun(int remaining) {
     display.setCursor(x + 6, y + 4);
     display.print("End session?");
     display.setCursor(x + 6, y + 14);
-    if (sessionEndConfirmYes)
+    if (app.session.endConfirm.yesSelected)
       display.print("No [YES]");
     else
       display.print("[NO] Yes");

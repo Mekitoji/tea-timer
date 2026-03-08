@@ -30,46 +30,46 @@ int clampInfusionSec(int sec) {
 }
 
 int stepSecAt(int index) {
-  if (index < 0 || index >= sessionStepCount)
+  if (index < 0 || index >= app.session.stepCount)
     return MIN_TIME;
-  return clampInfusionSec(sessionSteps[index]);
+  return clampInfusionSec(app.session.steps[index]);
 }
 
 bool hasCurrentSessionStep() {
-  if (sessionRinseActive && sessionRinseSec > 0)
+  if (app.session.rinseActive && app.session.rinseSec > 0)
     return true;
-  return sessionStepIndex >= 0 && sessionStepIndex < sessionStepCount;
+  return app.session.stepIndex >= 0 && app.session.stepIndex < app.session.stepCount;
 }
 
 void applyCurrentStepFromModel() {
-  if (sessionRinseActive) {
-    int rinse = sessionRinseSec;
+  if (app.session.rinseActive) {
+    int rinse = app.session.rinseSec;
     if (rinse < MIN_TIME)
       rinse = MIN_TIME;
     if (rinse > MAX_TIME)
       rinse = MAX_TIME;
-    sessionRinseSec = rinse;
-    sessionStepDurationSec = rinse;
-    sessionStepTotalSec = rinse;
+    app.session.rinseSec = rinse;
+    app.session.stepDurationSec = rinse;
+    app.session.stepTotalSec = rinse;
     return;
   }
 
-  sessionStepDurationSec = stepSecAt(sessionStepIndex);
-  sessionStepTotalSec = sessionStepDurationSec;
+  app.session.stepDurationSec = stepSecAt(app.session.stepIndex);
+  app.session.stepTotalSec = app.session.stepDurationSec;
 }
 
 bool advanceToNextSessionStep() {
-  if (sessionRinseActive) {
-    sessionRinseActive = false;
-    sessionStepIndex = 0;
-    if (sessionStepCount <= 0)
+  if (app.session.rinseActive) {
+    app.session.rinseActive = false;
+    app.session.stepIndex = 0;
+    if (app.session.stepCount <= 0)
       return false;
     applyCurrentStepFromModel();
     return true;
   }
 
-  sessionStepIndex++;
-  if (sessionStepIndex >= sessionStepCount)
+  app.session.stepIndex++;
+  if (app.session.stepIndex >= app.session.stepCount)
     return false;
 
   applyCurrentStepFromModel();
@@ -116,18 +116,18 @@ void processSessionLongPressInput(bool down, unsigned long nowMs) {
   }
 
   setSessionStatePaused();
-  drawSessionRun(sessionStepDurationSec);
+  drawSessionRun(app.session.stepDurationSec);
 }
 
 void loadSessionPresetByIndex(int presetIndex) {
-  sessionEndConfirmActive = false;
-  sessionEndConfirmYes = false;
+  app.session.endConfirm.active = false;
+  app.session.endConfirm.yesSelected = false;
 
   if (SESSION_PRESET_COUNT <= 0) {
-    sessionPresetIndex = 0;
-    sessionStepCount = 0;
-    sessionRinseSec = 0;
-    sessionRinseActive = false;
+    app.session.presetIndex = 0;
+    app.session.stepCount = 0;
+    app.session.rinseSec = 0;
+    app.session.rinseActive = false;
     setSessionStateStopped();
     resetSessionFlowState();
     return;
@@ -138,11 +138,11 @@ void loadSessionPresetByIndex(int presetIndex) {
   if (presetIndex >= SESSION_PRESET_COUNT)
     presetIndex = 0;
 
-  sessionPresetIndex = presetIndex;
+  app.session.presetIndex = presetIndex;
 
-  const SessionPreset &preset = SESSION_PRESETS[sessionPresetIndex];
-  sessionRinseSec = clampRinseSec(preset.rinseSec);
-  sessionRinseActive = (sessionRinseSec > 0);
+  const SessionPreset &preset = SESSION_PRESETS[app.session.presetIndex];
+  app.session.rinseSec = clampRinseSec(preset.rinseSec);
+  app.session.rinseActive = (app.session.rinseSec > 0);
 
   int count = preset.stepCount;
   if (count < 0)
@@ -150,47 +150,47 @@ void loadSessionPresetByIndex(int presetIndex) {
   if (count > SESSION_MAX_STEPS)
     count = SESSION_MAX_STEPS;
 
-  sessionStepCount = count;
+  app.session.stepCount = count;
 
-  for (int i = 0; i < sessionStepCount; i++) {
-    sessionSteps[i] = clampInfusionSec(preset.stepsSec[i]);
+  for (int i = 0; i < app.session.stepCount; i++) {
+    app.session.steps[i] = clampInfusionSec(preset.stepsSec[i]);
   }
-  for (int i = sessionStepCount; i < SESSION_MAX_STEPS; i++) {
-    sessionSteps[i] = 0;
+  for (int i = app.session.stepCount; i < SESSION_MAX_STEPS; i++) {
+    app.session.steps[i] = 0;
   }
 
-  sessionStepIndex = 0;
-  if (sessionRinseActive) {
-    sessionStepDurationSec = sessionRinseSec;
-  } else if (sessionStepCount > 0) {
-    sessionStepDurationSec = stepSecAt(0);
+  app.session.stepIndex = 0;
+  if (app.session.rinseActive) {
+    app.session.stepDurationSec = app.session.rinseSec;
+  } else if (app.session.stepCount > 0) {
+    app.session.stepDurationSec = stepSecAt(0);
   } else {
-    sessionStepDurationSec = MIN_TIME;
+    app.session.stepDurationSec = MIN_TIME;
   }
-  sessionStepTotalSec = sessionStepDurationSec;
+  app.session.stepTotalSec = app.session.stepDurationSec;
 
   setSessionStateStopped();
   resetSessionFlowState();
 }
 
 void enterSessionRunFromCurrentPreset() {
-  sessionEndConfirmActive = false;
-  sessionEndConfirmYes = false;
+  app.session.endConfirm.active = false;
+  app.session.endConfirm.yesSelected = false;
 
-  if (sessionStepCount <= 0) {
-    loadSessionPresetByIndex(sessionPresetIndex);
+  if (app.session.stepCount <= 0) {
+    loadSessionPresetByIndex(app.session.presetIndex);
   }
 
-  if (sessionStepCount <= 0 && sessionRinseSec <= 0)
+  if (app.session.stepCount <= 0 && app.session.rinseSec <= 0)
     return;
 
-  sessionStepIndex = 0;
-  sessionRinseActive = (sessionRinseSec > 0);
+  app.session.stepIndex = 0;
+  app.session.rinseActive = (app.session.rinseSec > 0);
   applyCurrentStepFromModel();
 
   setSessionStatePaused();
   navigateTo(SCREEN_SESSION_RUN);
-  drawSessionRun(sessionStepDurationSec);
+  drawSessionRun(app.session.stepDurationSec);
 }
 
 void updateSessionRun() {
@@ -203,10 +203,10 @@ void updateSessionRun() {
       return;
     }
 
-    int stepSec = sessionStepDurationSec;
+    int stepSec = app.session.stepDurationSec;
     if (stepSec <= 0) {
       stepSec =
-          sessionRinseActive ? sessionRinseSec : stepSecAt(sessionStepIndex);
+          app.session.rinseActive ? app.session.rinseSec : stepSecAt(app.session.stepIndex);
     }
     if (stepSec < MIN_TIME)
       stepSec = MIN_TIME;
@@ -215,7 +215,7 @@ void updateSessionRun() {
     int remaining = stepSec;
 
     if (isSessionRunning()) {
-      unsigned long elapsed = (millis() - sessionStepStartMs) / 1000;
+      unsigned long elapsed = (millis() - app.session.stepStartMs) / 1000;
       remaining = stepSec - (int)elapsed;
       if (remaining < 0)
         remaining = 0;
@@ -253,14 +253,14 @@ void updateSessionRun() {
         }
 
         setSessionStateCompleted();
-        sessionEndConfirmActive = false;
-        sessionEndConfirmYes = false;
+        app.session.endConfirm.active = false;
+        app.session.endConfirm.yesSelected = false;
         drawSessionComplete();
         lastRemaining = -999;
         return;
       }
 
-      drawSessionRun(sessionStepDurationSec);
+      drawSessionRun(app.session.stepDurationSec);
       lastRemaining = -1;
       return;
     }
@@ -278,33 +278,33 @@ void sessionToggleRunPauseAt(unsigned long nowMs) {
   }
 
   if (isSessionRunning()) {
-    int stepSec = sessionStepDurationSec;
+    int stepSec = app.session.stepDurationSec;
     if (stepSec <= 0) {
       stepSec =
-          sessionRinseActive ? sessionRinseSec : stepSecAt(sessionStepIndex);
+          app.session.rinseActive ? app.session.rinseSec : stepSecAt(app.session.stepIndex);
     }
     if (stepSec < MIN_TIME)
       stepSec = MIN_TIME;
     if (stepSec > MAX_TIME)
       stepSec = MAX_TIME;
 
-    unsigned long elapsed = (nowMs - sessionStepStartMs) / 1000;
+    unsigned long elapsed = (nowMs - app.session.stepStartMs) / 1000;
     int remaining = stepSec - (int)elapsed;
     if (remaining < 0)
       remaining = 0;
 
-    sessionStepDurationSec = remaining;
+    app.session.stepDurationSec = remaining;
     setSessionStatePaused();
-    drawSessionRun(sessionStepDurationSec);
+    drawSessionRun(app.session.stepDurationSec);
     return;
   }
 
-  if (sessionStepDurationSec <= 0)
+  if (app.session.stepDurationSec <= 0)
     applyCurrentStepFromModel();
-  if (sessionStepTotalSec <= 0)
-    sessionStepTotalSec = sessionStepDurationSec;
+  if (app.session.stepTotalSec <= 0)
+    app.session.stepTotalSec = app.session.stepDurationSec;
 
   setSessionStateRunning();
-  sessionStepStartMs = nowMs;
-  drawSessionRun(sessionStepDurationSec);
+  app.session.stepStartMs = nowMs;
+  drawSessionRun(app.session.stepDurationSec);
 }

@@ -30,57 +30,57 @@ void resetTimerLongPressFlowState() {
 
 void applyTimerPresetSec(int sec) {
   int v = normalizeTimerPresetSec(sec);
-  timerDuration = v;
-  editTimeValue = v;
-  timerTotalSec = v;
+  app.timer.timerDuration = v;
+  app.timer.editTimeValue = v;
+  app.timer.timerTotalSec = v;
 }
 
 void resetSingleTimerRuntimeState() {
   setTimerStateStopped();
 
-  timerIgnoreReleaseAfterEnter = false;
-  timerStartMillis = 0;
+  app.timer.timerIgnoreReleaseAfterEnter = false;
+  app.timer.timerStartMillis = 0;
   lastRemaining = -1;
 }
 
 void timerLongResetToPreset() {
-  applyTimerPresetSec(timerTotalSec);
-  prefs.putInt(appcfg::PREFS_DURATION_KEY, timerDuration);
+  applyTimerPresetSec(app.timer.timerTotalSec);
+  prefs.putInt(appcfg::PREFS_DURATION_KEY, app.timer.timerDuration);
   resetSingleTimerRuntimeState();
-  drawTimerScreen("Timer", editTimeValue, timerTotalSec);
+  drawTimerScreen("Timer", app.timer.editTimeValue, app.timer.timerTotalSec);
 }
 
 void timerPauseAt(unsigned long nowMs) {
-  unsigned long elapsed = (nowMs - timerStartMillis) / 1000;
-  int remaining = timerDuration - (int)elapsed;
+  unsigned long elapsed = (nowMs - app.timer.timerStartMillis) / 1000;
+  int remaining = app.timer.timerDuration - (int)elapsed;
   if (remaining < 0)
     remaining = 0;
 
   setTimerStatePaused();
-  timerDuration = remaining;
-  editTimeValue = remaining;
-  drawTimerScreen("Timer", remaining, timerTotalSec);
+  app.timer.timerDuration = remaining;
+  app.timer.editTimeValue = remaining;
+  drawTimerScreen("Timer", remaining, app.timer.timerTotalSec);
 }
 
 void timerStartOrResumeAt(unsigned long nowMs) {
   // Start from STOP preset
   if (isTimerStopped()) {
-    if (editTimeValue < MIN_TIME)
-      editTimeValue = MIN_TIME;
-    if (editTimeValue > MAX_TIME)
-      editTimeValue = MAX_TIME;
+    if (app.timer.editTimeValue < MIN_TIME)
+      app.timer.editTimeValue = MIN_TIME;
+    if (app.timer.editTimeValue > MAX_TIME)
+      app.timer.editTimeValue = MAX_TIME;
 
-    timerTotalSec = editTimeValue;
-    timerDuration = editTimeValue;
-    drawTimerScreen("Timer", timerDuration, timerTotalSec);
+    app.timer.timerTotalSec = app.timer.editTimeValue;
+    app.timer.timerDuration = app.timer.editTimeValue;
+    drawTimerScreen("Timer", app.timer.timerDuration, app.timer.timerTotalSec);
   }
 
-  if (timerDuration <= 0) {
-    timerDuration = timerTotalSec;
+  if (app.timer.timerDuration <= 0) {
+    app.timer.timerDuration = app.timer.timerTotalSec;
   }
 
   setTimerStateRunning();
-  timerStartMillis = nowMs;
+  app.timer.timerStartMillis = nowMs;
   resetSingleTimerFlowState();
 }
 
@@ -89,13 +89,13 @@ void updateSingleTimer() {
     if (!isTimerRunning())
       return;
 
-    unsigned long elapsed = (millis() - timerStartMillis) / 1000;
-    int remaining = timerDuration - (int)elapsed;
+    unsigned long elapsed = (millis() - app.timer.timerStartMillis) / 1000;
+    int remaining = app.timer.timerDuration - (int)elapsed;
     if (remaining < 0)
       remaining = 0;
 
     if (remaining != lastRemaining) {
-      drawTimerScreen("Timer", remaining, timerTotalSec);
+      drawTimerScreen("Timer", remaining, app.timer.timerTotalSec);
 
       if (remaining <= 3 && remaining > 0) {
         digitalWrite(LED_PIN, HIGH);
@@ -125,18 +125,18 @@ void timerAdjustByEncoderDelta(int delta) {
     return;
 
   if (isTimerStopped()) {
-    editTimeValue += delta;
-    if (editTimeValue < MIN_TIME)
-      editTimeValue = MIN_TIME;
-    if (editTimeValue > MAX_TIME)
-      editTimeValue = MAX_TIME;
+    app.timer.editTimeValue += delta;
+    if (app.timer.editTimeValue < MIN_TIME)
+      app.timer.editTimeValue = MIN_TIME;
+    if (app.timer.editTimeValue > MAX_TIME)
+      app.timer.editTimeValue = MAX_TIME;
 
-    timerTotalSec = editTimeValue;
-    drawTimerScreen("Timer", editTimeValue, timerTotalSec);
+    app.timer.timerTotalSec = app.timer.editTimeValue;
+    drawTimerScreen("Timer", app.timer.editTimeValue, app.timer.timerTotalSec);
     return;
   }
 
-  int elapsed = timerTotalSec - timerDuration;
+  int elapsed = app.timer.timerTotalSec - app.timer.timerDuration;
   if (elapsed < 0)
     elapsed = 0;
   if (elapsed > MAX_TIME)
@@ -146,16 +146,16 @@ void timerAdjustByEncoderDelta(int delta) {
   if (maxRemaining < MIN_TIME)
     maxRemaining = MIN_TIME;
 
-  int newRemaining = timerDuration + delta;
+  int newRemaining = app.timer.timerDuration + delta;
   if (newRemaining < MIN_TIME)
     newRemaining = MIN_TIME;
   if (newRemaining > maxRemaining)
     newRemaining = maxRemaining;
 
-  timerDuration = newRemaining;
-  editTimeValue = newRemaining;
-  timerTotalSec = elapsed + newRemaining;
-  drawTimerScreen("Timer", timerDuration, timerTotalSec);
+  app.timer.timerDuration = newRemaining;
+  app.timer.editTimeValue = newRemaining;
+  app.timer.timerTotalSec = elapsed + newRemaining;
+  drawTimerScreen("Timer", app.timer.timerDuration, app.timer.timerTotalSec);
 }
 
 void processTimerLongPressInput(bool down, unsigned long nowMs) {

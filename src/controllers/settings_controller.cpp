@@ -8,16 +8,12 @@
 
 namespace {
 void handleSettingsSelect() {
-  if (settingsSelected == SETTINGS_WIFI) {
-    navigateTo(SCREEN_WIFI);
-    drawWiFi();
-  } else if (settingsSelected == SETTINGS_ABOUT) {
-    navigateTo(SCREEN_ABOUT);
-    drawAbout();
-  } else if (settingsSelected == SETTINGS_POWER_SAVE) {
-    navigateTo(SCREEN_POWER_SAVE);
-    powerSaveEditEnabled = powerSaveEnabled;
-    drawPowerSave(powerSaveEditEnabled);
+  if (app.ui.settingsSelected == SETTINGS_WIFI) {
+    showWiFiScreen();
+  } else if (app.ui.settingsSelected == SETTINGS_ABOUT) {
+    showAboutScreen();
+  } else if (app.ui.settingsSelected == SETTINGS_POWER_SAVE) {
+    showPowerSaveScreen();
     return;
   }
 }
@@ -25,18 +21,18 @@ void handleSettingsSelect() {
 
 bool handleSettingsEncoderInput(bool stepPlus, bool stepMinus) {
   if (currentScreen == SCREEN_SETTINGS) {
-    settingsSelected += stepPlus ? 1 : -1;
-    if (settingsSelected < 0)
-      settingsSelected = settingsMenuCount - 1;
-    if (settingsSelected >= settingsMenuCount)
-      settingsSelected = 0;
+    app.ui.settingsSelected += stepPlus ? 1 : -1;
+    if (app.ui.settingsSelected < 0)
+      app.ui.settingsSelected = settingsMenuCount - 1;
+    if (app.ui.settingsSelected >= settingsMenuCount)
+      app.ui.settingsSelected = 0;
     drawSettingsMenu();
     return true;
   }
 
   if (currentScreen == SCREEN_POWER_SAVE) {
-    powerSaveEditEnabled = !powerSaveEditEnabled;
-    drawPowerSave(powerSaveEditEnabled);
+    app.power.editEnabled = !app.power.editEnabled;
+    drawPowerSave(app.power.editEnabled);
     return true;
   }
 
@@ -50,17 +46,15 @@ bool handleSettingsSelectInput() {
   }
 
   if (currentScreen == SCREEN_ABOUT) {
-    navigateTo(SCREEN_SETTINGS);
-    drawSettingsMenu();
+    showSettingsScreen();
     return true;
   }
 
   if (currentScreen == SCREEN_POWER_SAVE) {
-    powerSaveEnabled = powerSaveEditEnabled;
-    setPowerSavingEnabled(powerSaveEnabled);
-    prefs.putBool(appcfg::PREFS_POWER_SAVE_KEY, powerSaveEnabled);
-    navigateTo(SCREEN_SETTINGS);
-    drawSettingsMenu();
+    app.power.enabled = app.power.editEnabled;
+    setPowerSavingEnabled(app.power.enabled);
+    prefs.putBool(appcfg::PREFS_POWER_SAVE_KEY, app.power.enabled);
+    showSettingsScreen();
     return true;
   }
 
@@ -69,14 +63,12 @@ bool handleSettingsSelectInput() {
 
 bool handleSettingsBackInput() {
   if (currentScreen == SCREEN_ABOUT || currentScreen == SCREEN_POWER_SAVE) {
-    navigateTo(SCREEN_SETTINGS);
-    drawSettingsMenu();
+    showSettingsScreen();
     return true;
   }
 
   if (currentScreen == SCREEN_SETTINGS) {
-    navigateTo(SCREEN_MENU);
-    drawMenu();
+    showMenuScreen();
     return true;
   }
 

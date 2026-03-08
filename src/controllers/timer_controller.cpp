@@ -43,10 +43,10 @@ bool handleTimerBackInput() {
     return false;
   }
 
-  applyTimerPresetSec(timerTotalSec);
-  prefs.putInt(appcfg::PREFS_DURATION_KEY, timerDuration);
+  applyTimerPresetSec(app.timer.timerTotalSec);
+  prefs.putInt(appcfg::PREFS_DURATION_KEY, app.timer.timerDuration);
   resetSingleTimerRuntimeState();
-  timerIgnoreReleaseAfterEnter = false;
+  app.timer.timerIgnoreReleaseAfterEnter = false;
   resetTimerLongPressFlowState();
   navigateTo(SCREEN_MENU);
   drawMenu();
@@ -74,9 +74,9 @@ void handleTimerLongPressInput() {
   if (currentScreen != SCREEN_TIMER)
     return;
 
-  if (timerIgnoreReleaseAfterEnter) {
+  if (app.timer.timerIgnoreReleaseAfterEnter) {
     if (digitalRead(ENC_SW) == HIGH) {
-      timerIgnoreReleaseAfterEnter = false;
+      app.timer.timerIgnoreReleaseAfterEnter = false;
     }
 
     return;

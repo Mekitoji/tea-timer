@@ -11,11 +11,11 @@ bool handleMenuEncoderInput(bool stepPlus, bool stepMinus) {
   if (currentScreen != SCREEN_MENU)
     return false;
 
-  selected += stepPlus ? 1 : -1;
-  if (selected < 0)
-    selected = menuCount - 1;
-  if (selected >= menuCount)
-    selected = 0;
+  app.ui.menuSelected += stepPlus ? 1 : -1;
+  if (app.ui.menuSelected < 0)
+    app.ui.menuSelected = menuCount - 1;
+  if (app.ui.menuSelected >= menuCount)
+    app.ui.menuSelected = 0;
   drawMenu();
 
   return true;
@@ -25,13 +25,13 @@ bool handleMenuSelectInput() {
   if (currentScreen != SCREEN_MENU)
     return false;
 
-  switch (selected) {
+  switch (app.ui.menuSelected) {
   case MENU_TIMER:
     navigateTo(SCREEN_TIMER);
-    applyTimerPresetSec(timerDuration);
+    applyTimerPresetSec(app.timer.timerDuration);
     resetSingleTimerRuntimeState();
-    timerIgnoreReleaseAfterEnter = true;
-    drawTimerScreen("Timer", editTimeValue, timerTotalSec);
+    app.timer.timerIgnoreReleaseAfterEnter = true;
+    drawTimerScreen("Timer", app.timer.editTimeValue, app.timer.timerTotalSec);
     break;
 
   case MENU_SESSION:
@@ -41,7 +41,7 @@ bool handleMenuSelectInput() {
 
   case MENU_SETTINGS:
     navigateTo(SCREEN_SETTINGS);
-    settingsSelected = 0;
+    app.ui.settingsSelected = 0;
     drawSettingsMenu();
     break;
 

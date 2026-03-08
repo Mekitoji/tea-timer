@@ -24,11 +24,11 @@ bool handleWiFiEncoderInput(bool stepPlus, bool stepMinus) {
   if (currentScreen != SCREEN_WIFI)
     return false;
 
-  if (wifiResetConfirmActive) {
+  if (app.wifi.resetConfirm.active) {
     if (stepPlus)
-      wifiResetConfirmYes = true;
+      setConfirmChoice(app.wifi.resetConfirm, true);
     if (stepMinus)
-      wifiResetConfirmYes = false;
+      setConfirmChoice(app.wifi.resetConfirm, false);
     drawWiFi();
   }
 
@@ -39,16 +39,14 @@ bool handleWiFiBackInput() {
   if (currentScreen != SCREEN_WIFI)
     return false;
 
-  if (wifiResetConfirmActive) {
-    wifiResetConfirmActive = false;
-    wifiResetConfirmYes = false;
+  if (app.wifi.resetConfirm.active) {
+    closeConfirm(app.wifi.resetConfirm);
     drawWiFi();
     return true;
   }
 
   stopWiFiProvisioning();
-  navigateTo(SCREEN_SETTINGS);
-  drawSettingsMenu();
+  showSettingsScreen();
   return true;
 }
 
@@ -56,10 +54,9 @@ bool handleWiFiSelectInput() {
   if (currentScreen != SCREEN_WIFI)
     return false;
 
-  if (wifiResetConfirmActive) {
-    bool doReset = wifiResetConfirmYes;
-    wifiResetConfirmActive = false;
-    wifiResetConfirmYes = false;
+  if (app.wifi.resetConfirm.active) {
+    bool doReset = app.wifi.resetConfirm.yesSelected;
+    closeConfirm(app.wifi.resetConfirm);
     if (doReset) {
       wifiResetCredentialsAndStartProvisioning();
     }
@@ -78,7 +75,7 @@ void handleWiFiLongPressInput() {
     return;
   }
 
-  if (wifiResetConfirmActive || !wifiProvisionHasSavedCredentials()) {
+  if (app.wifi.resetConfirm.active || !wifiProvisionHasSavedCredentials()) {
     resetWiFiLongPressFlowState();
     return;
   }
@@ -105,7 +102,6 @@ void handleWiFiLongPressInput() {
     return;
 
   wifiLongPressFired = true;
-  wifiResetConfirmActive = true;
-  wifiResetConfirmYes = false;
+  openConfirm(app.wifi.resetConfirm);
   drawWiFi();
 }

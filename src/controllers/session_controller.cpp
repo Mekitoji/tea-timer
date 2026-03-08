@@ -12,11 +12,11 @@
 bool handleSessionEncoderInput(bool stepPlus, bool stepMinus) {
   if (currentScreen == SCREEN_SESSION_PRESET) {
     if (SESSION_PRESET_COUNT > 0) {
-      sessionPresetIndex += stepPlus ? 1 : -1;
-      if (sessionPresetIndex < 0)
-        sessionPresetIndex = SESSION_PRESET_COUNT - 1;
-      if (sessionPresetIndex >= SESSION_PRESET_COUNT)
-        sessionPresetIndex = 0;
+      app.session.presetIndex += stepPlus ? 1 : -1;
+      if (app.session.presetIndex < 0)
+        app.session.presetIndex = SESSION_PRESET_COUNT - 1;
+      if (app.session.presetIndex >= SESSION_PRESET_COUNT)
+        app.session.presetIndex = 0;
       drawSessionPresetMenu();
     }
 
@@ -24,30 +24,30 @@ bool handleSessionEncoderInput(bool stepPlus, bool stepMinus) {
   }
 
   if (currentScreen == SCREEN_SESSION_RUN) {
-    if (sessionEndConfirmActive) {
+    if (app.session.endConfirm.active) {
       if (stepPlus)
-        sessionEndConfirmYes = true;
+        setConfirmChoice(app.session.endConfirm, true);
       if (stepMinus)
-        sessionEndConfirmYes = false;
-      drawSessionRun(sessionStepDurationSec);
+        setConfirmChoice(app.session.endConfirm, false);
+      drawSessionRun(app.session.stepDurationSec);
 
       return true;
     }
 
     if (!isSessionRunning() &&
-        (sessionRinseActive || sessionStepIndex < sessionStepCount)) {
-      sessionStepDurationSec += stepPlus ? 1 : -1;
-      if (sessionStepDurationSec < MIN_TIME)
-        sessionStepDurationSec = MIN_TIME;
-      if (sessionStepDurationSec > MAX_TIME)
-        sessionStepDurationSec = MAX_TIME;
-      if (sessionRinseActive) {
-        sessionRinseSec = sessionStepDurationSec;
-      } else if (sessionStepIndex >= 0 && sessionStepIndex < sessionStepCount) {
-        sessionSteps[sessionStepIndex] = sessionStepDurationSec;
+        (app.session.rinseActive || app.session.stepIndex < app.session.stepCount)) {
+      app.session.stepDurationSec += stepPlus ? 1 : -1;
+      if (app.session.stepDurationSec < MIN_TIME)
+        app.session.stepDurationSec = MIN_TIME;
+      if (app.session.stepDurationSec > MAX_TIME)
+        app.session.stepDurationSec = MAX_TIME;
+      if (app.session.rinseActive) {
+        app.session.rinseSec = app.session.stepDurationSec;
+      } else if (app.session.stepIndex >= 0 && app.session.stepIndex < app.session.stepCount) {
+        app.session.steps[app.session.stepIndex] = app.session.stepDurationSec;
       }
-      sessionStepTotalSec = sessionStepDurationSec;
-      drawSessionRun(sessionStepTotalSec);
+      app.session.stepTotalSec = app.session.stepDurationSec;
+      drawSessionRun(app.session.stepTotalSec);
     }
 
     return true;
@@ -58,54 +58,50 @@ bool handleSessionEncoderInput(bool stepPlus, bool stepMinus) {
 
 bool handleSessionBackInput() {
   if (currentScreen == SCREEN_SESSION_PRESET) {
-    sessionEndConfirmActive = false;
-    sessionEndConfirmYes = false;
+    closeConfirm(app.session.endConfirm);
     navigateTo(SCREEN_MENU);
     drawMenu();
     return true;
   }
 
   if (currentScreen == SCREEN_SESSION_RUN) {
-    if (sessionEndConfirmActive) {
-      sessionEndConfirmActive = false;
-      sessionEndConfirmYes = false;
-      drawSessionRun(sessionStepDurationSec);
+    if (app.session.endConfirm.active) {
+      closeConfirm(app.session.endConfirm);
+      drawSessionRun(app.session.stepDurationSec);
       return true;
     }
 
     const bool hasActiveStep =
-        sessionRinseActive || sessionStepIndex < sessionStepCount;
+        app.session.rinseActive || app.session.stepIndex < app.session.stepCount;
     if (!isSessionCompleted() && hasActiveStep) {
       if (isSessionRunning()) {
         sessionToggleRunPauseAt(millis());
       }
-      sessionEndConfirmActive = true;
-      sessionEndConfirmYes = false;
-      drawSessionRun(sessionStepDurationSec);
+      openConfirm(app.session.endConfirm);
+      drawSessionRun(app.session.stepDurationSec);
       return true;
     }
 
-    sessionEndConfirmActive = false;
-    sessionEndConfirmYes = false;
+    closeConfirm(app.session.endConfirm);
     setSessionStateStopped();
-    sessionRinseActive = (sessionRinseSec > 0);
-    sessionStepIndex = 0;
-    if (sessionRinseActive) {
-      sessionStepDurationSec = sessionRinseSec;
-      if (sessionStepDurationSec < MIN_TIME)
-        sessionStepDurationSec = MIN_TIME;
-      if (sessionStepDurationSec > MAX_TIME)
-        sessionStepDurationSec = MAX_TIME;
-    } else if (sessionStepCount > 0) {
-      sessionStepDurationSec = sessionSteps[0];
-      if (sessionStepDurationSec < MIN_TIME)
-        sessionStepDurationSec = MIN_TIME;
-      if (sessionStepDurationSec > MAX_TIME)
-        sessionStepDurationSec = MAX_TIME;
+    app.session.rinseActive = (app.session.rinseSec > 0);
+    app.session.stepIndex = 0;
+    if (app.session.rinseActive) {
+      app.session.stepDurationSec = app.session.rinseSec;
+      if (app.session.stepDurationSec < MIN_TIME)
+        app.session.stepDurationSec = MIN_TIME;
+      if (app.session.stepDurationSec > MAX_TIME)
+        app.session.stepDurationSec = MAX_TIME;
+    } else if (app.session.stepCount > 0) {
+      app.session.stepDurationSec = app.session.steps[0];
+      if (app.session.stepDurationSec < MIN_TIME)
+        app.session.stepDurationSec = MIN_TIME;
+      if (app.session.stepDurationSec > MAX_TIME)
+        app.session.stepDurationSec = MAX_TIME;
     } else {
-      sessionStepDurationSec = MIN_TIME;
+      app.session.stepDurationSec = MIN_TIME;
     }
-    sessionStepTotalSec = sessionStepDurationSec;
+    app.session.stepTotalSec = app.session.stepDurationSec;
     navigateTo(SCREEN_SESSION_PRESET);
     drawSessionPresetMenu();
     return true;
@@ -116,25 +112,23 @@ bool handleSessionBackInput() {
 
 bool handleSessionSelectInput() {
   if (currentScreen == SCREEN_SESSION_PRESET) {
-    loadSessionPresetByIndex(sessionPresetIndex);
+    loadSessionPresetByIndex(app.session.presetIndex);
     enterSessionRunFromCurrentPreset();
 
     return true;
   }
 
   if (currentScreen == SCREEN_SESSION_RUN) {
-    if (sessionEndConfirmActive) {
-      if (sessionEndConfirmYes) {
-        sessionEndConfirmActive = false;
-        sessionEndConfirmYes = false;
-        sessionRinseActive = false;
+    if (app.session.endConfirm.active) {
+      if (app.session.endConfirm.yesSelected) {
+        closeConfirm(app.session.endConfirm);
+        app.session.rinseActive = false;
         setSessionStateCompleted();
-        sessionStepIndex = sessionStepCount;
+        app.session.stepIndex = app.session.stepCount;
         drawSessionComplete();
       } else {
-        sessionEndConfirmActive = false;
-        sessionEndConfirmYes = false;
-        drawSessionRun(sessionStepDurationSec);
+        closeConfirm(app.session.endConfirm);
+        drawSessionRun(app.session.stepDurationSec);
       }
     } else {
       sessionToggleRunPauseAt(millis());
@@ -153,7 +147,7 @@ void handleSessionLongPressInput() {
     resetSessionLongPressFlowState();
     return;
   }
-  if (sessionEndConfirmActive) {
+  if (app.session.endConfirm.active) {
     resetSessionLongPressFlowState();
     return;
   }

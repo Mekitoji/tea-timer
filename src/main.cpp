@@ -37,10 +37,10 @@ void setup() {
 
   // Load saved timer duration (NVS)
   prefs.begin(appcfg::PREFS_NAMESPACE, false);
-  powerSaveEnabled = prefs.getBool(appcfg::PREFS_POWER_SAVE_KEY,
+  app.power.enabled = prefs.getBool(appcfg::PREFS_POWER_SAVE_KEY,
                                    appcfg::DEFAULT_POWER_SAVE_ENABLED);
-  powerSaveEditEnabled = powerSaveEnabled;
-  setPowerSavingEnabled(powerSaveEnabled);
+  app.power.editEnabled = app.power.enabled;
+  setPowerSavingEnabled(app.power.enabled);
 
   int savedDuration =
       prefs.getInt(appcfg::PREFS_DURATION_KEY, appcfg::DEFAULT_TIMER_DURATION);

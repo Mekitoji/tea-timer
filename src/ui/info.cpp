@@ -62,7 +62,7 @@ void drawWiFiResetConfirmOverlay() {
   display.setCursor(x + 6, y + 4);
   display.print("Reset Wi-Fi?");
   display.setCursor(x + 6, y + 14);
-  if (wifiResetConfirmYes) {
+  if (app.wifi.resetConfirm.yesSelected) {
     display.print("No [YES]");
   } else {
     display.print("[NO] Yes");
@@ -73,10 +73,19 @@ void drawWiFiScreen() {
   bool hasSaved = wifiProvisionHasSavedCredentials();
   bool setupMode = !hasSaved;
   wl_status_t sta = WiFi.status();
-  bool connected = (sta == WL_CONNECTED);
+  WifiProvisionUiState pstate = wifiProvisionState();
+  IPAddress localIp = WiFi.localIP();
+  bool connected =
+      (sta == WL_CONNECTED) || (pstate == WifiProvisionUiState::Connected);
+
+  String ssid = WiFi.SSID();
+  const char *cachedSsid = wifiProvisionStaSsid();
+  const char *cachedIp = wifiProvisionStaIp();
+  bool hasCachedSsid = (cachedSsid && cachedSsid[0] != '\0');
+  bool hasCachedIp = (cachedIp && cachedIp[0] != '\0');
 
   display.clearDisplay();
-  drawHeader("Wi-Fi", setupMode ? setupBadge() : staBadge(sta));
+  drawHeader("Wi-Fi", setupMode ? setupBadge() : staBadge(connected ? WL_CONNECTED : sta));
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
 
@@ -86,9 +95,10 @@ void drawWiFiScreen() {
     display.print(wifiProvisionApSsid());
   } else {
     display.print("SSID: ");
-    if (connected) {
-      String ssid = WiFi.SSID();
-      display.print(ssid.length() > 0 ? ssid.c_str() : "-");
+    if (ssid.length() > 0) {
+      display.print(ssid.c_str());
+    } else if (hasCachedSsid) {
+      display.print(cachedSsid);
     } else {
       display.print("-");
     }
@@ -100,8 +110,10 @@ void drawWiFiScreen() {
     display.print(wifiProvisionPop());
   } else {
     display.print("IP: ");
-    if (connected)
-      display.print(WiFi.localIP());
+    if (localIp != IPAddress(static_cast<uint32_t>(0)))
+      display.print(localIp);
+    else if (hasCachedIp)
+      display.print(cachedIp);
     else
       display.print("-");
   }
@@ -113,13 +125,16 @@ void drawWiFiScreen() {
     display.print(wifiProvisionStatusText());
   } else {
     display.print("State: ");
-    display.print(staStatusText(sta));
+    if (connected) {
+      display.print("CONNECTED");
+    } else {
+      display.print(staStatusText(sta));
+    }
   }
 
   display.setCursor(0,
                     ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 3);
   if (setupMode) {
-    WifiProvisionUiState pstate = wifiProvisionState();
     if (pstate == WifiProvisionUiState::Failed) {
       const char *reason = wifiProvisionFailureReasonText();
       display.print("Fail: ");
@@ -131,9 +146,14 @@ void drawWiFiScreen() {
     }
   } else {
     if (connected) {
+      int rssi = WiFi.RSSI();
       display.print("RSSI: ");
-      display.print(WiFi.RSSI());
-      display.print(" dBm");
+      if (rssi == 0) {
+        display.print("-");
+      } else {
+        display.print(rssi);
+        display.print(" dBm");
+      }
     } else {
       display.print("Saved: yes");
     }
@@ -146,7 +166,7 @@ void drawWiFiScreen() {
     display.print("Hold: reset");
   }
 
-  if (wifiResetConfirmActive) {
+  if (app.wifi.resetConfirm.active) {
     drawWiFiResetConfirmOverlay();
   }
 

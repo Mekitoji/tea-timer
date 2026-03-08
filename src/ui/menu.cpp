@@ -15,7 +15,7 @@ void drawMenu() {
   for (int i = 0; i < menuCount; i++) {
     int y = ui::layout::MENU_LIST_START_Y + i * ui::layout::MENU_LIST_STEP_Y;
 
-    if (i == selected) {
+    if (i == app.ui.menuSelected) {
       display.fillRect(ui::layout::MENU_ITEM_BG_X, y - 1,
                        ui::layout::MENU_ITEM_BG_W, ui::layout::MENU_ITEM_H,
                        SSD1306_WHITE);
@@ -41,7 +41,7 @@ void drawSettingsMenu() {
   for (int i = 0; i < settingsMenuCount; i++) {
     int y = ui::layout::MENU_LIST_START_Y + i * ui::layout::MENU_LIST_STEP_Y;
 
-    if (i == settingsSelected) {
+    if (i == app.ui.settingsSelected) {
 
       display.fillRect(ui::layout::MENU_ITEM_BG_X, y - 1,
                        ui::layout::MENU_ITEM_BG_W, ui::layout::MENU_ITEM_H,

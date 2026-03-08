@@ -10,7 +10,6 @@
 #include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
 #include <hw/input.h>
-#include <ui/menu.h>
 
 namespace {
 bool shouldIgnoreInputByPowerGuard() {
@@ -69,7 +68,7 @@ void handleBackButton() {
     return;
   }
 
-  if (goBack())
+  if (goBackAndRender())
     return;
 }
 
@@ -89,8 +88,7 @@ void handleSelectButton() {
     if (handleWiFiSelectInput())
       return;
 
-    navigateTo(SCREEN_MENU);
-    drawMenu();
+    showMenuScreen();
   }
 }
 
