@@ -61,10 +61,7 @@ void loop() {
   handleEncoderByScreen(step.plus, step.minus);
   handleBackButton();
   handleSelectButton();
-
-  handleSessionLongPress();
-  handleWiFiLongPress();
-  handleTimerLongPress();
+  handleLongPress();
 
   wifiMaintainConnection();
 
