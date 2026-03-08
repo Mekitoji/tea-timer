@@ -11,7 +11,6 @@ inline constexpr bool DEFAULT_POWER_SAVE_ENABLED = true;
 inline constexpr unsigned long INPUT_DEBOUNCE_MS = 30;
 
 inline constexpr unsigned long TIMER_HOLD_MS = 1200;
-inline constexpr unsigned long TIMER_RELEASE_GUARD_MS = 120;
 
 inline constexpr unsigned long ENC_ACCEL_FAST_MS = 80;
 inline constexpr unsigned long ENC_ACCEL_MEDIUM_MS = 140;

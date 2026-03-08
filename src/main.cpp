@@ -1,10 +1,10 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <esp_system.h>
 #include <app/app_config.h>
 #include <app/app_controller.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
+#include <esp_system.h>
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
 #include <flow/timer_flow.h>
@@ -57,17 +57,21 @@ void setup() {
 
 void loop() {
   EncoderStep step = readEncoderStep();
+
   handleEncoderByScreen(step.plus, step.minus);
   handleBackButton();
   handleSelectButton();
+
   handleSessionLongPress();
   handleWiFiLongPress();
-  handleTimerButton();
+  handleTimerLongPress();
+
+  wifiMaintainConnection();
+
   if (currentScreen == SCREEN_WIFI) {
     updateWiFiScreen();
   }
   updateSingleTimer();
   updateSessionRun();
-  wifiMaintainConnection();
   updatePowerSaving();
 }

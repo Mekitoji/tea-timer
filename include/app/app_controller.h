@@ -5,4 +5,4 @@ void handleBackButton();
 void handleSelectButton();
 void handleSessionLongPress();
 void handleWiFiLongPress();
-void handleTimerButton();
+void handleTimerLongPress();

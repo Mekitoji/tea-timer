@@ -2,7 +2,6 @@
 
 #include <Arduino.h>
 #include <app/app_config.h>
-#include <app/app_state.h>
 #include <hw/pins.h>
 
 namespace {
@@ -71,21 +70,6 @@ EncoderStep readEncoderStep() {
     step.minus = true;
     encoderAccum = 0;
   }
-
-  return step;
-}
-
-int encoderAccelStepForTimestamp(unsigned long nowMs) {
-  static unsigned long lastStepMs = 0;
-
-  unsigned long dt = nowMs - lastStepMs;
-  lastStepMs = nowMs;
-
-  int step = appcfg::ENC_STEP_NORMAL;
-  if (dt < appcfg::ENC_ACCEL_FAST_MS)
-    step = appcfg::ENC_STEP_FAST;
-  else if (dt < appcfg::ENC_ACCEL_MEDIUM_MS)
-    step = appcfg::ENC_STEP_MEDIUM;
 
   return step;
 }

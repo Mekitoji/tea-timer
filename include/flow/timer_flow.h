@@ -13,5 +13,5 @@ void timerStartOrResumeAt(unsigned long nowMs);
 
 void timerAdjustByEncoderDelta(int delta);
 
-void resetTimerButtonFlowState();
-void processTimerButtonInput(bool down, unsigned long nowMs);
+void resetTimerLongPressFlowState();
+void processTimerLongPressInput(bool down, unsigned long nowMs);

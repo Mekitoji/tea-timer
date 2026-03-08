@@ -6,7 +6,6 @@ struct EncoderStep {
 };
 
 EncoderStep readEncoderStep();
-int encoderAccelStepForTimestamp(unsigned long nowMs);
 
 bool buttonPressedEvent();
 bool backButtonPressedEvent();

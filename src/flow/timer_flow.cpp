@@ -13,7 +13,6 @@ int lastRemaining = -1;
 unsigned long timerHoldStartMs = 0;
 bool timerWasDown = false;
 bool timerLongPressFired = false;
-unsigned long timerReleaseGuardUntilMs = 0;
 } // namespace
 
 int normalizeTimerPresetSec(int sec) {
@@ -24,10 +23,9 @@ int normalizeTimerPresetSec(int sec) {
   return sec;
 }
 
-void resetTimerButtonFlowState() {
+void resetTimerLongPressFlowState() {
   timerWasDown = false;
   timerLongPressFired = false;
-  timerReleaseGuardUntilMs = 0;
 }
 
 void applyTimerPresetSec(int sec) {
@@ -160,29 +158,16 @@ void timerAdjustByEncoderDelta(int delta) {
   drawTimerScreen("Timer", timerDuration, timerTotalSec);
 }
 
-void processTimerButtonInput(bool down, unsigned long nowMs) {
-  // Ignore click that opened Timer from menu.
-  if (timerIgnoreReleaseAfterEnter) {
-    if (!down) {
-      timerIgnoreReleaseAfterEnter = false;
-      timerWasDown = false;
-      timerLongPressFired = false;
-      timerReleaseGuardUntilMs = nowMs + appcfg::INPUT_DEBOUNCE_MS * 3;
-    }
-    return;
-  }
-
-  // Ignore bounce after long-press release.
-  if (nowMs < timerReleaseGuardUntilMs) {
-    if (!down)
-      timerWasDown = false;
-    return;
-  }
-
-  // Press edge
+void processTimerLongPressInput(bool down, unsigned long nowMs) {
   if (down && !timerWasDown) {
     timerWasDown = true;
     timerHoldStartMs = nowMs;
+    timerLongPressFired = false;
+    return;
+  }
+
+  if (!down && timerWasDown) {
+    timerWasDown = false;
     timerLongPressFired = false;
     return;
   }
@@ -191,25 +176,8 @@ void processTimerButtonInput(bool down, unsigned long nowMs) {
   if (down && timerWasDown && !timerLongPressFired &&
       (nowMs - timerHoldStartMs >= appcfg::TIMER_HOLD_MS)) {
     timerLongPressFired = true;
-    timerReleaseGuardUntilMs = nowMs + appcfg::TIMER_RELEASE_GUARD_MS;
     timerLongResetToPreset();
     return;
-  }
-
-  // Release edge => short press
-  if (!down && timerWasDown) {
-    timerWasDown = false;
-
-    if (timerLongPressFired) {
-      timerLongPressFired = false;
-      return;
-    }
-
-    if (isTimerRunning()) {
-      timerPauseAt(nowMs);
-    } else {
-      timerStartOrResumeAt(nowMs);
-    }
   }
 }
 
