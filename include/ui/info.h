@@ -5,3 +5,4 @@ void drawWiFi();
 void drawPowerSave(bool enabled);
 
 void updateWiFiScreen();
+void stopWiFiProvisioning();

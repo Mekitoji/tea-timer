@@ -25,9 +25,6 @@ extern unsigned long timerStartMillis;
 extern bool timerIgnoreReleaseAfterEnter;
 extern int timerTotalSec;
 
-// wifi
-extern int wifiCount;
-
 // session
 extern int sessionStepIndex;
 extern unsigned long sessionStepStartMs;
@@ -41,6 +38,8 @@ extern int sessionRinseSec;
 extern bool sessionRinseActive;
 extern bool sessionEndConfirmActive;
 extern bool sessionEndConfirmYes;
+extern bool wifiResetConfirmActive;
+extern bool wifiResetConfirmYes;
 
 // power settings
 extern bool powerSaveEnabled;
@@ -59,6 +58,10 @@ enum ScreenState {
 
 enum MenuIndex { MENU_SESSION, MENU_TIMER, MENU_SETTINGS };
 
-enum SettingsMenuIndex { SETTINGS_WIFI, SETTINGS_POWER_SAVE, SETTINGS_ABOUT };
+enum SettingsMenuIndex {
+  SETTINGS_WIFI,
+  SETTINGS_POWER_SAVE,
+  SETTINGS_ABOUT
+};
 
 extern ScreenState currentScreen;

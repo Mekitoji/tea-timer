@@ -3,12 +3,155 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <app/app_state.h>
+#include <flow/wifi_flow.h>
 #include <ui/header.h>
 #include <ui/layout.h>
 
 namespace {
-bool wifiScanPending = false;
-bool wifiResultShown = false;
+unsigned long wifiLastDrawMs = 0;
+constexpr unsigned long WIFI_DRAW_INTERVAL_MS = 250;
+
+const char *staStatusText(wl_status_t status) {
+  switch (status) {
+  case WL_CONNECTED:
+    return "CONNECTED";
+  case WL_CONNECT_FAILED:
+    return "CONN_FAIL";
+  case WL_CONNECTION_LOST:
+    return "CONN_LOST";
+  case WL_NO_SSID_AVAIL:
+    return "NO_SSID";
+  case WL_IDLE_STATUS:
+    return "CONNECTING";
+  case WL_DISCONNECTED:
+    return "DISCONNECTED";
+  default:
+    return "UNKNOWN";
+  }
+}
+
+const char *setupBadge() {
+  switch (wifiProvisionState()) {
+  case WifiProvisionUiState::Connected:
+    return "CONN";
+  case WifiProvisionUiState::Failed:
+    return "FAIL";
+  case WifiProvisionUiState::NotSupported:
+    return "NOBLE";
+  default:
+    return "SETUP";
+  }
+}
+
+const char *staBadge(wl_status_t sta) {
+  if (sta == WL_CONNECTED)
+    return "CONN";
+  if (sta == WL_IDLE_STATUS)
+    return "CONN?";
+  return "DISC";
+}
+
+void drawWiFiResetConfirmOverlay() {
+  const int x = 8;
+  const int y = 20;
+  const int w = 112;
+  const int h = 24;
+
+  display.fillRect(x, y, w, h, SSD1306_BLACK);
+  display.drawRect(x, y, w, h, SSD1306_WHITE);
+  display.setCursor(x + 6, y + 4);
+  display.print("Reset Wi-Fi?");
+  display.setCursor(x + 6, y + 14);
+  if (wifiResetConfirmYes) {
+    display.print("No [YES]");
+  } else {
+    display.print("[NO] Yes");
+  }
+}
+
+void drawWiFiScreen() {
+  bool hasSaved = wifiProvisionHasSavedCredentials();
+  bool setupMode = !hasSaved;
+  wl_status_t sta = WiFi.status();
+  bool connected = (sta == WL_CONNECTED);
+
+  display.clearDisplay();
+  drawHeader("Wi-Fi", setupMode ? setupBadge() : staBadge(sta));
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(0, ui::layout::INFO_ROW1_Y);
+  if (setupMode) {
+    display.print("BLE: ");
+    display.print(wifiProvisionApSsid());
+  } else {
+    display.print("SSID: ");
+    if (connected) {
+      String ssid = WiFi.SSID();
+      display.print(ssid.length() > 0 ? ssid.c_str() : "-");
+    } else {
+      display.print("-");
+    }
+  }
+
+  display.setCursor(0, ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y);
+  if (setupMode) {
+    display.print("POP: ");
+    display.print(wifiProvisionPop());
+  } else {
+    display.print("IP: ");
+    if (connected)
+      display.print(WiFi.localIP());
+    else
+      display.print("-");
+  }
+
+  display.setCursor(0,
+                    ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 2);
+  if (setupMode) {
+    display.print("State: ");
+    display.print(wifiProvisionStatusText());
+  } else {
+    display.print("State: ");
+    display.print(staStatusText(sta));
+  }
+
+  display.setCursor(0,
+                    ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 3);
+  if (setupMode) {
+    WifiProvisionUiState pstate = wifiProvisionState();
+    if (pstate == WifiProvisionUiState::Failed) {
+      const char *reason = wifiProvisionFailureReasonText();
+      display.print("Fail: ");
+      display.print((reason && reason[0]) ? reason : "RETRY");
+    } else if (pstate == WifiProvisionUiState::NotSupported) {
+      display.print("BLE not supported");
+    } else {
+      display.print("Use ESP BLE app");
+    }
+  } else {
+    if (connected) {
+      display.print("RSSI: ");
+      display.print(WiFi.RSSI());
+      display.print(" dBm");
+    } else {
+      display.print("Saved: yes");
+    }
+  }
+
+  display.setCursor(0, 56);
+  if (setupMode) {
+    display.print("Back: menu");
+  } else {
+    display.print("Hold: reset");
+  }
+
+  if (wifiResetConfirmActive) {
+    drawWiFiResetConfirmOverlay();
+  }
+
+  display.display();
+}
 } // namespace
 
 void drawAbout() {
@@ -36,55 +179,19 @@ void drawAbout() {
 }
 
 void updateWiFiScreen() {
-  if (!wifiScanPending || wifiResultShown)
-    return;
-
-  int scanResult = WiFi.scanComplete();
-
-  if (scanResult == -1)
-    return; // still scanning
-  if (scanResult == -2) {
-    WiFi.scanNetworks(true); // restart if needed
-    return;
+  bool hasSaved = wifiProvisionHasSavedCredentials();
+  if (!hasSaved && !wifiProvisionIsActive()) {
+    wifiProvisionStart();
+  }
+  if (!hasSaved) {
+    wifiProvisionUpdate();
   }
 
-  wifiCount = scanResult;
-
-  display.clearDisplay();
-  drawHeader("WiFi Found:");
-
-  for (int i = 0; i < wifiCount && i < 4; i++) {
-    display.setCursor(0, ui::layout::WIFI_LIST_START_Y +
-                             i * ui::layout::WIFI_LIST_STEP_Y);
-    display.print(WiFi.SSID(i));
+  unsigned long now = millis();
+  if (now - wifiLastDrawMs >= WIFI_DRAW_INTERVAL_MS) {
+    drawWiFiScreen();
+    wifiLastDrawMs = now;
   }
-
-  if (wifiCount == 0) {
-    display.setCursor(0, ui::layout::WIFI_EMPTY_Y);
-    display.print("No networks");
-  }
-
-  display.display();
-
-  wifiResultShown = true;
-  wifiScanPending = false;
-  WiFi.scanDelete();
-}
-
-void drawWiFi() {
-  wifiResultShown = false;
-  wifiScanPending = true;
-
-  display.clearDisplay();
-  drawHeader("Wi-Fi");
-  display.setCursor(0, ui::layout::WIFI_SCAN_MSG_Y);
-  display.print("Scanning...");
-  display.display();
-
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  WiFi.scanDelete();
-  WiFi.scanNetworks(true);
 }
 
 void drawPowerSave(bool enabled) {
@@ -101,3 +208,14 @@ void drawPowerSave(bool enabled) {
 
   display.display();
 }
+
+void drawWiFi() {
+  bool hasSaved = wifiProvisionHasSavedCredentials();
+  if (!hasSaved && !wifiProvisionIsActive()) {
+    wifiProvisionStart();
+  }
+  wifiLastDrawMs = 0;
+  drawWiFiScreen();
+}
+
+void stopWiFiProvisioning() { wifiProvisionStop(); }

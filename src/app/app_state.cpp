@@ -14,8 +14,6 @@ int editTimeValue = appcfg::DEFAULT_TIMER_DURATION;
 bool timerIgnoreReleaseAfterEnter = false;
 int timerTotalSec = appcfg::DEFAULT_TIMER_DURATION;
 
-int wifiCount = 0;
-
 // session state
 int sessionStepIndex = 0;
 unsigned long sessionStepStartMs = 0;
@@ -29,6 +27,8 @@ int sessionRinseSec = 0;
 bool sessionRinseActive = false;
 bool sessionEndConfirmActive = false;
 bool sessionEndConfirmYes = false;
+bool wifiResetConfirmActive = false;
+bool wifiResetConfirmYes = false;
 
 // power save settings
 bool powerSaveEnabled = appcfg::DEFAULT_POWER_SAVE_ENABLED;

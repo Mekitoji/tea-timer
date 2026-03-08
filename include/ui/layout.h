@@ -28,10 +28,6 @@ constexpr int UI_HEADER_LINE_Y = 15;
 // Info / Wi-Fi
 constexpr int INFO_ROW1_Y = UI_HEADER_LINE_Y + 2;
 constexpr int INFO_ROW_STEP_Y = 10;
-constexpr int WIFI_LIST_START_Y = 18;
-constexpr int WIFI_LIST_STEP_Y = 10;
-constexpr int WIFI_EMPTY_Y = 22;
-constexpr int WIFI_SCAN_MSG_Y = 23;
 
 // Session complete
 constexpr int SESSION_COMPLETE_TITLE_X = 8;

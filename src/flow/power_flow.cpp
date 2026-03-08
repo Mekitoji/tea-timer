@@ -5,6 +5,7 @@
 #include <app/app_state.h>
 #include <driver/gpio.h>
 #include <esp_sleep.h>
+#include <flow/wifi_flow.h>
 #include <hw/pins.h>
 
 namespace {
@@ -48,6 +49,15 @@ void markUserActivity() {
 void updatePowerSaving() {
   if (!powerSavingEnabled)
     return;
+
+  if (currentScreen == SCREEN_WIFI && wifiProvisionIsActive()) {
+    lastActivityMs = millis();
+    if (displaySleeping) {
+      display.ssd1306_command(SSD1306_DISPLAYON);
+      displaySleeping = false;
+    }
+    return;
+  }
 
   if (lastActivityMs == 0)
     lastActivityMs = millis();

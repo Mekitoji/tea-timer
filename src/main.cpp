@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <esp_system.h>
 #include <app/app_config.h>
 #include <app/app_controller.h>
 #include <app/app_state.h>
@@ -7,12 +8,18 @@
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
 #include <flow/timer_flow.h>
+#include <flow/wifi_flow.h>
 #include <hw/display_config.h>
 #include <hw/input.h>
 #include <hw/pins.h>
 #include <ui.h>
 
 void setup() {
+  Serial.begin(115200);
+  delay(80);
+  Serial.printf("[boot] setup reset_reason=%d\n",
+                static_cast<int>(esp_reset_reason()));
+
   Wire.begin(SDA_PIN, SCL_PIN);
   display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   display.setRotation(0);
@@ -40,6 +47,8 @@ void setup() {
   applyTimerPresetSec(savedDuration);
   resetSingleTimerRuntimeState();
 
+  wifiInitOnBoot();
+
   drawMenu();
 
   initPowerSaving();
@@ -52,11 +61,13 @@ void loop() {
   handleBackButton();
   handleSelectButton();
   handleSessionLongPress();
+  handleWiFiLongPress();
   handleTimerButton();
   if (currentScreen == SCREEN_WIFI) {
     updateWiFiScreen();
   }
   updateSingleTimer();
   updateSessionRun();
+  wifiMaintainConnection();
   updatePowerSaving();
 }

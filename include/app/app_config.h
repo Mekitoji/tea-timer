@@ -21,8 +21,11 @@ inline constexpr int ENC_STEP_FAST = 10;
 
 inline constexpr unsigned long SESSION_HOLD_MS = 1200;
 inline constexpr unsigned long SESSION_RELEASE_SETTLE_MS = 10;
+inline constexpr unsigned long WIFI_HOLD_MS = 1200;
 
 inline constexpr unsigned long DISPLAY_IDLE_OFF_MS = 60000;
 inline constexpr bool ENABLE_LIGHT_SLEEP = true;
 inline constexpr unsigned long LIGHT_SLEEP_IDLE_MS = 120000;
+
+inline constexpr unsigned long WIFI_RECONNECT_INTERVAL_MS = 8000;
 } // namespace appcfg

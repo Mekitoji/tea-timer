@@ -27,6 +27,12 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
   - idle OLED off,
   - optional ESP32 light sleep on longer idle,
   - first wake input is consumed
+- Phone Wi-Fi provisioning (BLE-first via `WiFiProv`):
+  - single screen `Settings -> WiFi` (no separate status screen),
+  - if credentials are missing: BLE setup mode is shown (`PROV_xxxxxx`, POP),
+  - if credentials exist: current STA status/SSID/IP/RSSI is shown,
+  - long press on Wi-Fi screen opens `Reset Wi-Fi?` confirm (`No/Yes`),
+  - selecting `Yes` clears saved STA config and switches to BLE setup.
 - Non-blocking input handling with debounce and encoder quadrature decoding.
 - Explicit FSM layers:
   - `TimerState`: `Stopped/Running/Paused`,
@@ -65,13 +71,13 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
 pio run
 ```
 
-2. Flash the board:
+1. Flash the board:
 
 ```bash
 pio run -t upload
 ```
 
-3. Open Serial Monitor (`115200`):
+1. Open Serial Monitor (`115200`):
 
 ```bash
 pio device monitor -b 115200
@@ -83,6 +89,24 @@ If needed, specify the port manually:
 pio run -t upload --upload-port <PORT>
 pio device monitor -b 115200 --port <PORT>
 ```
+
+## Wi-Fi Setup (Phone, BLE)
+
+`SoftAP provisioning for this hardware setup was unstable in practice (AP visibility/connection drops), so BLE provisioning is the primary and supported flow.`
+
+1. On device open `Settings -> Wi-Fi`.
+2. Open Espressif provisioning app on phone (`ESP BLE Provisioning` / `ESP SoftAP Provisioning`).
+3. Choose BLE transport and select device name shown on timer screen (`PROV_xxxxxx`).
+4. Enter POP `teatimer`.
+5. Enter your home `SSID` and `Password`, then submit.
+6. Wait for device status `CONNECTED` and verify shown STA IP.
+
+Notes:
+
+- If Wi-Fi credentials already exist, the same screen shows connection status instead of setup prompt.
+- `Back` exits Wi-Fi screen.
+- Saved credentials are reused on next boot (best-effort reconnect).
+- To reprovision, long-press on Wi-Fi screen, confirm reset, then run BLE setup again.
 
 ## Project Structure
 
@@ -97,6 +121,7 @@ pio device monitor -b 115200 --port <PORT>
 - `src/flow/menu_flow.cpp` — main menu actions and screen transitions.
 - `src/flow/timer_flow.cpp` — single timer runtime logic.
 - `src/flow/session_flow.cpp` — session runtime logic.
+- `src/flow/wifi_flow.cpp` — Wi-Fi provisioning state machine (BLE-first via `WiFiProv`).
 - `src/flow/power_flow.cpp` — idle display off/light sleep and wake-guard logic.
 - `src/ui/*.cpp` — UI rendering split by domain:
   - `ui/menu.cpp`
@@ -111,4 +136,5 @@ pio device monitor -b 115200 --port <PORT>
 - `include/app/session_state.h` — `SessionState` declarations.
 - `include/flow/timer_flow.h` — timer flow API.
 - `include/flow/session_flow.h` — session flow API.
+- `include/flow/wifi_flow.h` — Wi-Fi provisioning flow API.
 - `include/flow/power_flow.h` — power-saving flow API.

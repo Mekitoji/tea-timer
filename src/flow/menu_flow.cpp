@@ -37,7 +37,6 @@ void handleMenuSelect() {
 void handleSettingsSelect() {
   if (settingsSelected == SETTINGS_WIFI) {
     currentScreen = SCREEN_WIFI;
-    wifiCount = 0;
     drawWiFi();
   } else if (settingsSelected == SETTINGS_ABOUT) {
     currentScreen = SCREEN_ABOUT;
