@@ -5,9 +5,9 @@
 #include <app/app_state.h>
 #include <app/session_presets.h>
 #include <app/tea_config.h>
+#include <flow/audio_profile_flow.h>
 #include <flow/navigation_flow.h>
-#include <hw/audio.h>
-#include <hw/pins.h>
+#include <hw/feedback.h>
 #include <ui.h>
 
 namespace {
@@ -38,7 +38,8 @@ int stepSecAt(int index) {
 bool hasCurrentSessionStep() {
   if (app.session.rinseActive && app.session.rinseSec > 0)
     return true;
-  return app.session.stepIndex >= 0 && app.session.stepIndex < app.session.stepCount;
+  return app.session.stepIndex >= 0 &&
+         app.session.stepIndex < app.session.stepCount;
 }
 
 void applyCurrentStepFromModel() {
@@ -205,8 +206,8 @@ void updateSessionRun() {
 
     int stepSec = app.session.stepDurationSec;
     if (stepSec <= 0) {
-      stepSec =
-          app.session.rinseActive ? app.session.rinseSec : stepSecAt(app.session.stepIndex);
+      stepSec = app.session.rinseActive ? app.session.rinseSec
+                                        : stepSecAt(app.session.stepIndex);
     }
     if (stepSec < MIN_TIME)
       stepSec = MIN_TIME;
@@ -225,30 +226,26 @@ void updateSessionRun() {
       drawSessionRun(remaining);
 
       if (isSessionRunning() && remaining <= 3 && remaining > 0) {
-        digitalWrite(LED_PIN, HIGH);
-        beep(2200, 60);
-        digitalWrite(LED_PIN, LOW);
+        pulseLedAndSound(audioProfileCountdownFreq(),
+                         audioProfileBeepDurationMs(),
+                         app.audio.soundEnabled);
       }
     }
 
     if (isSessionRunning() && remaining == 0) {
       for (int i = 0; i < 2; i++) {
-        digitalWrite(LED_PIN, HIGH);
-        buzzerOn(2500);
-        delay(70);
-        buzzerOff();
-        digitalWrite(LED_PIN, LOW);
+        pulseLedAndSound(audioProfileSessionStepDoneFreq(),
+                         audioProfileBeepDurationMs(),
+                         app.audio.soundEnabled);
         delay(120);
       }
 
       setSessionStatePaused();
       if (!advanceToNextSessionStep()) {
         for (int i = 0; i < 3; i++) {
-          digitalWrite(LED_PIN, HIGH);
-          buzzerOn(3000);
-          delay(120);
-          buzzerOff();
-          digitalWrite(LED_PIN, LOW);
+          pulseLedAndSound(audioProfileSessionDoneFreq(),
+                           audioProfileBeepDurationMs(),
+                           app.audio.soundEnabled);
           delay(160);
         }
 
@@ -280,8 +277,8 @@ void sessionToggleRunPauseAt(unsigned long nowMs) {
   if (isSessionRunning()) {
     int stepSec = app.session.stepDurationSec;
     if (stepSec <= 0) {
-      stepSec =
-          app.session.rinseActive ? app.session.rinseSec : stepSecAt(app.session.stepIndex);
+      stepSec = app.session.rinseActive ? app.session.rinseSec
+                                        : stepSecAt(app.session.stepIndex);
     }
     if (stepSec < MIN_TIME)
       stepSec = MIN_TIME;

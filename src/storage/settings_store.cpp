@@ -22,6 +22,14 @@ int clampTimerDuration(int seconds) {
     return MAX_TIME;
   return seconds;
 }
+
+BeepProfile clampBeepProfile(int raw) {
+  if (raw < static_cast<int>(BeepProfile::Soft))
+    return BeepProfile::Soft;
+  if (raw > static_cast<int>(BeepProfile::Loud))
+    return BeepProfile::Loud;
+  return static_cast<BeepProfile>(raw);
+}
 } // namespace
 
 void settingsStoreBegin() { ensureInitialized(); }
@@ -47,4 +55,27 @@ bool settingsStoreLoadPowerSaveEnabled() {
 void settingsStoreSavePowerSaveEnabled(bool enabled) {
   ensureInitialized();
   prefs.putBool(appcfg::PREFS_POWER_SAVE_KEY, enabled);
+}
+
+BeepProfile settingsStoreLoadBeepProfile() {
+  ensureInitialized();
+  int raw = prefs.getInt(appcfg::PREFS_BEEP_PROFILE_KEY,
+                         static_cast<int>(appcfg::DEFAULT_BEEP_PROFILE));
+  return clampBeepProfile(raw);
+}
+
+void settingsStoreSaveBeepProfile(BeepProfile profile) {
+  ensureInitialized();
+  prefs.putInt(appcfg::PREFS_BEEP_PROFILE_KEY, static_cast<int>(profile));
+}
+
+bool settingsStoreLoadSoundEnabled() {
+  ensureInitialized();
+  return prefs.getBool(appcfg::PREFS_SOUND_ENABLED_KEY,
+                       appcfg::DEFAULT_SOUND_ENABLED);
+}
+
+void settingsStoreSaveSoundEnabled(bool enabled) {
+  ensureInitialized();
+  prefs.putBool(appcfg::PREFS_SOUND_ENABLED_KEY, enabled);
 }

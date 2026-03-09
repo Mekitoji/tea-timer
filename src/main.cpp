@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <app/app_config.h>
 #include <app/app_controller.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
@@ -40,6 +39,9 @@ void setup() {
   app.power.enabled = settingsStoreLoadPowerSaveEnabled();
   app.power.editEnabled = app.power.enabled;
   setPowerSavingEnabled(app.power.enabled);
+
+  app.audio.profile = settingsStoreLoadBeepProfile();
+  app.audio.soundEnabled = settingsStoreLoadSoundEnabled();
 
   int savedDuration = settingsStoreLoadTimerDurationSec();
   applyTimerPresetSec(savedDuration);

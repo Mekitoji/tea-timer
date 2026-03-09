@@ -1,6 +1,9 @@
 #pragma once
 
-#include <ui/info.h>
 #include <ui/menu.h>
+#include <ui/settings/about.h>
+#include <ui/settings/power_save.h>
+#include <ui/settings/sound.h>
+#include <ui/settings/wifi.h>
 #include <ui/session.h>
 #include <ui/timer.h>

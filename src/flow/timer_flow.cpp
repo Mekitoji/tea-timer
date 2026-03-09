@@ -4,8 +4,8 @@
 #include <app/app_config.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
-#include <hw/audio.h>
-#include <hw/pins.h>
+#include <flow/audio_profile_flow.h>
+#include <hw/feedback.h>
 #include <storage/settings_store.h>
 #include <ui.h>
 
@@ -99,18 +99,16 @@ void updateSingleTimer() {
       drawTimerScreen("Timer", remaining, app.timer.timerTotalSec);
 
       if (remaining <= 3 && remaining > 0) {
-        digitalWrite(LED_PIN, HIGH);
-        beep(2200, 60);
-        digitalWrite(LED_PIN, LOW);
+        pulseLedAndSound(audioProfileCountdownFreq(),
+                         audioProfileBeepDurationMs(),
+                         app.audio.soundEnabled);
       }
 
       if (remaining == 0) {
         for (int i = 0; i < 3; i++) {
-          digitalWrite(LED_PIN, HIGH);
-          buzzerOn(2600);
-          delay(80);
-          buzzerOff();
-          digitalWrite(LED_PIN, LOW);
+          pulseLedAndSound(audioProfileTimerDoneFreq(),
+                           audioProfileBeepDurationMs(),
+                           app.audio.soundEnabled);
           delay(120);
         }
         timerLongResetToPreset();

@@ -5,9 +5,3 @@
 
 void buzzerOn(int freq) { tone(BUZZER_PIN, freq); }
 void buzzerOff() { noTone(BUZZER_PIN); }
-
-void beep(int freq, int ms) {
-  buzzerOn(freq);
-  delay(ms);
-  buzzerOff();
-}

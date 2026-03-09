@@ -1,4 +1,4 @@
-#include <ui/info.h>
+#include <ui/settings/wifi.h>
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -206,32 +206,7 @@ void drawWiFiScreen() {
 
   display.display();
 }
-
 } // namespace
-
-void drawAbout() {
-  display.clearDisplay();
-  drawHeader("About Device");
-
-  display.setCursor(0, ui::layout::INFO_ROW1_Y);
-  display.print("Chip: ESP32-C3");
-
-  display.setCursor(0, ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y);
-  display.print("Flash: ");
-  display.print(ESP.getFlashChipSize() / 1024 / 1024);
-  display.print("MB");
-
-  display.setCursor(0,
-                    ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 2);
-  display.print("Heap: ");
-  display.print(ESP.getFreeHeap());
-
-  display.setCursor(0,
-                    ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 3);
-  display.print("FW: v1.0.0");
-
-  display.display();
-}
 
 void updateWiFiScreen() {
   bool hasSaved = wifiProvisionHasSavedCredentials();
@@ -247,21 +222,6 @@ void updateWiFiScreen() {
     drawWiFiScreen();
     wifiLastDrawMs = now;
   }
-}
-
-void drawPowerSave(bool enabled) {
-  display.clearDisplay();
-  drawHeader("Power Save");
-
-  display.setTextSize(1);
-  display.setCursor(0, 18);
-  display.print("Mode:");
-
-  display.drawRect(44, 16, 36, 12, SSD1306_WHITE);
-  display.setCursor(52, 18);
-  display.print(enabled ? "ON" : "OFF");
-
-  display.display();
 }
 
 void drawWiFi() {

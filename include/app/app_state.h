@@ -2,6 +2,7 @@
 
 #include <Adafruit_SSD1306.h>
 
+#include <app/app_config.h>
 #include <app/confirm_state.h>
 #include <app/session_presets.h>
 #include <app/session_state.h>
@@ -23,12 +24,18 @@ enum ScreenState {
   SCREEN_TIMER,
   SCREEN_SESSION_PRESET,
   SCREEN_SESSION_RUN,
-  SCREEN_POWER_SAVE
+  SCREEN_POWER_SAVE,
+  SCREEN_SOUND
 };
 
 enum MenuIndex { MENU_SESSION, MENU_TIMER, MENU_SETTINGS };
 
-enum SettingsMenuIndex { SETTINGS_WIFI, SETTINGS_POWER_SAVE, SETTINGS_ABOUT };
+enum SettingsMenuIndex {
+  SETTINGS_WIFI,
+  SETTINGS_POWER_SAVE,
+  SETTINGS_SOUND,
+  SETTINGS_ABOUT
+};
 
 extern ScreenState currentScreen;
 
@@ -57,14 +64,25 @@ struct WiFiStateModel {
   ConfirmState resetConfirm;
 };
 
-struct UiStateModel {
-  int menuSelected = 0;
-  int settingsSelected = 0;
-};
-
 struct PowerStateModel {
   bool enabled = false;
   bool editEnabled = false;
+};
+
+enum class SoundRow : uint8_t { Enabled = 0, Profile = 1 };
+
+struct AudioStateModel {
+  BeepProfile profile = BeepProfile::Normal;
+  bool soundEnabled = true;
+};
+
+struct UiStateModel {
+  int menuSelected = 0;
+  int settingsSelected = 0;
+
+  bool soundEditMode = false;
+  SoundRow soundSelected = SoundRow::Enabled;
+  AudioStateModel soundDraft;
 };
 
 struct AppState {
@@ -73,6 +91,7 @@ struct AppState {
   WiFiStateModel wifi;
   UiStateModel ui;
   PowerStateModel power;
+  AudioStateModel audio;
 };
 
 extern AppState app;

@@ -3,6 +3,7 @@
 #include <app/app_state.h>
 #include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
+#include <flow/sound_settings_flow.h>
 #include <storage/settings_store.h>
 #include <ui.h>
 
@@ -12,6 +13,10 @@ void handleSettingsSelect() {
     showWiFiScreen();
   } else if (app.ui.settingsSelected == SETTINGS_ABOUT) {
     showAboutScreen();
+  } else if (app.ui.settingsSelected == SETTINGS_SOUND) {
+    soundSettingsEnter();
+    showSoundScreen();
+    return;
   } else if (app.ui.settingsSelected == SETTINGS_POWER_SAVE) {
     showPowerSaveScreen();
     return;
@@ -27,6 +32,11 @@ bool handleSettingsEncoderInput(bool stepPlus, bool stepMinus) {
     if (app.ui.settingsSelected >= settingsMenuCount)
       app.ui.settingsSelected = 0;
     drawSettingsMenu();
+    return true;
+  }
+
+  if (currentScreen == SCREEN_SOUND) {
+    soundSettingsHandleEncoder(stepPlus, stepMinus);
     return true;
   }
 
@@ -50,6 +60,11 @@ bool handleSettingsSelectInput() {
     return true;
   }
 
+  if (currentScreen == SCREEN_SOUND) {
+    soundSettingsHandleSelect();
+    return true;
+  }
+
   if (currentScreen == SCREEN_POWER_SAVE) {
     app.power.enabled = app.power.editEnabled;
     setPowerSavingEnabled(app.power.enabled);
@@ -69,6 +84,11 @@ bool handleSettingsBackInput() {
 
   if (currentScreen == SCREEN_SETTINGS) {
     showMenuScreen();
+    return true;
+  }
+
+  if (currentScreen == SCREEN_SOUND) {
+    soundSettingsHandleBack();
     return true;
   }
 
