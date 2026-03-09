@@ -9,6 +9,13 @@ enum class WifiProvisionUiState {
   NotSupported,
 };
 
+enum class WifiProvisionFailReason {
+  None,
+  AuthError,
+  ApNotFound,
+  Unknown,
+};
+
 void wifiProvisionStart();
 void wifiProvisionStop();
 void wifiProvisionUpdate();
@@ -19,8 +26,7 @@ void wifiMaintainConnection();
 bool wifiProvisionIsActive();
 WifiProvisionUiState wifiProvisionState();
 
-const char *wifiProvisionStatusText();
-const char *wifiProvisionFailureReasonText();
+WifiProvisionFailReason wifiProvisionFailureReason();
 const char *wifiProvisionApSsid();
 const char *wifiProvisionPop();
 const char *wifiProvisionStaSsid();

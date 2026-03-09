@@ -11,26 +11,16 @@
 #include <wifi_provisioning/manager.h>
 
 namespace {
-enum class WifiProvisionState {
-  Idle,
-  WaitingCredentials,
-  Connecting,
-  Connected,
-  Failed,
-  NotSupported,
-};
-
 #define WIFI_LOG(fmt, ...) Serial.printf("[wifi] " fmt "\n", ##__VA_ARGS__)
 
 constexpr char PROV_POP[] = "teatimer";
 
-WifiProvisionState provisionState = WifiProvisionState::Idle;
+WifiProvisionUiState provisionState = WifiProvisionUiState::Idle;
+WifiProvisionFailReason provisionFailReason = WifiProvisionFailReason::None;
 
 char serviceNameBuf[32] = "PROV_TEA";
 char staSsidBuf[33] = "";
 char staIpBuf[24] = "";
-char statusBuf[24] = "IDLE";
-char failReasonBuf[24] = "";
 
 char pendingSsid[33] = "";
 
@@ -50,40 +40,22 @@ void copyToBuf(char *dst, size_t dstSize, const char *src) {
   std::snprintf(dst, dstSize, "%s", src);
 }
 
-void setState(WifiProvisionState next) {
+void setState(WifiProvisionUiState next) {
   provisionState = next;
-  if (provisionState != WifiProvisionState::Failed) {
-    failReasonBuf[0] = '\0';
+
+  if (provisionState != WifiProvisionUiState::Failed) {
+    provisionFailReason = WifiProvisionFailReason::None;
   }
 
-  switch (provisionState) {
-  case WifiProvisionState::Idle:
-    std::snprintf(statusBuf, sizeof(statusBuf), "IDLE");
-    break;
-  case WifiProvisionState::WaitingCredentials:
-    std::snprintf(statusBuf, sizeof(statusBuf), "BLE_WAIT");
-    break;
-  case WifiProvisionState::Connecting:
-    std::snprintf(statusBuf, sizeof(statusBuf), "CONNECTING");
-    break;
-  case WifiProvisionState::Connected:
-    std::snprintf(statusBuf, sizeof(statusBuf), "CONNECTED");
-    break;
-  case WifiProvisionState::Failed:
-    std::snprintf(statusBuf, sizeof(statusBuf), "FAILED");
-    break;
-  case WifiProvisionState::NotSupported:
-    std::snprintf(statusBuf, sizeof(statusBuf), "NO_BLE");
-    break;
-  }
-
-  WIFI_LOG("state=%s", statusBuf);
+  WIFI_LOG("state=%d", static_cast<int>(provisionState));
 }
 
 bool hasSystemStaCredentials() {
   wifi_config_t conf = {};
+
   if (esp_wifi_get_config(WIFI_IF_STA, &conf) != ESP_OK)
     return false;
+
   return conf.sta.ssid[0] != '\0';
 }
 
@@ -107,7 +79,7 @@ void onProvisionEvent(arduino_event_t *event) {
   switch (event->event_id) {
   case ARDUINO_EVENT_PROV_START:
     provisioningSessionActive = true;
-    setState(WifiProvisionState::WaitingCredentials);
+    setState(WifiProvisionUiState::WaitingCredentials);
     WIFI_LOG("prov_start name=%s", serviceNameBuf);
     break;
 
@@ -116,28 +88,28 @@ void onProvisionEvent(arduino_event_t *event) {
         pendingSsid, sizeof(pendingSsid),
         reinterpret_cast<const char *>(event->event_info.prov_cred_recv.ssid));
     copyToBuf(staSsidBuf, sizeof(staSsidBuf), pendingSsid);
-    setState(WifiProvisionState::Connecting);
+    setState(WifiProvisionUiState::Connecting);
     WIFI_LOG("cred_recv ssid='%s'", pendingSsid);
     break;
 
   case ARDUINO_EVENT_PROV_CRED_FAIL:
     if (event->event_info.prov_fail_reason == WIFI_PROV_STA_AUTH_ERROR) {
-      copyToBuf(failReasonBuf, sizeof(failReasonBuf), "AUTH_ERR");
+      provisionFailReason = WifiProvisionFailReason::AuthError;
     } else if (event->event_info.prov_fail_reason ==
                WIFI_PROV_STA_AP_NOT_FOUND) {
-      copyToBuf(failReasonBuf, sizeof(failReasonBuf), "AP_NOT_FOUND");
+      provisionFailReason = WifiProvisionFailReason::ApNotFound;
     } else {
-      copyToBuf(failReasonBuf, sizeof(failReasonBuf), "UNKNOWN");
+      provisionFailReason = WifiProvisionFailReason::Unknown;
     }
-    setState(WifiProvisionState::Failed);
+
+    setState(WifiProvisionUiState::Failed);
     wifi_prov_mgr_reset_sm_state_on_failure();
-    WIFI_LOG("cred_fail reason=%d (%s)",
-             static_cast<int>(event->event_info.prov_fail_reason),
-             failReasonBuf);
+    WIFI_LOG("cred_fail reason=%d",
+             static_cast<int>(event->event_info.prov_fail_reason));
     break;
 
   case ARDUINO_EVENT_PROV_CRED_SUCCESS:
-    setState(WifiProvisionState::Connecting);
+    setState(WifiProvisionUiState::Connecting);
     WIFI_LOG("cred_success");
     break;
 
@@ -153,15 +125,15 @@ void onProvisionEvent(arduino_event_t *event) {
     refreshSavedCredentialsFlag();
 
     provisioningSessionActive = false;
-    setState(WifiProvisionState::Connected);
+    setState(WifiProvisionUiState::Connected);
     WIFI_LOG("got_ip ip=%s", staIpBuf);
     break;
   }
 
   case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-    if (provisionState == WifiProvisionState::Connected ||
-        provisionState == WifiProvisionState::Connecting) {
-      setState(WifiProvisionState::Connecting);
+    if (provisionState == WifiProvisionUiState::Connected ||
+        provisionState == WifiProvisionUiState::Connecting) {
+      setState(WifiProvisionUiState::Connecting);
     }
     WIFI_LOG("sta_disconnected");
     break;
@@ -260,7 +232,7 @@ void wifiProvisionStart() {
 #if CONFIG_BLUEDROID_ENABLED
   provisioningSessionActive = true;
 
-  setState(WifiProvisionState::WaitingCredentials);
+  setState(WifiProvisionUiState::WaitingCredentials);
 
   WiFiProv.beginProvision(
       WIFI_PROV_SCHEME_BLE, WIFI_PROV_SCHEME_HANDLER_FREE_BTDM,
@@ -269,7 +241,7 @@ void wifiProvisionStart() {
   WIFI_LOG("ble_started name=%s", serviceNameBuf);
 #else
   provisioningSessionActive = false;
-  setState(WifiProvisionState::NotSupported);
+  setState(WifiProvisionUiState::NotSupported);
   WIFI_LOG("ble_not_supported");
 #endif
 }
@@ -284,7 +256,7 @@ void wifiResetCredentialsAndStartProvisioning() {
   WiFi.disconnect(true, true);
   clearRuntimeBuffers();
   provisioningSessionActive = false;
-  setState(WifiProvisionState::Idle);
+  setState(WifiProvisionUiState::Idle);
   refreshSavedCredentialsFlag();
   wifiProvisionStart();
 }
@@ -297,11 +269,11 @@ void wifiProvisionStop() {
 #endif
 
   provisioningSessionActive = false;
-  setState(WifiProvisionState::Idle);
+  setState(WifiProvisionUiState::Idle);
 }
 
 void wifiProvisionUpdate() {
-  if (provisionState != WifiProvisionState::Connecting)
+  if (provisionState != WifiProvisionUiState::Connecting)
     return;
 
   if (WiFi.status() == WL_CONNECTED) {
@@ -313,38 +285,22 @@ void wifiProvisionUpdate() {
       copyToBuf(staSsidBuf, sizeof(staSsidBuf), connectedSsid.c_str());
     }
     provisioningSessionActive = false;
-    setState(WifiProvisionState::Connected);
+    setState(WifiProvisionUiState::Connected);
     return;
   }
 }
 
 bool wifiProvisionIsActive() {
   return provisioningSessionActive ||
-         provisionState == WifiProvisionState::WaitingCredentials ||
-         provisionState == WifiProvisionState::Connecting;
+         provisionState == WifiProvisionUiState::WaitingCredentials ||
+         provisionState == WifiProvisionUiState::Connecting;
 }
 
-WifiProvisionUiState wifiProvisionState() {
-  switch (provisionState) {
-  case WifiProvisionState::Idle:
-    return WifiProvisionUiState::Idle;
-  case WifiProvisionState::WaitingCredentials:
-    return WifiProvisionUiState::WaitingCredentials;
-  case WifiProvisionState::Connecting:
-    return WifiProvisionUiState::Connecting;
-  case WifiProvisionState::Connected:
-    return WifiProvisionUiState::Connected;
-  case WifiProvisionState::Failed:
-    return WifiProvisionUiState::Failed;
-  case WifiProvisionState::NotSupported:
-    return WifiProvisionUiState::NotSupported;
-  }
-  return WifiProvisionUiState::Idle;
+WifiProvisionUiState wifiProvisionState() { return provisionState; }
+
+WifiProvisionFailReason wifiProvisionFailureReason() {
+  return provisionFailReason;
 }
-
-const char *wifiProvisionStatusText() { return statusBuf; }
-
-const char *wifiProvisionFailureReasonText() { return failReasonBuf; }
 
 const char *wifiProvisionApSsid() { return serviceNameBuf; }
 

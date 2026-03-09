@@ -69,6 +69,38 @@ void drawWiFiResetConfirmOverlay() {
   }
 }
 
+const char *provisionStateText(WifiProvisionUiState state) {
+  switch (state) {
+  case WifiProvisionUiState::Idle:
+    return "IDLE";
+  case WifiProvisionUiState::WaitingCredentials:
+    return "BLE_WAIT";
+  case WifiProvisionUiState::Connecting:
+    return "CONNECTING";
+  case WifiProvisionUiState::Connected:
+    return "CONNECTED";
+  case WifiProvisionUiState::Failed:
+    return "FAILED";
+  case WifiProvisionUiState::NotSupported:
+    return "NO_BLE";
+  }
+  return "IDLE";
+}
+
+const char *provisionFailReasonText(WifiProvisionFailReason reason) {
+  switch (reason) {
+  case WifiProvisionFailReason::AuthError:
+    return "AUTH_ERR";
+  case WifiProvisionFailReason::ApNotFound:
+    return "AP_NOT_FOUND";
+  case WifiProvisionFailReason::Unknown:
+    return "UNKNOWN";
+  case WifiProvisionFailReason::None:
+  default:
+    return "RETRY";
+  }
+}
+
 void drawWiFiScreen() {
   bool hasSaved = wifiProvisionHasSavedCredentials();
   bool setupMode = !hasSaved;
@@ -85,7 +117,8 @@ void drawWiFiScreen() {
   bool hasCachedIp = (cachedIp && cachedIp[0] != '\0');
 
   display.clearDisplay();
-  drawHeader("Wi-Fi", setupMode ? setupBadge() : staBadge(connected ? WL_CONNECTED : sta));
+  drawHeader("Wi-Fi", setupMode ? setupBadge()
+                                : staBadge(connected ? WL_CONNECTED : sta));
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
 
@@ -122,7 +155,7 @@ void drawWiFiScreen() {
                     ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 2);
   if (setupMode) {
     display.print("State: ");
-    display.print(wifiProvisionStatusText());
+    display.print(provisionStateText(pstate));
   } else {
     display.print("State: ");
     if (connected) {
@@ -136,9 +169,10 @@ void drawWiFiScreen() {
                     ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 3);
   if (setupMode) {
     if (pstate == WifiProvisionUiState::Failed) {
-      const char *reason = wifiProvisionFailureReasonText();
+      const char *reason =
+          provisionFailReasonText(wifiProvisionFailureReason());
       display.print("Fail: ");
-      display.print((reason && reason[0]) ? reason : "RETRY");
+      display.print(reason);
     } else if (pstate == WifiProvisionUiState::NotSupported) {
       display.print("BLE not supported");
     } else {
@@ -172,6 +206,7 @@ void drawWiFiScreen() {
 
   display.display();
 }
+
 } // namespace
 
 void drawAbout() {
