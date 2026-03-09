@@ -7,6 +7,7 @@
 #include <flow/power_flow.h>
 #include <flow/timer_flow.h>
 #include <hw/pins.h>
+#include <storage/settings_store.h>
 #include <ui/menu.h>
 
 namespace {
@@ -44,7 +45,7 @@ bool handleTimerBackInput() {
   }
 
   applyTimerPresetSec(app.timer.timerTotalSec);
-  prefs.putInt(appcfg::PREFS_DURATION_KEY, app.timer.timerDuration);
+  settingsStoreSaveTimerDurationSec(app.timer.timerDuration);
   resetSingleTimerRuntimeState();
   app.timer.timerIgnoreReleaseAfterEnter = false;
   resetTimerLongPressFlowState();

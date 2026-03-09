@@ -1,9 +1,9 @@
 #include <controllers/settings_controller.h>
 
-#include <app/app_config.h>
 #include <app/app_state.h>
 #include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
+#include <storage/settings_store.h>
 #include <ui.h>
 
 namespace {
@@ -53,7 +53,7 @@ bool handleSettingsSelectInput() {
   if (currentScreen == SCREEN_POWER_SAVE) {
     app.power.enabled = app.power.editEnabled;
     setPowerSavingEnabled(app.power.enabled);
-    prefs.putBool(appcfg::PREFS_POWER_SAVE_KEY, app.power.enabled);
+    settingsStoreSavePowerSaveEnabled(app.power.enabled);
     showSettingsScreen();
     return true;
   }

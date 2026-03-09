@@ -12,6 +12,7 @@
 #include <hw/display_config.h>
 #include <hw/input.h>
 #include <hw/pins.h>
+#include <storage/settings_store.h>
 #include <ui.h>
 
 void setup() {
@@ -35,15 +36,12 @@ void setup() {
   pinMode(BUZZER_PIN, OUTPUT);
   digitalWrite(BUZZER_PIN, LOW);
 
-  // Load saved timer duration (NVS)
-  prefs.begin(appcfg::PREFS_NAMESPACE, false);
-  app.power.enabled = prefs.getBool(appcfg::PREFS_POWER_SAVE_KEY,
-                                   appcfg::DEFAULT_POWER_SAVE_ENABLED);
+  settingsStoreBegin();
+  app.power.enabled = settingsStoreLoadPowerSaveEnabled();
   app.power.editEnabled = app.power.enabled;
   setPowerSavingEnabled(app.power.enabled);
 
-  int savedDuration =
-      prefs.getInt(appcfg::PREFS_DURATION_KEY, appcfg::DEFAULT_TIMER_DURATION);
+  int savedDuration = settingsStoreLoadTimerDurationSec();
   applyTimerPresetSec(savedDuration);
   resetSingleTimerRuntimeState();
 

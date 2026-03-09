@@ -6,6 +6,7 @@
 #include <app/tea_config.h>
 #include <hw/audio.h>
 #include <hw/pins.h>
+#include <storage/settings_store.h>
 #include <ui.h>
 
 namespace {
@@ -45,7 +46,7 @@ void resetSingleTimerRuntimeState() {
 
 void timerLongResetToPreset() {
   applyTimerPresetSec(app.timer.timerTotalSec);
-  prefs.putInt(appcfg::PREFS_DURATION_KEY, app.timer.timerDuration);
+  settingsStoreSaveTimerDurationSec(app.timer.timerDuration);
   resetSingleTimerRuntimeState();
   drawTimerScreen("Timer", app.timer.editTimeValue, app.timer.timerTotalSec);
 }
