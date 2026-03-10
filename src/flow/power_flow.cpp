@@ -13,6 +13,7 @@ unsigned long lastActivityMs = 0;
 bool displaySleeping = false;
 bool powerSavingEnabled = appcfg::DEFAULT_POWER_SAVE_ENABLED;
 unsigned long wakeInputGuardUntilMs = 0;
+unsigned long displayIdleOffTimeoutMs = appcfg::DEFAULT_DISPLAY_IDLE_OFF_MS;
 } // namespace
 
 bool canEnterLightSleep() {
@@ -73,7 +74,7 @@ void updatePowerSaving() {
 
   unsigned long idleMs = millis() - lastActivityMs;
 
-  if (!displaySleeping && idleMs >= appcfg::DISPLAY_IDLE_OFF_MS) {
+  if (!displaySleeping && idleMs >= displayIdleOffTimeoutMs) {
     display.ssd1306_command(SSD1306_DISPLAYOFF);
     displaySleeping = true;
   }
@@ -124,3 +125,15 @@ void setPowerSavingEnabled(bool enabled) {
 }
 
 bool isPowerSavingEnabled() { return powerSavingEnabled; }
+
+void setDisplayIdleOffTimeoutMs(unsigned long timeoutMs) {
+  if (timeoutMs < appcfg::MIN_DISPLAY_IDLE_OFF_MS)
+    timeoutMs = appcfg::MIN_DISPLAY_IDLE_OFF_MS;
+  if (timeoutMs > appcfg::MAX_DISPLAY_IDLE_OFF_MS)
+    timeoutMs = appcfg::MAX_DISPLAY_IDLE_OFF_MS;
+
+  displayIdleOffTimeoutMs = timeoutMs;
+  lastActivityMs = millis();
+}
+
+unsigned long getDisplayIdleOffTimeoutMs() { return displayIdleOffTimeoutMs; }

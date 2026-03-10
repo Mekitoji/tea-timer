@@ -37,8 +37,10 @@ void setup() {
 
   settingsStoreBegin();
   app.power.enabled = settingsStoreLoadPowerSaveEnabled();
-  app.power.editEnabled = app.power.enabled;
+  app.power.displayOffTimeoutMs = settingsStoreLoadDisplayIdleOffMs();
+
   setPowerSavingEnabled(app.power.enabled);
+  setDisplayIdleOffTimeoutMs(app.power.displayOffTimeoutMs);
 
   app.audio.profile = settingsStoreLoadBeepProfile();
   app.audio.soundEnabled = settingsStoreLoadSoundEnabled();

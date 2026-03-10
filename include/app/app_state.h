@@ -64,9 +64,17 @@ struct WiFiStateModel {
   ConfirmState resetConfirm;
 };
 
+enum class PowerRow : uint8_t { Enabled = 0, Timeout = 1 };
+
 struct PowerStateModel {
   bool enabled = false;
-  bool editEnabled = false;
+  bool draftEnabled = false;
+
+  unsigned long displayOffTimeoutMs = appcfg::DEFAULT_DISPLAY_IDLE_OFF_MS;
+  unsigned long draftDisplayOffTimeoutMs = appcfg::DEFAULT_DISPLAY_IDLE_OFF_MS;
+
+  PowerRow selectedRow = PowerRow::Enabled;
+  bool editMode = false;
 };
 
 enum class SoundRow : uint8_t { Enabled = 0, Profile = 1 };

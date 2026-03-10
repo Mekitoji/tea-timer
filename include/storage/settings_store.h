@@ -15,3 +15,6 @@ void settingsStoreSaveBeepProfile(BeepProfile profile);
 
 bool settingsStoreLoadSoundEnabled();
 void settingsStoreSaveSoundEnabled(bool enabled);
+
+unsigned long settingsStoreLoadDisplayIdleOffMs();
+void settingsStoreSaveDisplayIdleOffMs(unsigned long ms);

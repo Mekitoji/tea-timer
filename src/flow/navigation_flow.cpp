@@ -1,6 +1,7 @@
 #include <flow/navigation_flow.h>
 
 #include <app/app_state.h>
+#include <flow/power_settings_flow.h>
 #include <flow/sound_settings_flow.h>
 #include <ui.h>
 
@@ -33,8 +34,7 @@ void showWiFiScreen() {
 
 void showPowerSaveScreen() {
   navigateTo(SCREEN_POWER_SAVE);
-  app.power.editEnabled = app.power.enabled;
-  drawPowerSave(app.power.editEnabled);
+  powerSettingsRender();
 }
 
 bool goBackAndRender() {

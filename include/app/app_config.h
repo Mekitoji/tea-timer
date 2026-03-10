@@ -25,7 +25,6 @@ inline constexpr int ENC_STEP_FAST = 10;
 inline constexpr unsigned long SESSION_HOLD_MS = 1200;
 inline constexpr unsigned long WIFI_HOLD_MS = 1200;
 
-inline constexpr unsigned long DISPLAY_IDLE_OFF_MS = 60000;
 inline constexpr bool ENABLE_LIGHT_SLEEP = true;
 inline constexpr unsigned long LIGHT_SLEEP_IDLE_MS = 120000;
 
@@ -36,4 +35,10 @@ inline constexpr const char *PREFS_SOUND_ENABLED_KEY = "sound_enabled";
 
 inline constexpr BeepProfile DEFAULT_BEEP_PROFILE = BeepProfile::Normal;
 inline constexpr bool DEFAULT_SOUND_ENABLED = true;
+
+inline constexpr unsigned long DEFAULT_DISPLAY_IDLE_OFF_MS = 60000;
+inline constexpr unsigned long MIN_DISPLAY_IDLE_OFF_MS = 10000;
+inline constexpr unsigned long MAX_DISPLAY_IDLE_OFF_MS = 600000;
+
+inline constexpr const char *PREFS_DISPLAY_IDLE_OFF_MS_KEY = "disp_off_ms";
 } // namespace appcfg

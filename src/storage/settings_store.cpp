@@ -30,6 +30,16 @@ BeepProfile clampBeepProfile(int raw) {
     return BeepProfile::Loud;
   return static_cast<BeepProfile>(raw);
 }
+
+unsigned long clampDisplayIdleOffMs(unsigned long ms) {
+  if (ms < appcfg::MIN_DISPLAY_IDLE_OFF_MS) {
+    return appcfg::MIN_DISPLAY_IDLE_OFF_MS;
+  } else if (ms > appcfg::MAX_DISPLAY_IDLE_OFF_MS) {
+    return appcfg::MAX_DISPLAY_IDLE_OFF_MS;
+  }
+
+  return ms;
+}
 } // namespace
 
 void settingsStoreBegin() { ensureInitialized(); }
@@ -78,4 +88,18 @@ bool settingsStoreLoadSoundEnabled() {
 void settingsStoreSaveSoundEnabled(bool enabled) {
   ensureInitialized();
   prefs.putBool(appcfg::PREFS_SOUND_ENABLED_KEY, enabled);
+}
+
+unsigned long settingsStoreLoadDisplayIdleOffMs() {
+  ensureInitialized();
+  unsigned long value = prefs.getULong(appcfg::PREFS_DISPLAY_IDLE_OFF_MS_KEY,
+                                       appcfg::DEFAULT_DISPLAY_IDLE_OFF_MS);
+
+  return clampDisplayIdleOffMs(value);
+}
+
+void settingsStoreSaveDisplayIdleOffMs(unsigned long ms) {
+  ensureInitialized();
+  prefs.putULong(appcfg::PREFS_DISPLAY_IDLE_OFF_MS_KEY,
+                 clampDisplayIdleOffMs(ms));
 }

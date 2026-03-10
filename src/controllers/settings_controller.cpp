@@ -2,9 +2,8 @@
 
 #include <app/app_state.h>
 #include <flow/navigation_flow.h>
-#include <flow/power_flow.h>
+#include <flow/power_settings_flow.h>
 #include <flow/sound_settings_flow.h>
-#include <storage/settings_store.h>
 #include <ui.h>
 
 namespace {
@@ -18,6 +17,7 @@ void handleSettingsSelect() {
     showSoundScreen();
     return;
   } else if (app.ui.settingsSelected == SETTINGS_POWER_SAVE) {
+    powerSettingsEnter();
     showPowerSaveScreen();
     return;
   }
@@ -41,8 +41,7 @@ bool handleSettingsEncoderInput(bool stepPlus, bool stepMinus) {
   }
 
   if (currentScreen == SCREEN_POWER_SAVE) {
-    app.power.editEnabled = !app.power.editEnabled;
-    drawPowerSave(app.power.editEnabled);
+    powerSettingsHandleEncoder(stepPlus, stepMinus);
     return true;
   }
 
@@ -66,10 +65,7 @@ bool handleSettingsSelectInput() {
   }
 
   if (currentScreen == SCREEN_POWER_SAVE) {
-    app.power.enabled = app.power.editEnabled;
-    setPowerSavingEnabled(app.power.enabled);
-    settingsStoreSavePowerSaveEnabled(app.power.enabled);
-    showSettingsScreen();
+    powerSettingsHandleSelect();
     return true;
   }
 
@@ -77,8 +73,13 @@ bool handleSettingsSelectInput() {
 }
 
 bool handleSettingsBackInput() {
-  if (currentScreen == SCREEN_ABOUT || currentScreen == SCREEN_POWER_SAVE) {
+  if (currentScreen == SCREEN_ABOUT) {
     showSettingsScreen();
+    return true;
+  }
+
+  if (currentScreen == SCREEN_POWER_SAVE) {
+    powerSettingsHandleBack();
     return true;
   }
 
