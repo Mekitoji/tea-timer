@@ -22,11 +22,16 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
   - back button after completion: return to preset list,
   - completion screen at the end of session.
 - Runtime status labels in header (`RUNNING`, `PAUSED`, `STOP`/`READY`) with right-aligned header text.
-- Persistent timer preset via `Preferences` (NVS).
+- Persistent settings via `Preferences` (NVS): timer preset, power save mode/timeout, audio mode/profile.
 - Power Save mode (Settings):
+  - toggle `ON/OFF`,
+  - configurable display idle timeout (`15s / 30s / 60s / 120s / 300s`),
   - idle OLED off,
   - optional ESP32 light sleep on longer idle,
-  - first wake input is consumed
+  - first wake input is consumed.
+- Audio mode (Settings):
+  - toggle `ON/OFF`,
+  - beep profile selection (`Soft / Normal / Loud`).
 - Phone Wi-Fi provisioning (BLE-first via `WiFiProv`):
   - single screen `Settings -> WiFi` (no separate status screen),
   - if credentials are missing: BLE setup mode is shown (`PROV_xxxxxx`, POP),
@@ -110,31 +115,54 @@ Notes:
 
 ## Project Structure
 
-- `src/main.cpp` — app bootstrap (`setup/loop`) and module orchestration.
-- `src/app/app_state.cpp` — shared app state definitions.
-- `src/app/session_presets.cpp` — session preset definitions (steps + metadata).
-- `src/app/timer_state.cpp` — `TimerState` implementation.
-- `src/app/session_state.cpp` — `SessionState` implementation.
-- `src/app/app_controller.cpp` — input-driven screen/control handlers.
-- `src/hw/input.cpp` — encoder/buttons (debounced, non-blocking) + encoder acceleration helper.
-- `src/hw/audio.cpp` — buzzer helpers.
-- `src/flow/menu_flow.cpp` — main menu actions and screen transitions.
-- `src/flow/timer_flow.cpp` — single timer runtime logic.
-- `src/flow/session_flow.cpp` — session runtime logic.
-- `src/flow/wifi_flow.cpp` — Wi-Fi provisioning state machine (BLE-first via `WiFiProv`).
-- `src/flow/power_flow.cpp` — idle display off/light sleep and wake-guard logic.
-- `src/ui/*.cpp` — UI rendering split by domain:
-  - `ui/menu.cpp`
-  - `ui/header.cpp`
-  - `ui/timer.cpp`
-  - `ui/info.cpp`
-  - `ui/session.cpp`
-- `include/app/app_config.h` — app-level constants (prefs keys, debounce/hold timings, encoder accel).
-- `include/app/app_state.h` — shared app state declarations.
-- `include/app/session_presets.h` — session preset model/declarations.
-- `include/app/timer_state.h` — `TimerState` declarations.
-- `include/app/session_state.h` — `SessionState` declarations.
+- `src/main.cpp` — app bootstrap (`setup/loop`) and top-level orchestration.
+- `src/app/app_controller.cpp` — central input dispatcher by screen/controller.
+- `src/app/app_state.cpp` — global app state storage and menu item tables.
+- `src/app/session_presets.cpp` — tea session presets (metadata + infusion steps).
+- `src/app/timer_state.cpp` — timer FSM implementation (`Stopped/Running/Paused`).
+- `src/app/session_state.cpp` — session FSM implementation (`Stopped/Running/Paused/Completed`).
+- `src/controllers/menu_controller.cpp` — menu input handling.
+- `src/controllers/timer_controller.cpp` — timer screen input handling.
+- `src/controllers/session_controller.cpp` — session screens input handling.
+- `src/controllers/settings_controller.cpp` — settings subtree input handling.
+- `src/controllers/wifi_controller.cpp` — Wi-Fi screen input handling.
+- `src/flow/navigation_flow.cpp` — centralized screen transitions (`navigateTo`, back behavior).
+- `src/flow/timer_flow.cpp` — single timer runtime/update logic.
+- `src/flow/session_flow.cpp` — session runtime/update logic.
+- `src/flow/wifi_flow.cpp` — BLE provisioning + STA status/reconnect logic.
+- `src/flow/power_flow.cpp` — idle display off/light sleep/wake guard runtime logic.
+- `src/flow/power_settings_flow.cpp` — Power Save settings editor flow.
+- `src/flow/audio_profile_flow.cpp` — profile-based audio frequencies/durations.
+- `src/flow/audio_settings_flow.cpp` — Audio settings editor flow.
+- `src/storage/settings_store.cpp` — persistent settings load/save wrappers over `Preferences`.
+- `src/hw/input.cpp` — encoder/buttons (debounced, non-blocking) + acceleration helper.
+- `src/hw/audio.cpp` — buzzer on/off helpers.
+- `src/hw/feedback.cpp` — LED + audio pulse helper.
+- `src/ui/menu.cpp` — main/settings menu drawing.
+- `src/ui/header.cpp` — shared header rendering.
+- `src/ui/timer.cpp` — timer screen rendering.
+- `src/ui/session.cpp` — session preset/run/complete rendering.
+- `src/ui/settings/wifi.cpp` — Wi-Fi settings rendering.
+- `src/ui/settings/power_save.cpp` — Power Save settings rendering.
+- `src/ui/settings/audio.cpp` — Audio settings rendering.
+- `src/ui/settings/about.cpp` — About screen rendering.
+- `include/app/app_config.h` — app-level constants (timings, prefs keys, defaults).
+- `include/app/app_state.h` — app models/state declarations.
+- `include/app/session_presets.h` — session preset declarations.
+- `include/app/timer_state.h` — timer FSM declarations.
+- `include/app/session_state.h` — session FSM declarations.
+- `include/app/app_controller.h` — top-level input handling API.
+- `include/controllers/*.h` — per-screen input controller APIs.
+- `include/flow/navigation_flow.h` — navigation API.
 - `include/flow/timer_flow.h` — timer flow API.
 - `include/flow/session_flow.h` — session flow API.
-- `include/flow/wifi_flow.h` — Wi-Fi provisioning flow API.
-- `include/flow/power_flow.h` — power-saving flow API.
+- `include/flow/wifi_flow.h` — Wi-Fi flow API.
+- `include/flow/power_flow.h` — power runtime API.
+- `include/flow/power_settings_flow.h` — Power Save settings flow API.
+- `include/flow/audio_profile_flow.h` — audio profile mapping API.
+- `include/flow/audio_settings_flow.h` — Audio settings flow API.
+- `include/storage/settings_store.h` — settings persistence API.
+- `include/hw/pins.h` — hardware pin mapping.
+- `include/hw/input.h` — input API.
+- `include/hw/audio.h` — buzzer API.
+- `include/hw/feedback.h` — LED/audio feedback API.

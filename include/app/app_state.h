@@ -25,7 +25,7 @@ enum ScreenState {
   SCREEN_SESSION_PRESET,
   SCREEN_SESSION_RUN,
   SCREEN_POWER_SAVE,
-  SCREEN_SOUND
+  SCREEN_AUDIO
 };
 
 enum MenuIndex { MENU_SESSION, MENU_TIMER, MENU_SETTINGS };
@@ -33,7 +33,7 @@ enum MenuIndex { MENU_SESSION, MENU_TIMER, MENU_SETTINGS };
 enum SettingsMenuIndex {
   SETTINGS_WIFI,
   SETTINGS_POWER_SAVE,
-  SETTINGS_SOUND,
+  SETTINGS_AUDIO,
   SETTINGS_ABOUT
 };
 
@@ -77,20 +77,21 @@ struct PowerStateModel {
   bool editMode = false;
 };
 
-enum class SoundRow : uint8_t { Enabled = 0, Profile = 1 };
+enum class AudioRow : uint8_t { Enabled = 0, Profile = 1 };
 
 struct AudioStateModel {
   BeepProfile profile = BeepProfile::Normal;
-  bool soundEnabled = true;
+  bool audioEnabled = true;
+
+  bool draftAudioEnabled = true;
+  BeepProfile draftProfile = BeepProfile::Normal;
+  AudioRow selectedRow = AudioRow::Enabled;
+  bool editMode = false;
 };
 
 struct UiStateModel {
   int menuSelected = 0;
   int settingsSelected = 0;
-
-  bool soundEditMode = false;
-  SoundRow soundSelected = SoundRow::Enabled;
-  AudioStateModel soundDraft;
 };
 
 struct AppState {

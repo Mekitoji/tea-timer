@@ -79,15 +79,15 @@ void settingsStoreSaveBeepProfile(BeepProfile profile) {
   prefs.putInt(appcfg::PREFS_BEEP_PROFILE_KEY, static_cast<int>(profile));
 }
 
-bool settingsStoreLoadSoundEnabled() {
+bool settingsStoreLoadAudioEnabled() {
   ensureInitialized();
-  return prefs.getBool(appcfg::PREFS_SOUND_ENABLED_KEY,
-                       appcfg::DEFAULT_SOUND_ENABLED);
+  return prefs.getBool(appcfg::PREFS_AUDIO_ENABLED_KEY,
+                       appcfg::DEFAULT_AUDIO_ENABLED);
 }
 
-void settingsStoreSaveSoundEnabled(bool enabled) {
+void settingsStoreSaveAudioEnabled(bool enabled) {
   ensureInitialized();
-  prefs.putBool(appcfg::PREFS_SOUND_ENABLED_KEY, enabled);
+  prefs.putBool(appcfg::PREFS_AUDIO_ENABLED_KEY, enabled);
 }
 
 unsigned long settingsStoreLoadDisplayIdleOffMs() {

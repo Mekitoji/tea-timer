@@ -2,7 +2,7 @@
 
 #include <app/app_state.h>
 #include <flow/power_settings_flow.h>
-#include <flow/sound_settings_flow.h>
+#include <flow/audio_settings_flow.h>
 #include <ui.h>
 
 void navigateTo(ScreenState screen) { currentScreen = screen; }
@@ -22,9 +22,9 @@ void showAboutScreen() {
   drawAbout();
 }
 
-void showSoundScreen() {
-  navigateTo(SCREEN_SOUND);
-  soundSettingsRender();
+void showAudioScreen() {
+  navigateTo(SCREEN_AUDIO);
+  audioSettingsRender();
 }
 
 void showWiFiScreen() {
@@ -41,7 +41,7 @@ bool goBackAndRender() {
   switch (currentScreen) {
   case SCREEN_ABOUT:
   case SCREEN_POWER_SAVE:
-  case SCREEN_SOUND:
+  case SCREEN_AUDIO:
   case SCREEN_WIFI:
     showSettingsScreen();
     return true;

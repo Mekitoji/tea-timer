@@ -1,3 +1,3 @@
 #pragma once
 
-void pulseLedAndSound(int freq, int onMs, bool soundEnabled);
+void pulseLedAndAudio(int freq, int onMs, bool audioEnabled);

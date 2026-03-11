@@ -99,16 +99,16 @@ void updateSingleTimer() {
       drawTimerScreen("Timer", remaining, app.timer.timerTotalSec);
 
       if (remaining <= 3 && remaining > 0) {
-        pulseLedAndSound(audioProfileCountdownFreq(),
+        pulseLedAndAudio(audioProfileCountdownFreq(),
                          audioProfileBeepDurationMs(),
-                         app.audio.soundEnabled);
+                         app.audio.audioEnabled);
       }
 
       if (remaining == 0) {
         for (int i = 0; i < 3; i++) {
-          pulseLedAndSound(audioProfileTimerDoneFreq(),
+          pulseLedAndAudio(audioProfileTimerDoneFreq(),
                            audioProfileBeepDurationMs(),
-                           app.audio.soundEnabled);
+                           app.audio.audioEnabled);
           delay(120);
         }
         timerLongResetToPreset();

@@ -4,9 +4,9 @@
 #include <hw/audio.h>
 #include <hw/pins.h>
 
-void pulseLedAndSound(int freq, int onMs, bool soundEnabled) {
+void pulseLedAndAudio(int freq, int onMs, bool audioEnabled) {
   digitalWrite(LED_PIN, HIGH);
-  if (soundEnabled) {
+  if (audioEnabled) {
     buzzerOn(freq);
   }
   delay(onMs);

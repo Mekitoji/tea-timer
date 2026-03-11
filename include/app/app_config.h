@@ -31,10 +31,10 @@ inline constexpr unsigned long LIGHT_SLEEP_IDLE_MS = 120000;
 inline constexpr unsigned long WIFI_RECONNECT_INTERVAL_MS = 8000;
 
 inline constexpr const char *PREFS_BEEP_PROFILE_KEY = "beep_profile";
-inline constexpr const char *PREFS_SOUND_ENABLED_KEY = "sound_enabled";
+inline constexpr const char *PREFS_AUDIO_ENABLED_KEY = "audio_enabled";
 
 inline constexpr BeepProfile DEFAULT_BEEP_PROFILE = BeepProfile::Normal;
-inline constexpr bool DEFAULT_SOUND_ENABLED = true;
+inline constexpr bool DEFAULT_AUDIO_ENABLED = true;
 
 inline constexpr unsigned long DEFAULT_DISPLAY_IDLE_OFF_MS = 60000;
 inline constexpr unsigned long MIN_DISPLAY_IDLE_OFF_MS = 10000;

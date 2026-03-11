@@ -226,26 +226,26 @@ void updateSessionRun() {
       drawSessionRun(remaining);
 
       if (isSessionRunning() && remaining <= 3 && remaining > 0) {
-        pulseLedAndSound(audioProfileCountdownFreq(),
+        pulseLedAndAudio(audioProfileCountdownFreq(),
                          audioProfileBeepDurationMs(),
-                         app.audio.soundEnabled);
+                         app.audio.audioEnabled);
       }
     }
 
     if (isSessionRunning() && remaining == 0) {
       for (int i = 0; i < 2; i++) {
-        pulseLedAndSound(audioProfileSessionStepDoneFreq(),
+        pulseLedAndAudio(audioProfileSessionStepDoneFreq(),
                          audioProfileBeepDurationMs(),
-                         app.audio.soundEnabled);
+                         app.audio.audioEnabled);
         delay(120);
       }
 
       setSessionStatePaused();
       if (!advanceToNextSessionStep()) {
         for (int i = 0; i < 3; i++) {
-          pulseLedAndSound(audioProfileSessionDoneFreq(),
+          pulseLedAndAudio(audioProfileSessionDoneFreq(),
                            audioProfileBeepDurationMs(),
-                           app.audio.soundEnabled);
+                           app.audio.audioEnabled);
           delay(160);
         }
 

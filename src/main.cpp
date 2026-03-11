@@ -43,7 +43,7 @@ void setup() {
   setDisplayIdleOffTimeoutMs(app.power.displayOffTimeoutMs);
 
   app.audio.profile = settingsStoreLoadBeepProfile();
-  app.audio.soundEnabled = settingsStoreLoadSoundEnabled();
+  app.audio.audioEnabled = settingsStoreLoadAudioEnabled();
 
   int savedDuration = settingsStoreLoadTimerDurationSec();
   applyTimerPresetSec(savedDuration);

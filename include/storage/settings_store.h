@@ -13,8 +13,8 @@ void settingsStoreSavePowerSaveEnabled(bool enabled);
 BeepProfile settingsStoreLoadBeepProfile();
 void settingsStoreSaveBeepProfile(BeepProfile profile);
 
-bool settingsStoreLoadSoundEnabled();
-void settingsStoreSaveSoundEnabled(bool enabled);
+bool settingsStoreLoadAudioEnabled();
+void settingsStoreSaveAudioEnabled(bool enabled);
 
 unsigned long settingsStoreLoadDisplayIdleOffMs();
 void settingsStoreSaveDisplayIdleOffMs(unsigned long ms);

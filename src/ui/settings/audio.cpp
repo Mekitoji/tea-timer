@@ -1,4 +1,4 @@
-#include <ui/settings/sound.h>
+#include <ui/settings/audio.h>
 
 #include <app/app_state.h>
 #include <ui/header.h>
@@ -17,14 +17,13 @@ const char *beepProfileText(BeepProfile profile) {
 }
 } // namespace
 
-void drawSound(const AudioStateModel &audioState, SoundRow selectedRow,
-               bool editMode) {
+void drawAudio(const AudioStateModel &audioState) {
   display.clearDisplay();
-  drawHeader("SOUND", editMode ? "EDIT" : "");
+  drawHeader("AUDIO", audioState.editMode ? "EDIT" : "");
 
   auto drawRow = [&](int y, const char *label, const char *value,
                      bool selected) {
-    if (selected && !editMode) {
+    if (selected && !audioState.editMode) {
       display.fillRect(0, y - 1, 128, 9, SSD1306_WHITE);
       display.setTextColor(SSD1306_BLACK);
     } else {
@@ -41,7 +40,7 @@ void drawSound(const AudioStateModel &audioState, SoundRow selectedRow,
     if (valueX < 2)
       valueX = 2;
 
-    if (selected && editMode) {
+    if (selected && audioState.editMode) {
       display.drawRect(valueX - 2, y - 1, (int)w + 4, 9, SSD1306_WHITE);
     }
 
@@ -49,14 +48,15 @@ void drawSound(const AudioStateModel &audioState, SoundRow selectedRow,
     display.print(value);
   };
 
-  drawRow(20, "Sound", audioState.soundEnabled ? "ON" : "OFF",
-          selectedRow == SoundRow::Enabled);
-  drawRow(32, "Profile", beepProfileText(audioState.profile),
-          selectedRow == SoundRow::Profile);
+  drawRow(20, "Audio", audioState.draftAudioEnabled ? "ON" : "OFF",
+          audioState.selectedRow == AudioRow::Enabled);
+  drawRow(32, "Profile", beepProfileText(audioState.draftProfile),
+          audioState.selectedRow == AudioRow::Profile);
 
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 56);
-  display.print(editMode ? "Rot:Edit Sel:Done" : "Sel:Edit Back:Save");
+  display.print(audioState.editMode ? "Rot:Edit Sel:Done"
+                                    : "Sel:Edit Back:Save");
 
   display.display();
 }
