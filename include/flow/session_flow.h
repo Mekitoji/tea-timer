@@ -10,3 +10,4 @@ void resetSessionLongPressFlowState();
 void processSessionLongPressInput(bool down, unsigned long nowMs);
 
 void sessionToggleRunPauseAt(unsigned long nowMs);
+void sessionAdjustPausedStepByDelta(int delta);

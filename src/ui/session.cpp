@@ -61,6 +61,21 @@ int currentTotalSec() {
     return app.session.steps[app.session.stepIndex];
   return MIN_TIME;
 }
+
+int previousStepSec() {
+  if (app.session.rinseActive)
+    return 0;
+
+  if (app.session.stepIndex > 0) {
+    int prev = app.session.steps[app.session.stepIndex - 1];
+    return (prev > 0) ? prev : 0;
+  }
+
+  if (app.session.stepIndex == 0 && app.session.rinseSec > 0)
+    return app.session.rinseSec;
+
+  return 0;
+}
 } // namespace
 
 void drawSessionPresetMenu() {
@@ -176,9 +191,26 @@ void drawSessionRun(int remaining) {
   }
 
   display.setCursor(0, ui::layout::SESSION_RUN_INFUSE_Y);
-  display.print("Step ");
+  display.print("C:");
   display.print(totalSec);
   display.print("s");
+
+  int prevSec = previousStepSec();
+  if (prevSec > 0) {
+    char prevBuf[16];
+    snprintf(prevBuf, sizeof(prevBuf), "P:%ds", prevSec);
+
+    int16_t x1 = 0, y1 = 0;
+    uint16_t w = 0, h = 0;
+    display.getTextBounds(prevBuf, 0, 0, &x1, &y1, &w, &h);
+
+    int prevX = ui::layout::SESSION_RUN_TIMER_X - 4 - (int)w;
+    if (prevX < 36)
+      prevX = 36;
+
+    display.setCursor(prevX, ui::layout::SESSION_RUN_INFUSE_Y);
+    display.print(prevBuf);
+  }
 
   display.setTextSize(2);
   display.setCursor(ui::layout::SESSION_RUN_TIMER_X,

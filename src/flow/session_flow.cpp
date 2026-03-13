@@ -42,6 +42,19 @@ bool hasCurrentSessionStep() {
          app.session.stepIndex < app.session.stepCount;
 }
 
+int currentStepSecFromState() {
+  int stepSec = app.session.stepDurationSec;
+  if (stepSec <= 0) {
+    stepSec = app.session.rinseActive ? app.session.rinseSec
+                                      : stepSecAt(app.session.stepIndex);
+  }
+  if (stepSec < MIN_TIME)
+    stepSec = MIN_TIME;
+  if (stepSec > MAX_TIME)
+    stepSec = MAX_TIME;
+  return stepSec;
+}
+
 void applyCurrentStepFromModel() {
   if (app.session.rinseActive) {
     int rinse = app.session.rinseSec;
@@ -204,15 +217,7 @@ void updateSessionRun() {
       return;
     }
 
-    int stepSec = app.session.stepDurationSec;
-    if (stepSec <= 0) {
-      stepSec = app.session.rinseActive ? app.session.rinseSec
-                                        : stepSecAt(app.session.stepIndex);
-    }
-    if (stepSec < MIN_TIME)
-      stepSec = MIN_TIME;
-    if (stepSec > MAX_TIME)
-      stepSec = MAX_TIME;
+    int stepSec = currentStepSecFromState();
     int remaining = stepSec;
 
     if (isSessionRunning()) {
@@ -275,15 +280,7 @@ void sessionToggleRunPauseAt(unsigned long nowMs) {
   }
 
   if (isSessionRunning()) {
-    int stepSec = app.session.stepDurationSec;
-    if (stepSec <= 0) {
-      stepSec = app.session.rinseActive ? app.session.rinseSec
-                                        : stepSecAt(app.session.stepIndex);
-    }
-    if (stepSec < MIN_TIME)
-      stepSec = MIN_TIME;
-    if (stepSec > MAX_TIME)
-      stepSec = MAX_TIME;
+    int stepSec = currentStepSecFromState();
 
     unsigned long elapsed = (nowMs - app.session.stepStartMs) / 1000;
     int remaining = stepSec - (int)elapsed;
@@ -304,4 +301,37 @@ void sessionToggleRunPauseAt(unsigned long nowMs) {
   setSessionStateRunning();
   app.session.stepStartMs = nowMs;
   drawSessionRun(app.session.stepDurationSec);
+}
+
+void sessionAdjustPausedStepByDelta(int delta) {
+  if (isSessionRunning() || !hasCurrentSessionStep())
+    return;
+
+  int remaining = currentStepSecFromState();
+
+  int elapsed = app.session.stepTotalSec - remaining;
+  if (elapsed < 0)
+    elapsed = 0;
+  if (elapsed > MAX_TIME)
+    elapsed = MAX_TIME;
+
+  int maxRemaining = MAX_TIME - elapsed;
+  if (maxRemaining < MIN_TIME)
+    maxRemaining = MIN_TIME;
+
+  int newRemaining = remaining + delta;
+  if (newRemaining < MIN_TIME)
+    newRemaining = MIN_TIME;
+  if (newRemaining > maxRemaining)
+    newRemaining = maxRemaining;
+
+  app.session.stepDurationSec = newRemaining;
+  app.session.stepTotalSec = elapsed + newRemaining;
+
+  if (app.session.rinseActive) {
+    app.session.rinseSec = app.session.stepTotalSec;
+  } else if (app.session.stepIndex >= 0 &&
+             app.session.stepIndex < app.session.stepCount) {
+    app.session.steps[app.session.stepIndex] = app.session.stepTotalSec;
+  }
 }

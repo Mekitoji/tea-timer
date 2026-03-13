@@ -36,18 +36,8 @@ bool handleSessionEncoderInput(bool stepPlus, bool stepMinus) {
 
     if (!isSessionRunning() &&
         (app.session.rinseActive || app.session.stepIndex < app.session.stepCount)) {
-      app.session.stepDurationSec += stepPlus ? 1 : -1;
-      if (app.session.stepDurationSec < MIN_TIME)
-        app.session.stepDurationSec = MIN_TIME;
-      if (app.session.stepDurationSec > MAX_TIME)
-        app.session.stepDurationSec = MAX_TIME;
-      if (app.session.rinseActive) {
-        app.session.rinseSec = app.session.stepDurationSec;
-      } else if (app.session.stepIndex >= 0 && app.session.stepIndex < app.session.stepCount) {
-        app.session.steps[app.session.stepIndex] = app.session.stepDurationSec;
-      }
-      app.session.stepTotalSec = app.session.stepDurationSec;
-      drawSessionRun(app.session.stepTotalSec);
+      sessionAdjustPausedStepByDelta(stepPlus ? 1 : -1);
+      drawSessionRun(app.session.stepDurationSec);
     }
 
     return true;
