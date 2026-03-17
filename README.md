@@ -41,10 +41,10 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
   - after successful sync, periodic resync is scheduled automatically.
   - sync flow:
     - Wi-Fi connected -> request NTP sync,
-    - SNTP callback marks sync as completed,
-    - clock runtime applies updated system time in `loop()` and stores it in `Preferences`,
+    - clock runtime polls SNTP sync status in `loop()`,
+    - after `SNTP_SYNC_STATUS_COMPLETED`, runtime reads system time and stores it in `Preferences`,
     - next background resync is scheduled in `6h`,
-    - if no sync callback arrives within `15s`, current attempt is stopped and retry is scheduled in `30s`,
+    - if sync does not complete within `15s`, current attempt is stopped and retry is scheduled in `30s`,
     - manual `Time/Date` change disables `Auto Sync` and cancels pending NTP sync.
 - Phone Wi-Fi provisioning (BLE-first via `WiFiProv`):
   - single screen `Settings -> WiFi` (no separate status screen),
@@ -144,12 +144,14 @@ Notes:
 - `src/flow/timer_flow.cpp` — single timer runtime/update logic.
 - `src/flow/session_flow.cpp` — session runtime/update logic.
 - `src/flow/wifi_flow.cpp` — BLE provisioning + STA status/reconnect logic.
-- `src/flow/clock_flow.cpp` — clock runtime, manual edit flow, NTP sync scheduling.
+- `src/flow/clock_flow.cpp` — Clock screen editor flow (rows, edit mode, save/cancel).
+- `src/flow/clock_runtime.cpp` — Clock boot/runtime logic, NTP sync scheduling, and live screen refresh.
 - `src/flow/power_flow.cpp` — idle display off/light sleep/wake guard runtime logic.
 - `src/flow/power_settings_flow.cpp` — Power Save settings editor flow.
 - `src/flow/audio_profile_flow.cpp` — profile-based audio frequencies/durations.
 - `src/flow/audio_settings_flow.cpp` — Audio settings editor flow.
 - `src/storage/settings_store.cpp` — persistent settings load/save wrappers over `Preferences`.
+- `src/app/clock_time.cpp` — clock date/time helpers (`epoch <-> state`, timezone, draft/date clamp).
 - `src/hw/input.cpp` — encoder/buttons (debounced, non-blocking) + acceleration helper.
 - `src/hw/audio.cpp` — buzzer on/off helpers.
 - `src/hw/feedback.cpp` — LED + audio pulse helper.
@@ -173,12 +175,14 @@ Notes:
 - `include/flow/timer_flow.h` — timer flow API.
 - `include/flow/session_flow.h` — session flow API.
 - `include/flow/wifi_flow.h` — Wi-Fi flow API.
-- `include/flow/clock_flow.h` — clock runtime/settings flow API.
+- `include/flow/clock_flow.h` — Clock screen editor flow API.
+- `include/flow/clock_runtime.h` — Clock runtime/NTP/update API.
 - `include/flow/power_flow.h` — power runtime API.
 - `include/flow/power_settings_flow.h` — Power Save settings flow API.
 - `include/flow/audio_profile_flow.h` — audio profile mapping API.
 - `include/flow/audio_settings_flow.h` — Audio settings flow API.
 - `include/storage/settings_store.h` — settings persistence API.
+- `include/app/clock_time.h` — clock date/time helper API.
 - `include/hw/pins.h` — hardware pin mapping.
 - `include/hw/input.h` — input API.
 - `include/hw/audio.h` — buzzer API.
