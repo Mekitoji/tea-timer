@@ -4,6 +4,7 @@
 #include <app/app_state.h>
 #include <app/tea_config.h>
 #include <esp_system.h>
+#include <flow/clock_flow.h>
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
 #include <flow/timer_flow.h>
@@ -49,6 +50,12 @@ void setup() {
   applyTimerPresetSec(savedDuration);
   resetSingleTimerRuntimeState();
 
+  app.clock.autoSyncEnabled = settingsStoreLoadClockAutoSyncEnabled();
+  app.clock.source = static_cast<ClockSource>(settingsStoreLoadClockSource());
+  app.clock.timeValid = settingsStoreLoadClockValid();
+  unsigned long long savedClockEpoch = settingsStoreLoadClockEpoch();
+  clockInitializeRuntime(savedClockEpoch);
+
   wifiInitOnBoot();
 
   drawMenu();
@@ -70,6 +77,9 @@ void loop() {
   if (currentScreen == SCREEN_WIFI) {
     updateWiFiScreen();
   }
+  updateMenuClock();
+  updateClockRuntime();
+  updateClockScreen();
   updateSingleTimer();
   updateSessionRun();
   updatePowerSaving();

@@ -1,14 +1,41 @@
 #include <ui/menu.h>
 
-#include <Arduino.h>
 #include <app/app_state.h>
+#include <ctime>
 #include <ui/header.h>
 #include <ui/layout.h>
+
+namespace {
+bool readCurrentMenuTime(int &hour, int &minute) {
+  time_t now = std::time(nullptr);
+  if (now <= 0)
+    return false;
+
+  std::tm tmValue = {};
+  localtime_r(&now, &tmValue);
+  hour = tmValue.tm_hour;
+  minute = tmValue.tm_min;
+  return true;
+}
+
+void drawMenuHeader() {
+  char timeBuf[6] = {};
+  int hour = 0;
+  int minute = 0;
+  if (readCurrentMenuTime(hour, minute)) {
+    std::snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", hour, minute);
+    drawHeader("MENU", timeBuf);
+    return;
+  }
+
+  drawHeader("MENU");
+}
+} // namespace
 
 void drawMenu() {
   display.clearDisplay();
 
-  drawHeader("MENU");
+  drawMenuHeader();
 
   // items in blue zone
   display.setTextSize(1);
@@ -56,4 +83,24 @@ void drawSettingsMenu() {
   }
 
   display.display();
+}
+
+void updateMenuClock() {
+  if (currentScreen != SCREEN_MENU)
+    return;
+
+  static int lastMinute = -1;
+  static int lastHour = -1;
+
+  int hour = 0;
+  int minute = 0;
+  if (!readCurrentMenuTime(hour, minute))
+    return;
+
+  if (hour == lastHour && minute == lastMinute)
+    return;
+
+  lastHour = hour;
+  lastMinute = minute;
+  drawMenu();
 }

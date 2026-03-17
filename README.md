@@ -22,7 +22,8 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
   - back button after completion: return to preset list,
   - completion screen at the end of session.
 - Runtime status labels in header (`RUNNING`, `PAUSED`, `STOP`/`READY`) with right-aligned header text.
-- Persistent settings via `Preferences` (NVS): timer preset, power save mode/timeout, audio mode/profile.
+- Main menu header shows current time (`HH:MM`) on the right.
+- Persistent settings via `Preferences` (NVS): timer preset, power save mode/timeout, audio mode/profile, clock state.
 - Power Save mode (Settings):
   - toggle `ON/OFF`,
   - configurable display idle timeout (`15s / 30s / 60s / 120s / 300s`),
@@ -32,6 +33,19 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
 - Audio mode (Settings):
   - toggle `ON/OFF`,
   - beep profile selection (`Soft / Normal / Loud`).
+- Clock mode (Settings):
+  - manual `Time` and `Date` editing,
+  - `Auto Sync` toggle,
+  - manual edit immediately disables `Auto Sync`,
+  - when Wi-Fi is connected and `Auto Sync = ON`, device syncs time from NTP,
+  - after successful sync, periodic resync is scheduled automatically.
+  - sync flow:
+    - Wi-Fi connected -> request NTP sync,
+    - SNTP callback marks sync as completed,
+    - clock runtime applies updated system time in `loop()` and stores it in `Preferences`,
+    - next background resync is scheduled in `6h`,
+    - if no sync callback arrives within `15s`, current attempt is stopped and retry is scheduled in `30s`,
+    - manual `Time/Date` change disables `Auto Sync` and cancels pending NTP sync.
 - Phone Wi-Fi provisioning (BLE-first via `WiFiProv`):
   - single screen `Settings -> WiFi` (no separate status screen),
   - if credentials are missing: BLE setup mode is shown (`PROV_xxxxxx`, POP),
@@ -130,6 +144,7 @@ Notes:
 - `src/flow/timer_flow.cpp` — single timer runtime/update logic.
 - `src/flow/session_flow.cpp` — session runtime/update logic.
 - `src/flow/wifi_flow.cpp` — BLE provisioning + STA status/reconnect logic.
+- `src/flow/clock_flow.cpp` — clock runtime, manual edit flow, NTP sync scheduling.
 - `src/flow/power_flow.cpp` — idle display off/light sleep/wake guard runtime logic.
 - `src/flow/power_settings_flow.cpp` — Power Save settings editor flow.
 - `src/flow/audio_profile_flow.cpp` — profile-based audio frequencies/durations.
@@ -143,6 +158,7 @@ Notes:
 - `src/ui/timer.cpp` — timer screen rendering.
 - `src/ui/session.cpp` — session preset/run/complete rendering.
 - `src/ui/settings/wifi.cpp` — Wi-Fi settings rendering.
+- `src/ui/settings/clock.cpp` — Clock settings rendering.
 - `src/ui/settings/power_save.cpp` — Power Save settings rendering.
 - `src/ui/settings/audio.cpp` — Audio settings rendering.
 - `src/ui/settings/about.cpp` — About screen rendering.
@@ -157,6 +173,7 @@ Notes:
 - `include/flow/timer_flow.h` — timer flow API.
 - `include/flow/session_flow.h` — session flow API.
 - `include/flow/wifi_flow.h` — Wi-Fi flow API.
+- `include/flow/clock_flow.h` — clock runtime/settings flow API.
 - `include/flow/power_flow.h` — power runtime API.
 - `include/flow/power_settings_flow.h` — Power Save settings flow API.
 - `include/flow/audio_profile_flow.h` — audio profile mapping API.

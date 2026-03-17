@@ -2,3 +2,4 @@
 
 void drawMenu();
 void drawSettingsMenu();
+void updateMenuClock();

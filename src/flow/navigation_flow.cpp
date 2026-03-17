@@ -1,8 +1,9 @@
 #include <flow/navigation_flow.h>
 
 #include <app/app_state.h>
-#include <flow/power_settings_flow.h>
 #include <flow/audio_settings_flow.h>
+#include <flow/clock_flow.h>
+#include <flow/power_settings_flow.h>
 #include <ui.h>
 
 void navigateTo(ScreenState screen) { currentScreen = screen; }
@@ -15,6 +16,11 @@ void showMenuScreen() {
 void showSettingsScreen() {
   navigateTo(SCREEN_SETTINGS);
   drawSettingsMenu();
+}
+
+void showClockScreen() {
+  navigateTo(SCREEN_CLOCK);
+  clockRender();
 }
 
 void showAboutScreen() {
@@ -42,6 +48,7 @@ bool goBackAndRender() {
   case SCREEN_ABOUT:
   case SCREEN_POWER_SAVE:
   case SCREEN_AUDIO:
+  case SCREEN_CLOCK:
   case SCREEN_WIFI:
     showSettingsScreen();
     return true;

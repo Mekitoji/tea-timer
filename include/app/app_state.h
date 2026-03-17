@@ -21,6 +21,7 @@ enum ScreenState {
   SCREEN_SETTINGS,
   SCREEN_ABOUT,
   SCREEN_WIFI,
+  SCREEN_CLOCK,
   SCREEN_TIMER,
   SCREEN_SESSION_PRESET,
   SCREEN_SESSION_RUN,
@@ -32,6 +33,7 @@ enum MenuIndex { MENU_SESSION, MENU_TIMER, MENU_SETTINGS };
 
 enum SettingsMenuIndex {
   SETTINGS_WIFI,
+  SETTINGS_CLOCK,
   SETTINGS_POWER_SAVE,
   SETTINGS_AUDIO,
   SETTINGS_ABOUT
@@ -94,6 +96,39 @@ struct UiStateModel {
   int settingsSelected = 0;
 };
 
+enum class ClockSource : uint8_t {
+  Default = 0,
+  Manual = 1,
+  Ntp = 2,
+  Backend = 3
+};
+
+enum class ClockRow : uint8_t { Time = 0, Date = 1, AutoSync = 2 };
+
+struct ClockStateModel {
+  bool timeValid = false;
+  bool autoSyncEnabled = true;
+  bool draftAutoSyncEnabled = true;
+
+  ClockSource source = ClockSource::Default;
+  ClockRow selectedRow = ClockRow::Time;
+  bool editMode = false;
+
+  int year = 1970;
+  int month = 1;
+  int day = 1;
+  int hour = 0;
+  int minute = 0;
+
+  int draftYear = 1970;
+  int draftMonth = 1;
+  int draftDay = 1;
+  int draftHour = 0;
+  int draftMinute = 0;
+
+  uint8_t editPart = 0;
+};
+
 struct AppState {
   TimerStateModel timer;
   SessionStateModel session;
@@ -101,6 +136,7 @@ struct AppState {
   UiStateModel ui;
   PowerStateModel power;
   AudioStateModel audio;
+  ClockStateModel clock;
 };
 
 extern AppState app;

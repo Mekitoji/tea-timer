@@ -5,6 +5,7 @@
 #include <WiFiProv.h>
 #include <app/app_config.h>
 #include <app/app_state.h>
+#include <flow/clock_flow.h>
 #include <cstdio>
 #include <cstring>
 #include <esp_wifi.h>
@@ -29,7 +30,6 @@ bool hasSavedCredentials = false;
 bool eventHandlerRegistered = false;
 bool provisioningSessionActive = false;
 unsigned long lastReconnectMs = 0;
-
 void copyToBuf(char *dst, size_t dstSize, const char *src) {
   if (!dst || dstSize == 0)
     return;
@@ -125,6 +125,9 @@ void onProvisionEvent(arduino_event_t *event) {
     refreshSavedCredentialsFlag();
 
     provisioningSessionActive = false;
+    if (app.clock.autoSyncEnabled) {
+      clockRequestNtpSync();
+    }
     setState(WifiProvisionUiState::Connected);
     WIFI_LOG("got_ip ip=%s", staIpBuf);
     break;

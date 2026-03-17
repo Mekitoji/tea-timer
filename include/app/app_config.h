@@ -41,4 +41,13 @@ inline constexpr unsigned long MIN_DISPLAY_IDLE_OFF_MS = 10000;
 inline constexpr unsigned long MAX_DISPLAY_IDLE_OFF_MS = 600000;
 
 inline constexpr const char *PREFS_DISPLAY_IDLE_OFF_MS_KEY = "disp_off_ms";
+
+// Clock
+inline constexpr const char *PREFS_CLOCK_AUTO_SYNC_KEY = "clock_auto";
+inline constexpr const char *PREFS_CLOCK_SOURCE_KEY = "clock_src";
+inline constexpr const char *PREFS_CLOCK_VALID_KEY = "clock_valid";
+inline constexpr const char *PREFS_CLOCK_EPOCH_KEY = "clock_epoch";
+
+inline constexpr bool DEFAULT_CLOCK_AUTO_SYNC_ENABLED = true;
+inline constexpr char DEFAULT_CLOCK_TZ[] = "GET-4";
 } // namespace appcfg

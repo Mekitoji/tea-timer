@@ -1,9 +1,10 @@
 #include <controllers/settings_controller.h>
 
 #include <app/app_state.h>
+#include <flow/audio_settings_flow.h>
+#include <flow/clock_flow.h>
 #include <flow/navigation_flow.h>
 #include <flow/power_settings_flow.h>
-#include <flow/audio_settings_flow.h>
 #include <ui.h>
 
 namespace {
@@ -15,6 +16,10 @@ void handleSettingsSelect() {
   } else if (app.ui.settingsSelected == SETTINGS_AUDIO) {
     audioSettingsEnter();
     showAudioScreen();
+    return;
+  } else if (app.ui.settingsSelected == SETTINGS_CLOCK) {
+    clockEnter();
+    showClockScreen();
     return;
   } else if (app.ui.settingsSelected == SETTINGS_POWER_SAVE) {
     powerSettingsEnter();
@@ -45,6 +50,11 @@ bool handleSettingsEncoderInput(bool stepPlus, bool stepMinus) {
     return true;
   }
 
+  if (currentScreen == SCREEN_CLOCK) {
+    clockHandleEncoder(stepPlus, stepMinus);
+    return true;
+  }
+
   return false;
 }
 
@@ -69,6 +79,11 @@ bool handleSettingsSelectInput() {
     return true;
   }
 
+  if (currentScreen == SCREEN_CLOCK) {
+    clockHandleSelect();
+    return true;
+  }
+
   return false;
 }
 
@@ -78,18 +93,24 @@ bool handleSettingsBackInput() {
     return true;
   }
 
-  if (currentScreen == SCREEN_POWER_SAVE) {
-    powerSettingsHandleBack();
-    return true;
-  }
-
   if (currentScreen == SCREEN_SETTINGS) {
     showMenuScreen();
     return true;
   }
 
+  // settings sub-menu:
+  if (currentScreen == SCREEN_POWER_SAVE) {
+    powerSettingsHandleBack();
+    return true;
+  }
+
   if (currentScreen == SCREEN_AUDIO) {
     audioSettingsHandleBack();
+    return true;
+  }
+
+  if (currentScreen == SCREEN_CLOCK) {
+    clockHandleBack();
     return true;
   }
 

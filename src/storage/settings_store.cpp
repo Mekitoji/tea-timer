@@ -103,3 +103,44 @@ void settingsStoreSaveDisplayIdleOffMs(unsigned long ms) {
   prefs.putULong(appcfg::PREFS_DISPLAY_IDLE_OFF_MS_KEY,
                  clampDisplayIdleOffMs(ms));
 }
+
+bool settingsStoreLoadClockAutoSyncEnabled() {
+  ensureInitialized();
+  return prefs.getBool(appcfg::PREFS_CLOCK_AUTO_SYNC_KEY,
+                       appcfg::DEFAULT_CLOCK_AUTO_SYNC_ENABLED);
+}
+
+void settingsStoreSaveClockAutoSyncEnabled(bool enabled) {
+  ensureInitialized();
+  prefs.putBool(appcfg::PREFS_CLOCK_AUTO_SYNC_KEY, enabled);
+}
+
+uint8_t settingsStoreLoadClockSource() {
+  ensureInitialized();
+  return prefs.getUChar(appcfg::PREFS_CLOCK_SOURCE_KEY, 0);
+}
+
+void settingsStoreSaveClockSource(uint8_t source) {
+  ensureInitialized();
+  prefs.putUChar(appcfg::PREFS_CLOCK_SOURCE_KEY, source);
+}
+
+bool settingsStoreLoadClockValid() {
+  ensureInitialized();
+  return prefs.getBool(appcfg::PREFS_CLOCK_VALID_KEY, false);
+}
+
+void settingsStoreSaveClockValid(bool valid) {
+  ensureInitialized();
+  prefs.putBool(appcfg::PREFS_CLOCK_VALID_KEY, valid);
+}
+
+unsigned long long settingsStoreLoadClockEpoch() {
+  ensureInitialized();
+  return prefs.getULong64(appcfg::PREFS_CLOCK_EPOCH_KEY, 0);
+}
+
+void settingsStoreSaveClockEpoch(unsigned long long epoch) {
+  ensureInitialized();
+  prefs.putULong64(appcfg::PREFS_CLOCK_EPOCH_KEY, epoch);
+}
