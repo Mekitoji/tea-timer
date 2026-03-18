@@ -23,6 +23,11 @@ void drawMenuHeader() {
   int hour = 0;
   int minute = 0;
   if (readCurrentMenuTime(hour, minute)) {
+    if (!app.clock.timeFreshThisBoot) {
+      drawHeader("MENU", "--:--");
+      return;
+    }
+
     std::snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", hour, minute);
     drawHeader("MENU", timeBuf);
     return;
@@ -91,16 +96,19 @@ void updateMenuClock() {
 
   static int lastMinute = -1;
   static int lastHour = -1;
+  static bool lastFreshThisBoot = false;
 
   int hour = 0;
   int minute = 0;
   if (!readCurrentMenuTime(hour, minute))
     return;
 
-  if (hour == lastHour && minute == lastMinute)
+  if (hour == lastHour && minute == lastMinute &&
+      app.clock.timeFreshThisBoot == lastFreshThisBoot)
     return;
 
   lastHour = hour;
   lastMinute = minute;
+  lastFreshThisBoot = app.clock.timeFreshThisBoot;
   drawMenu();
 }

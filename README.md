@@ -23,6 +23,7 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
   - completion screen at the end of session.
 - Runtime status labels in header (`RUNNING`, `PAUSED`, `STOP`/`READY`) with right-aligned header text.
 - Main menu header shows current time (`HH:MM`) on the right.
+- Before the first successful `NTP` sync or manual time set in the current boot, menu header shows `--:--` instead of exposing stale boot-time clock data.
 - Persistent settings via `Preferences` (NVS): timer preset, power save mode/timeout, audio mode/profile, clock state.
 - Power Save mode (Settings):
   - toggle `ON/OFF`,
@@ -39,6 +40,7 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
   - manual edit immediately disables `Auto Sync`,
   - when Wi-Fi is connected and `Auto Sync = ON`, device syncs time from NTP,
   - after successful sync, periodic resync is scheduled automatically.
+  - on boot without fresh sync, device restores last known time for internal clock state, but UI hides it as `--:--` until current-boot manual set or NTP sync.
   - sync flow:
     - Wi-Fi connected -> request NTP sync,
     - clock runtime polls SNTP sync status in `loop()`,
@@ -187,3 +189,7 @@ Notes:
 - `include/hw/input.h` — input API.
 - `include/hw/audio.h` — buzzer API.
 - `include/hw/feedback.h` — LED/audio feedback API.
+
+## Potential Improvements
+
+- Add a battery-backed RTC module such as `DS3231` to keep accurate time across full power loss and remove the need to hide boot-time clock as `--:--` before Wi-Fi sync.

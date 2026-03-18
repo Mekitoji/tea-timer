@@ -142,10 +142,12 @@ void clockHandleBack() {
   if (clockBuildEpochFromDraft(app.clock, epoch)) {
     if (manualTimeChanged) {
       app.clock.timeValid = clockSetSystemTimeFromEpoch(epoch);
+      app.clock.timeFreshThisBoot = app.clock.timeValid;
     }
     clockPersistState(epoch);
   } else if (manualTimeChanged) {
     app.clock.timeValid = false;
+    app.clock.timeFreshThisBoot = false;
     clockPersistState(0);
   }
 

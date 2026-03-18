@@ -107,6 +107,7 @@ enum class ClockRow : uint8_t { Time = 0, Date = 1, AutoSync = 2 };
 
 struct ClockStateModel {
   bool timeValid = false;
+  bool timeFreshThisBoot = false;
   bool autoSyncEnabled = true;
   bool draftAutoSyncEnabled = true;
 

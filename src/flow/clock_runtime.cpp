@@ -72,6 +72,7 @@ void clockInitializeRuntime(unsigned long long savedEpoch) {
   clockConfigureTimezone();
 
   bool initializedFromSavedEpoch = false;
+  app.clock.timeFreshThisBoot = false;
 
   if (app.clock.timeValid && savedEpoch > 0) {
     time_t epoch = static_cast<time_t>(savedEpoch);
@@ -139,6 +140,7 @@ void updateClockRuntime() {
 
       app.clock.source = ClockSource::Ntp;
       app.clock.timeValid = true;
+      app.clock.timeFreshThisBoot = true;
       if (!hasUnsavedDraft) {
         clockApplyEpochToState(app.clock, epoch);
         clockCopyStateToDraft(app.clock);
