@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <app/app_config.h>
 #include <app/app_state.h>
+#include <app/long_press.h>
 #include <app/tea_config.h>
 #include <flow/audio_profile_flow.h>
 #include <hw/feedback.h>
@@ -11,22 +12,13 @@
 
 namespace {
 int lastRemaining = -1;
-unsigned long timerHoldStartMs = 0;
-bool timerWasDown = false;
-bool timerLongPressFired = false;
+LongPressTracker timerLongPress;
 } // namespace
 
-int normalizeTimerPresetSec(int sec) {
-  if (sec < MIN_TIME)
-    return MIN_TIME;
-  if (sec > MAX_TIME)
-    return MAX_TIME;
-  return sec;
-}
+int normalizeTimerPresetSec(int sec) { return clampTeaDurationSec(sec); }
 
 void resetTimerLongPressFlowState() {
-  timerWasDown = false;
-  timerLongPressFired = false;
+  timerLongPress.reset();
 }
 
 void applyTimerPresetSec(int sec) {
@@ -66,10 +58,7 @@ void timerPauseAt(unsigned long nowMs) {
 void timerStartOrResumeAt(unsigned long nowMs) {
   // Start from STOP preset
   if (isTimerStopped()) {
-    if (app.timer.editTimeValue < MIN_TIME)
-      app.timer.editTimeValue = MIN_TIME;
-    if (app.timer.editTimeValue > MAX_TIME)
-      app.timer.editTimeValue = MAX_TIME;
+    app.timer.editTimeValue = clampTeaDurationSec(app.timer.editTimeValue);
 
     app.timer.timerTotalSec = app.timer.editTimeValue;
     app.timer.timerDuration = app.timer.editTimeValue;
@@ -124,11 +113,8 @@ void timerAdjustByEncoderDelta(int delta) {
     return;
 
   if (isTimerStopped()) {
-    app.timer.editTimeValue += delta;
-    if (app.timer.editTimeValue < MIN_TIME)
-      app.timer.editTimeValue = MIN_TIME;
-    if (app.timer.editTimeValue > MAX_TIME)
-      app.timer.editTimeValue = MAX_TIME;
+    app.timer.editTimeValue =
+        clampTeaDurationSec(app.timer.editTimeValue + delta);
 
     app.timer.timerTotalSec = app.timer.editTimeValue;
     drawTimerScreen("Timer", app.timer.editTimeValue, app.timer.timerTotalSec);
@@ -145,9 +131,7 @@ void timerAdjustByEncoderDelta(int delta) {
   if (maxRemaining < MIN_TIME)
     maxRemaining = MIN_TIME;
 
-  int newRemaining = app.timer.timerDuration + delta;
-  if (newRemaining < MIN_TIME)
-    newRemaining = MIN_TIME;
+  int newRemaining = clampTeaDurationSec(app.timer.timerDuration + delta);
   if (newRemaining > maxRemaining)
     newRemaining = maxRemaining;
 
@@ -158,25 +142,9 @@ void timerAdjustByEncoderDelta(int delta) {
 }
 
 void processTimerLongPressInput(bool down, unsigned long nowMs) {
-  if (down && !timerWasDown) {
-    timerWasDown = true;
-    timerHoldStartMs = nowMs;
-    timerLongPressFired = false;
-    return;
-  }
-
-  if (!down && timerWasDown) {
-    timerWasDown = false;
-    timerLongPressFired = false;
-    return;
-  }
-
-  // Long press => reset
-  if (down && timerWasDown && !timerLongPressFired &&
-      (nowMs - timerHoldStartMs >= appcfg::TIMER_HOLD_MS)) {
-    timerLongPressFired = true;
+  if (timerLongPress.update(down, nowMs, appcfg::TIMER_HOLD_MS) ==
+      LongPressEvent::LongPressed) {
     timerLongResetToPreset();
-    return;
   }
 }
 

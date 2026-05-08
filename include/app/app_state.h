@@ -25,11 +25,12 @@ enum ScreenState {
   SCREEN_TIMER,
   SCREEN_SESSION_PRESET,
   SCREEN_SESSION_RUN,
+  SCREEN_SESSION_HISTORY,
   SCREEN_POWER_SAVE,
   SCREEN_AUDIO
 };
 
-enum MenuIndex { MENU_SESSION, MENU_TIMER, MENU_SETTINGS };
+enum MenuIndex { MENU_SESSION, MENU_TIMER, MENU_HISTORY, MENU_SETTINGS };
 
 enum SettingsMenuIndex {
   SETTINGS_WIFI,
@@ -52,6 +53,8 @@ struct TimerStateModel {
 struct SessionStateModel {
   ConfirmState endConfirm;
   int presetIndex = 0;
+  bool started = false;
+  unsigned long startedAt = 0;
   int stepIndex = 0;
   unsigned long stepStartMs = 0;
   int stepDurationSec = 0;
@@ -64,6 +67,12 @@ struct SessionStateModel {
 
 struct WiFiStateModel {
   ConfirmState resetConfirm;
+};
+
+struct SessionHistoryStateModel {
+  ConfirmState deleteConfirm;
+  int selectedIndex = 0;
+  bool detailOpen = false;
 };
 
 enum class PowerRow : uint8_t { Enabled = 0, Timeout = 1 };
@@ -133,6 +142,7 @@ struct ClockStateModel {
 struct AppState {
   TimerStateModel timer;
   SessionStateModel session;
+  SessionHistoryStateModel history;
   WiFiStateModel wifi;
   UiStateModel ui;
   PowerStateModel power;

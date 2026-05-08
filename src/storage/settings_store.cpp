@@ -15,13 +15,7 @@ void ensureInitialized() {
   initialized = true;
 }
 
-int clampTimerDuration(int seconds) {
-  if (seconds < MIN_TIME)
-    return MIN_TIME;
-  if (seconds > MAX_TIME)
-    return MAX_TIME;
-  return seconds;
-}
+int clampTimerDuration(int seconds) { return clampTeaDurationSec(seconds); }
 
 BeepProfile clampBeepProfile(int raw) {
   if (raw < static_cast<int>(BeepProfile::Soft))

@@ -7,11 +7,13 @@
 #include <flow/clock_runtime.h>
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
+#include <flow/session_runtime_snapshot_flow.h>
 #include <flow/timer_flow.h>
 #include <flow/wifi_flow.h>
 #include <hw/display_config.h>
 #include <hw/input.h>
 #include <hw/pins.h>
+#include <storage/session_journal_store.h>
 #include <storage/settings_store.h>
 #include <ui.h>
 
@@ -37,6 +39,8 @@ void setup() {
   digitalWrite(BUZZER_PIN, LOW);
 
   settingsStoreBegin();
+  sessionJournalStoreBegin();
+
   app.power.enabled = settingsStoreLoadPowerSaveEnabled();
   app.power.displayOffTimeoutMs = settingsStoreLoadDisplayIdleOffMs();
 
@@ -58,7 +62,10 @@ void setup() {
 
   wifiInitOnBoot();
 
-  drawMenu();
+  bool sessionRestored = restoreSessionRuntimeSnapshotOnBoot();
+  if (!sessionRestored) {
+    drawMenu();
+  }
 
   initPowerSaving();
   markUserActivity();

@@ -4,6 +4,7 @@
 #include <app/app_state.h>
 #include <app/tea_config.h>
 #include <cstdio>
+#include <ui/confirm_overlay.h>
 #include <ui/header.h>
 #include <ui/layout.h>
 
@@ -247,21 +248,7 @@ void drawSessionRun(int remaining) {
     display.print("Press:Start Hold:Skip");
 
   if (app.session.endConfirm.active) {
-    const int x = 10;
-    const int y = 19;
-    const int w = 108;
-    const int h = 24;
-
-    display.fillRect(x, y, w, h, SSD1306_BLACK);
-    display.drawRect(x, y, w, h, SSD1306_WHITE);
-
-    display.setCursor(x + 6, y + 4);
-    display.print("End session?");
-    display.setCursor(x + 6, y + 14);
-    if (app.session.endConfirm.yesSelected)
-      display.print("No [YES]");
-    else
-      display.print("[NO] Yes");
+    drawConfirmOverlay("End session?", app.session.endConfirm);
   }
 
   display.display();

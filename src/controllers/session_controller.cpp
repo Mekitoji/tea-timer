@@ -6,6 +6,8 @@
 #include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
+#include <flow/session_journal_flow.h>
+#include <flow/session_runtime_snapshot_flow.h>
 #include <hw/pins.h>
 #include <ui.h>
 
@@ -74,20 +76,14 @@ bool handleSessionBackInput() {
 
     closeConfirm(app.session.endConfirm);
     setSessionStateStopped();
+    app.session.started = false;
+    app.session.startedAt = 0;
     app.session.rinseActive = (app.session.rinseSec > 0);
     app.session.stepIndex = 0;
     if (app.session.rinseActive) {
-      app.session.stepDurationSec = app.session.rinseSec;
-      if (app.session.stepDurationSec < MIN_TIME)
-        app.session.stepDurationSec = MIN_TIME;
-      if (app.session.stepDurationSec > MAX_TIME)
-        app.session.stepDurationSec = MAX_TIME;
+      app.session.stepDurationSec = clampTeaDurationSec(app.session.rinseSec);
     } else if (app.session.stepCount > 0) {
-      app.session.stepDurationSec = app.session.steps[0];
-      if (app.session.stepDurationSec < MIN_TIME)
-        app.session.stepDurationSec = MIN_TIME;
-      if (app.session.stepDurationSec > MAX_TIME)
-        app.session.stepDurationSec = MAX_TIME;
+      app.session.stepDurationSec = clampTeaDurationSec(app.session.steps[0]);
     } else {
       app.session.stepDurationSec = MIN_TIME;
     }
@@ -112,9 +108,11 @@ bool handleSessionSelectInput() {
     if (app.session.endConfirm.active) {
       if (app.session.endConfirm.yesSelected) {
         closeConfirm(app.session.endConfirm);
+        persistCompletedSessionJournalRecord(true);
         app.session.rinseActive = false;
         setSessionStateCompleted();
         app.session.stepIndex = app.session.stepCount;
+        clearSessionRuntimeSnapshot();
         drawSessionComplete();
       } else {
         closeConfirm(app.session.endConfirm);

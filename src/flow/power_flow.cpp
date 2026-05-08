@@ -19,6 +19,9 @@ unsigned long displayIdleOffTimeoutMs = appcfg::DEFAULT_DISPLAY_IDLE_OFF_MS;
 bool canEnterLightSleep() {
   if (isTimerRunning() || isSessionRunning())
     return false;
+
+  // Avoid entering sleep while wifi provisioning is active, to ensure the UI
+  // remains responsive.
   if (currentScreen == SCREEN_WIFI)
     return false;
 

@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <app/app_state.h>
+#include <controllers/history_controller.h>
 #include <controllers/menu_controller.h>
 #include <controllers/session_controller.h>
 #include <controllers/settings_controller.h>
@@ -37,6 +38,9 @@ void handleEncoderByScreen(bool stepPlus, bool stepMinus) {
   if (handleSessionEncoderInput(stepPlus, stepMinus)) {
     return;
   }
+  if (handleHistoryEncoderInput(stepPlus, stepMinus)) {
+    return;
+  }
   if (handleSettingsEncoderInput(stepPlus, stepMinus)) {
     return;
   }
@@ -64,6 +68,10 @@ void handleBackButton() {
     return;
   }
 
+  if (handleHistoryBackInput()) {
+    return;
+  }
+
   if (handleSettingsBackInput()) {
     return;
   }
@@ -83,6 +91,8 @@ void handleSelectButton() {
       return;
     if (handleSessionSelectInput())
       return;
+    if (handleHistorySelectInput())
+      return;
     if (handleSettingsSelectInput())
       return;
     if (handleWiFiSelectInput())
@@ -95,5 +105,6 @@ void handleSelectButton() {
 void handleLongPress() {
   handleSessionLongPressInput();
   handleWiFiLongPressInput();
+  handleHistoryLongPressInput();
   handleTimerLongPressInput();
 }

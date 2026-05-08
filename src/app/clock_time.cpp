@@ -144,6 +144,17 @@ bool clockBuildEpochFromDraft(const ClockStateModel &clockState,
   return true;
 }
 
+unsigned long clockCurrentEpochOrZero() {
+  if (!app.clock.timeValid)
+    return 0;
+
+  time_t now = std::time(nullptr);
+  if (now <= 0)
+    return 0;
+
+  return static_cast<unsigned long>(now);
+}
+
 bool clockSetSystemTimeFromEpoch(time_t epoch) {
   timeval tv = {};
   tv.tv_sec = epoch;

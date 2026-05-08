@@ -22,6 +22,7 @@ void wifiProvisionUpdate();
 void wifiResetCredentialsAndStartProvisioning();
 void wifiInitOnBoot();
 void wifiMaintainConnection();
+void wifiRetryFailedProvisioning();
 
 bool wifiProvisionIsActive();
 WifiProvisionUiState wifiProvisionState();

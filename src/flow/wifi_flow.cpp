@@ -30,6 +30,9 @@ bool hasSavedCredentials = false;
 bool eventHandlerRegistered = false;
 bool provisioningSessionActive = false;
 unsigned long lastReconnectMs = 0;
+
+bool beginWithSystemCredentials();
+
 void copyToBuf(char *dst, size_t dstSize, const char *src) {
   if (!dst || dstSize == 0)
     return;
@@ -38,6 +41,29 @@ void copyToBuf(char *dst, size_t dstSize, const char *src) {
     return;
   }
   std::snprintf(dst, dstSize, "%s", src);
+}
+
+const char *disconnectReasonName(uint8_t reason) {
+  switch (reason) {
+  case WIFI_REASON_AUTH_EXPIRE:
+    return "AUTH_EXPIRE";
+  case WIFI_REASON_TIMEOUT:
+    return "TIMEOUT";
+  case WIFI_REASON_BEACON_TIMEOUT:
+    return "BEACON_TIMEOUT";
+  case WIFI_REASON_NO_AP_FOUND:
+    return "NO_AP_FOUND";
+  case WIFI_REASON_AUTH_FAIL:
+    return "AUTH_FAIL";
+  case WIFI_REASON_ASSOC_FAIL:
+    return "ASSOC_FAIL";
+  case WIFI_REASON_HANDSHAKE_TIMEOUT:
+    return "HANDSHAKE_TIMEOUT";
+  case WIFI_REASON_CONNECTION_FAIL:
+    return "CONNECTION_FAIL";
+  default:
+    return "OTHER";
+  }
 }
 
 void setState(WifiProvisionUiState next) {
@@ -57,6 +83,19 @@ bool hasSystemStaCredentials() {
     return false;
 
   return conf.sta.ssid[0] != '\0';
+}
+
+bool loadSystemStaCredentials(wifi_config_t &conf) {
+  std::memset(&conf, 0, sizeof(conf));
+  if (esp_wifi_get_config(WIFI_IF_STA, &conf) != ESP_OK)
+    return false;
+
+  if (conf.sta.ssid[0] == '\0')
+    return false;
+
+  copyToBuf(staSsidBuf, sizeof(staSsidBuf),
+            reinterpret_cast<const char *>(conf.sta.ssid));
+  return true;
 }
 
 void refreshSavedCredentialsFlag() {
@@ -93,6 +132,7 @@ void onProvisionEvent(arduino_event_t *event) {
     break;
 
   case ARDUINO_EVENT_PROV_CRED_FAIL:
+    provisioningSessionActive = false;
     if (event->event_info.prov_fail_reason == WIFI_PROV_STA_AUTH_ERROR) {
       provisionFailReason = WifiProvisionFailReason::AuthError;
     } else if (event->event_info.prov_fail_reason ==
@@ -109,8 +149,13 @@ void onProvisionEvent(arduino_event_t *event) {
     break;
 
   case ARDUINO_EVENT_PROV_CRED_SUCCESS:
+    provisioningSessionActive = false;
+    refreshSavedCredentialsFlag();
     setState(WifiProvisionUiState::Connecting);
-    WIFI_LOG("cred_success");
+    WIFI_LOG("cred_success saved=%d", hasSavedCredentials ? 1 : 0);
+    if (hasSavedCredentials) {
+      beginWithSystemCredentials();
+    }
     break;
 
   case ARDUINO_EVENT_WIFI_STA_GOT_IP: {
@@ -133,13 +178,16 @@ void onProvisionEvent(arduino_event_t *event) {
     break;
   }
 
-  case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+  case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
     if (provisionState == WifiProvisionUiState::Connected ||
         provisionState == WifiProvisionUiState::Connecting) {
       setState(WifiProvisionUiState::Connecting);
     }
-    WIFI_LOG("sta_disconnected");
+    const uint8_t reason = event->event_info.wifi_sta_disconnected.reason;
+    WIFI_LOG("sta_disconnected reason=%d %s", static_cast<int>(reason),
+             disconnectReasonName(reason));
     break;
+  }
 
   case ARDUINO_EVENT_PROV_END:
     provisioningSessionActive = false;
@@ -165,11 +213,21 @@ void clearRuntimeBuffers() {
 }
 
 bool beginWithSystemCredentials() {
-  if (!hasSystemStaCredentials())
+  wifi_config_t conf = {};
+  if (!loadSystemStaCredentials(conf))
     return false;
 
-  WiFi.begin();
-  WIFI_LOG("connect_with_system_creds");
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);
+  if (esp_wifi_set_config(WIFI_IF_STA, &conf) != ESP_OK) {
+    WIFI_LOG("connect_with_system_creds set_config_failed");
+    return false;
+  }
+
+  setState(WifiProvisionUiState::Connecting);
+  wl_status_t status = WiFi.begin();
+  WIFI_LOG("connect_with_system_creds ssid='%s' status=%d", staSsidBuf,
+           static_cast<int>(status));
   return true;
 }
 
@@ -179,6 +237,7 @@ void wifiInitOnBoot() {
   ensureEventHandlerRegistered();
 
   WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
 
@@ -192,8 +251,6 @@ void wifiInitOnBoot() {
 }
 
 void wifiMaintainConnection() {
-  if (currentScreen == SCREEN_WIFI)
-    return;
   if (provisioningSessionActive)
     return;
   wl_status_t sta = WiFi.status();
@@ -211,15 +268,10 @@ void wifiMaintainConnection() {
     return;
   }
 
-  WiFi.mode(WIFI_STA);
-  if (WiFi.reconnect()) {
-    WIFI_LOG("reconnect_attempt system_creds");
+  WIFI_LOG("reconnect_attempt system_creds");
+  if (beginWithSystemCredentials()) {
     return;
   }
-
-  WIFI_LOG("reconnect_fallback begin");
-  if (beginWithSystemCredentials())
-    return;
 
   WIFI_LOG("reconnect_skipped no_system_creds");
 }
@@ -296,7 +348,25 @@ void wifiProvisionUpdate() {
 bool wifiProvisionIsActive() {
   return provisioningSessionActive ||
          provisionState == WifiProvisionUiState::WaitingCredentials ||
-         provisionState == WifiProvisionUiState::Connecting;
+         provisionState == WifiProvisionUiState::Connecting ||
+         provisionState == WifiProvisionUiState::Failed;
+}
+
+void wifiRetryFailedProvisioning() {
+  if (provisionState != WifiProvisionUiState::Failed) {
+    return;
+  }
+
+#if CONFIG_BLUEDROID_ENABLED
+  wifi_prov_mgr_deinit();
+#endif
+
+  WiFi.disconnect(true, true);
+  clearRuntimeBuffers();
+  provisioningSessionActive = false;
+  setState(WifiProvisionUiState::Idle);
+  refreshSavedCredentialsFlag();
+  wifiProvisionStart();
 }
 
 WifiProvisionUiState wifiProvisionState() { return provisionState; }

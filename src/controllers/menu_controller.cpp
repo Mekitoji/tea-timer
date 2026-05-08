@@ -1,4 +1,5 @@
 #include <flow/navigation_flow.h>
+#include <flow/session_history_flow.h>
 #include <flow/timer_flow.h>
 #include <ui/session.h>
 #include <ui/timer.h>
@@ -43,6 +44,10 @@ bool handleMenuSelectInput() {
     navigateTo(SCREEN_SETTINGS);
     app.ui.settingsSelected = 0;
     drawSettingsMenu();
+    break;
+
+  case MENU_HISTORY:
+    sessionHistoryEnter();
     break;
 
   default:

@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <app/app_state.h>
 #include <flow/wifi_flow.h>
+#include <ui/confirm_overlay.h>
 #include <ui/header.h>
 #include <ui/layout.h>
 
@@ -49,24 +50,6 @@ const char *staBadge(wl_status_t sta) {
   if (sta == WL_IDLE_STATUS)
     return "CONN?";
   return "DISC";
-}
-
-void drawWiFiResetConfirmOverlay() {
-  const int x = 8;
-  const int y = 20;
-  const int w = 112;
-  const int h = 24;
-
-  display.fillRect(x, y, w, h, SSD1306_BLACK);
-  display.drawRect(x, y, w, h, SSD1306_WHITE);
-  display.setCursor(x + 6, y + 4);
-  display.print("Reset Wi-Fi?");
-  display.setCursor(x + 6, y + 14);
-  if (app.wifi.resetConfirm.yesSelected) {
-    display.print("No [YES]");
-  } else {
-    display.print("[NO] Yes");
-  }
 }
 
 const char *provisionStateText(WifiProvisionUiState state) {
@@ -194,14 +177,16 @@ void drawWiFiScreen() {
   }
 
   display.setCursor(0, 56);
-  if (setupMode) {
+  if (setupMode && pstate == WifiProvisionUiState::Failed) {
+    display.print("Hold: retry");
+  } else if (setupMode) {
     display.print("Back: menu");
   } else {
     display.print("Hold: reset");
   }
 
   if (app.wifi.resetConfirm.active) {
-    drawWiFiResetConfirmOverlay();
+    drawConfirmOverlay("Reset Wi-Fi?", app.wifi.resetConfirm);
   }
 
   display.display();

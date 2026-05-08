@@ -4,6 +4,7 @@
 #include <flow/audio_settings_flow.h>
 #include <flow/clock_flow.h>
 #include <flow/power_settings_flow.h>
+#include <flow/session_history_flow.h>
 #include <ui.h>
 
 void navigateTo(ScreenState screen) { currentScreen = screen; }
@@ -43,6 +44,11 @@ void showPowerSaveScreen() {
   powerSettingsRender();
 }
 
+void showSessionHistoryScreen() {
+  navigateTo(SCREEN_SESSION_HISTORY);
+  sessionHistoryRender();
+}
+
 bool goBackAndRender() {
   switch (currentScreen) {
   case SCREEN_ABOUT:
@@ -51,6 +57,9 @@ bool goBackAndRender() {
   case SCREEN_CLOCK:
   case SCREEN_WIFI:
     showSettingsScreen();
+    return true;
+  case SCREEN_SESSION_HISTORY:
+    showMenuScreen();
     return true;
   case SCREEN_SETTINGS:
   case SCREEN_TIMER:

@@ -4,7 +4,8 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
 
 ## Features
 
-- Main menu navigation with rotary encoder (`Sessions`, `Timer`, `Settings`).
+- Main menu navigation with rotary encoder (`Sessions`, `Timer`, `History`,
+  `Settings`).
 - Single Timer mode:
   - adjust seconds with encoder acceleration (`+1 / +5 / +10` by rotation speed),
   - short press on encoder: start/pause/resume,
@@ -17,14 +18,43 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
   - encoder in paused state: adjust current step duration,
   - long press: skip current step,
   - rinse is a separate optional step (if `rinse=0`, rinse is not shown),
+  - after the first start, active session snapshot is persisted and restored
+    after reboot/power loss directly to `Session Run` in `PAUSED` state,
+  - while running, snapshot remaining time is refreshed at most every `5s`
+    to avoid writing to flash every second,
   - back button in run: open `End session?` confirm (`No/Yes`),
   - select `Yes` in confirm: finish session early and show completion screen,
   - back button after completion: return to preset list,
   - completion screen at the end of session.
+- Completed session journal:
+  - completed sessions are appended to one LittleFS JSON journal,
+  - false starts are not saved (`0` completed infusions),
+  - journal stores up to `128` records and overwrites the oldest record first,
+  - journal status is marked `pending` after each new completed session,
+  - if clock time is not valid, `startedAt/finishedAt` are stored as `0`,
+  - LittleFS is mounted without auto-format; mount failure makes the journal
+    unavailable but does not silently erase stored history,
+  - journal save is staged through three files:
+    - `/session_journal.tmp` receives the newly serialized JSON first,
+    - existing `/session_journal.json` is renamed to `/session_journal.bak`,
+    - tmp is renamed to `/session_journal.json`,
+  - if tmp write fails, the current journal is left untouched,
+  - if tmp-to-journal rename fails after the current journal was moved to bak,
+    the store attempts to rename bak back to `/session_journal.json`,
+  - on load, the store tries `/session_journal.json`, then
+    `/session_journal.bak`, then `/session_journal.tmp`; readable fallback
+    files are restored to the main journal path when possible,
+  - parse/version/open errors do not delete journal files automatically.
+- Session History screen (`Menu -> History`):
+  - shows stored completed session records,
+  - select opens/closes record details,
+  - encoder switches selected record,
+  - long press opens delete confirm for the selected record,
+  - back closes details/confirm or returns to Settings.
 - Runtime status labels in header (`RUNNING`, `PAUSED`, `STOP`/`READY`) with right-aligned header text.
 - Main menu header shows current time (`HH:MM`) on the right.
 - Before the first successful `NTP` sync or manual time set in the current boot, menu header shows `--:--` instead of exposing stale boot-time clock data.
-- Persistent settings via `Preferences` (NVS): timer preset, power save mode/timeout, audio mode/profile, clock state.
+- Persistent settings via `Preferences` (NVS): timer preset, power save mode/timeout, audio mode/profile, clock state, active session snapshot.
 - Power Save mode (Settings):
   - toggle `ON/OFF`,
   - configurable display idle timeout (`15s / 30s / 60s / 120s / 300s`),
@@ -128,67 +158,6 @@ Notes:
 - `Back` exits Wi-Fi screen.
 - Saved credentials are reused on next boot (best-effort reconnect).
 - To reprovision, long-press on Wi-Fi screen, confirm reset, then run BLE setup again.
-
-## Project Structure
-
-- `src/main.cpp` — app bootstrap (`setup/loop`) and top-level orchestration.
-- `src/app/app_controller.cpp` — central input dispatcher by screen/controller.
-- `src/app/app_state.cpp` — global app state storage and menu item tables.
-- `src/app/session_presets.cpp` — tea session presets (metadata + infusion steps).
-- `src/app/timer_state.cpp` — timer FSM implementation (`Stopped/Running/Paused`).
-- `src/app/session_state.cpp` — session FSM implementation (`Stopped/Running/Paused/Completed`).
-- `src/controllers/menu_controller.cpp` — menu input handling.
-- `src/controllers/timer_controller.cpp` — timer screen input handling.
-- `src/controllers/session_controller.cpp` — session screens input handling.
-- `src/controllers/settings_controller.cpp` — settings subtree input handling.
-- `src/controllers/wifi_controller.cpp` — Wi-Fi screen input handling.
-- `src/flow/navigation_flow.cpp` — centralized screen transitions (`navigateTo`, back behavior).
-- `src/flow/timer_flow.cpp` — single timer runtime/update logic.
-- `src/flow/session_flow.cpp` — session runtime/update logic.
-- `src/flow/wifi_flow.cpp` — BLE provisioning + STA status/reconnect logic.
-- `src/flow/clock_flow.cpp` — Clock screen editor flow (rows, edit mode, save/cancel).
-- `src/flow/clock_runtime.cpp` — Clock boot/runtime logic, NTP sync scheduling, and live screen refresh.
-- `src/flow/power_flow.cpp` — idle display off/light sleep/wake guard runtime logic.
-- `src/flow/power_settings_flow.cpp` — Power Save settings editor flow.
-- `src/flow/audio_profile_flow.cpp` — profile-based audio frequencies/durations.
-- `src/flow/audio_settings_flow.cpp` — Audio settings editor flow.
-- `src/storage/settings_store.cpp` — persistent settings load/save wrappers over `Preferences`.
-- `src/app/clock_time.cpp` — clock date/time helpers (`epoch <-> state`, timezone, draft/date clamp).
-- `src/hw/input.cpp` — encoder/buttons (debounced, non-blocking) + acceleration helper.
-- `src/hw/audio.cpp` — buzzer on/off helpers.
-- `src/hw/feedback.cpp` — LED + audio pulse helper.
-- `src/ui/menu.cpp` — main/settings menu drawing.
-- `src/ui/header.cpp` — shared header rendering.
-- `src/ui/timer.cpp` — timer screen rendering.
-- `src/ui/session.cpp` — session preset/run/complete rendering.
-- `src/ui/settings/wifi.cpp` — Wi-Fi settings rendering.
-- `src/ui/settings/clock.cpp` — Clock settings rendering.
-- `src/ui/settings/power_save.cpp` — Power Save settings rendering.
-- `src/ui/settings/audio.cpp` — Audio settings rendering.
-- `src/ui/settings/about.cpp` — About screen rendering.
-- `include/app/app_config.h` — app-level constants (timings, prefs keys, defaults).
-- `include/app/app_state.h` — app models/state declarations.
-- `include/app/session_presets.h` — session preset declarations.
-- `include/app/timer_state.h` — timer FSM declarations.
-- `include/app/session_state.h` — session FSM declarations.
-- `include/app/app_controller.h` — top-level input handling API.
-- `include/controllers/*.h` — per-screen input controller APIs.
-- `include/flow/navigation_flow.h` — navigation API.
-- `include/flow/timer_flow.h` — timer flow API.
-- `include/flow/session_flow.h` — session flow API.
-- `include/flow/wifi_flow.h` — Wi-Fi flow API.
-- `include/flow/clock_flow.h` — Clock screen editor flow API.
-- `include/flow/clock_runtime.h` — Clock runtime/NTP/update API.
-- `include/flow/power_flow.h` — power runtime API.
-- `include/flow/power_settings_flow.h` — Power Save settings flow API.
-- `include/flow/audio_profile_flow.h` — audio profile mapping API.
-- `include/flow/audio_settings_flow.h` — Audio settings flow API.
-- `include/storage/settings_store.h` — settings persistence API.
-- `include/app/clock_time.h` — clock date/time helper API.
-- `include/hw/pins.h` — hardware pin mapping.
-- `include/hw/input.h` — input API.
-- `include/hw/audio.h` — buzzer API.
-- `include/hw/feedback.h` — LED/audio feedback API.
 
 ## Potential Improvements
 

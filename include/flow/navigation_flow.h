@@ -12,3 +12,4 @@ void showWiFiScreen();
 void showPowerSaveScreen();
 void showAudioScreen();
 void showClockScreen();
+void showSessionHistoryScreen();

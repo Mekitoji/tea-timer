@@ -24,6 +24,13 @@ inline constexpr int ENC_STEP_FAST = 10;
 
 inline constexpr unsigned long SESSION_HOLD_MS = 1200;
 inline constexpr unsigned long WIFI_HOLD_MS = 1200;
+inline constexpr unsigned long HISTORY_HOLD_MS = 1200;
+
+// Session snapshot
+inline constexpr uint8_t SESSION_RUNTIME_SNAPSHOT_VERSION = 1;
+inline constexpr char PREFS_SESSION_RUNTIME_SNAPSHOT_KEY[] =
+    "sess_snap"; // ESP32 Preferences keys must be 15 chars or shorter (!!!!!);
+inline constexpr int SESSION_RUNTIME_SNAPSHOT_INTERVAL_SEC = 5;
 
 inline constexpr bool ENABLE_LIGHT_SLEEP = true;
 inline constexpr unsigned long LIGHT_SLEEP_IDLE_MS = 120000;

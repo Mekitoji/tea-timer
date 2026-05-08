@@ -11,6 +11,7 @@
 .cache/
 .clangd
 compile_commands.json
+_mock/
 
 # OS files
 .DS_Store

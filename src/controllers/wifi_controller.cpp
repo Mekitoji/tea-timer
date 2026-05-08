@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <app/app_config.h>
 #include <app/app_state.h>
+#include <app/long_press.h>
 #include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
 #include <flow/wifi_flow.h>
@@ -10,13 +11,10 @@
 #include <ui.h>
 
 namespace {
-unsigned long wifiHoldStartMs = 0;
-bool wifiWasDown = false;
-bool wifiLongPressFired = false;
+LongPressTracker wifiLongPress;
 
 void resetWiFiLongPressFlowState() {
-  wifiWasDown = false;
-  wifiLongPressFired = false;
+  wifiLongPress.reset();
 }
 } // namespace
 
@@ -75,7 +73,13 @@ void handleWiFiLongPressInput() {
     return;
   }
 
-  if (app.wifi.resetConfirm.active || !wifiProvisionHasSavedCredentials()) {
+  const WifiProvisionUiState provisionState = wifiProvisionState();
+  const bool canRetryFailedProvisioning =
+      provisionState == WifiProvisionUiState::Failed;
+  const bool canResetSavedCredentials = wifiProvisionHasSavedCredentials();
+
+  if (app.wifi.resetConfirm.active ||
+      (!canRetryFailedProvisioning && !canResetSavedCredentials)) {
     resetWiFiLongPressFlowState();
     return;
   }
@@ -83,25 +87,16 @@ void handleWiFiLongPressInput() {
   const unsigned long now = millis();
   const bool down = (digitalRead(ENC_SW) == LOW);
 
-  if (down && !wifiWasDown) {
-    wifiWasDown = true;
-    wifiHoldStartMs = now;
-    wifiLongPressFired = false;
-  }
+  if (wifiLongPress.update(down, now, appcfg::WIFI_HOLD_MS) !=
+      LongPressEvent::LongPressed)
+    return;
 
-  if (!down && wifiWasDown) {
-    wifiWasDown = false;
-    wifiLongPressFired = false;
+  if (canRetryFailedProvisioning) {
+    wifiRetryFailedProvisioning();
+    drawWiFi();
     return;
   }
 
-  if (!down || !wifiWasDown || wifiLongPressFired)
-    return;
-
-  if (now - wifiHoldStartMs < appcfg::WIFI_HOLD_MS)
-    return;
-
-  wifiLongPressFired = true;
   openConfirm(app.wifi.resetConfirm);
   drawWiFi();
 }

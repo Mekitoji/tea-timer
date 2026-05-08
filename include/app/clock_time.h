@@ -12,5 +12,6 @@ void clockApplyDraftToState(ClockStateModel &clockState);
 bool clockHasUnsavedDraft(const ClockStateModel &clockState);
 bool clockBuildEpochFromCompileTime(time_t &outEpoch);
 bool clockBuildEpochFromDraft(const ClockStateModel &clockState, time_t &outEpoch);
+unsigned long clockCurrentEpochOrZero();
 bool clockSetSystemTimeFromEpoch(time_t epoch);
 void clockApplyEpochToState(ClockStateModel &clockState, time_t epoch);

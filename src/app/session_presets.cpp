@@ -2,17 +2,17 @@
 
 namespace {
 const int STEPS_GREEN[] = {15, 20, 25, 30, 40, 55, 75, 100, 140};
-const int STEPS_WHITE_FRESH[] = {20,  25,  30,  40,  55,  75,
+const int STEPS_WHITE_FRESH[] = {20,  25,  30,  40,  55, 75,
                                  100, 130, 170, 220, 300};
 const int STEPS_WHITE_AGED[] = {10,  15,  20,  30,  45,  60, 80,
                                 110, 150, 210, 300, 420, 600};
 const int STEPS_YELLOW[] = {15, 20, 25, 30, 40, 55, 75, 100, 140};
-const int STEPS_OOLONG[] = {8,  10, 12, 15, 18, 22, 28,
+const int STEPS_OOLONG[] = {8,  10, 12, 15, 18, 22,  28,
                             35, 45, 60, 75, 90, 120, 150};
-const int STEPS_TGY[] = {12, 15, 18, 20,  25,  30, 35,
+const int STEPS_TGY[] = {12, 15, 18, 20, 25,  30,  35,
                          45, 55, 70, 90, 120, 150, 180};
-const int STEPS_YANCHA[] = {5,  8,  10, 12, 15, 18,  22, 28,
-                            35, 45, 60, 75, 90, 120, 150};
+const int STEPS_YANCHA[] = {8,  12, 15, 20, 25, 30,  35, 40,
+                            50, 60, 70, 80, 90, 120, 150};
 const int STEPS_DANCONG[] = {5,  6,  8,  10, 12, 15, 18,
                              22, 28, 35, 45, 60, 75, 90};
 const int STEPS_GABA[] = {15, 18, 20, 25, 30, 35, 45, 55, 70, 90, 120, 150};
@@ -24,7 +24,7 @@ const int STEPS_SHENG_A[] = {6,  8,  10, 12, 15, 18,  22, 28,
                              35, 45, 60, 75, 90, 120, 150};
 const int STEPS_SHU[] = {8,  10, 12, 15, 18,  22,  28, 35,
                          45, 60, 75, 90, 120, 150, 180};
-const int STEPS_HEICHA[] = {10, 12, 15, 18,  22,  28, 35,
+const int STEPS_HEICHA[] = {10, 12, 15, 18, 22,  28,  35,
                             45, 60, 75, 90, 120, 150, 180};
 } // namespace
 

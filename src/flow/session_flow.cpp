@@ -3,36 +3,25 @@
 #include <Arduino.h>
 #include <app/app_config.h>
 #include <app/app_state.h>
+#include <app/clock_time.h>
+#include <app/long_press.h>
 #include <app/session_presets.h>
 #include <app/tea_config.h>
 #include <flow/audio_profile_flow.h>
 #include <flow/navigation_flow.h>
+#include <flow/session_journal_flow.h>
+#include <flow/session_runtime_snapshot_flow.h>
 #include <hw/feedback.h>
 #include <ui.h>
 
 namespace {
 int lastRemaining = -1;
-
-int clampRinseSec(int sec) {
-  if (sec <= 0)
-    return 0;
-  if (sec > MAX_TIME)
-    return MAX_TIME;
-  return sec;
-}
-
-int clampInfusionSec(int sec) {
-  if (sec < MIN_TIME)
-    return MIN_TIME;
-  if (sec > MAX_TIME)
-    return MAX_TIME;
-  return sec;
-}
+int lastPersistedSnapshotRemaining = -1;
 
 int stepSecAt(int index) {
   if (index < 0 || index >= app.session.stepCount)
     return MIN_TIME;
-  return clampInfusionSec(app.session.steps[index]);
+  return clampTeaDurationSec(app.session.steps[index]);
 }
 
 bool hasCurrentSessionStep() {
@@ -48,20 +37,12 @@ int currentStepSecFromState() {
     stepSec = app.session.rinseActive ? app.session.rinseSec
                                       : stepSecAt(app.session.stepIndex);
   }
-  if (stepSec < MIN_TIME)
-    stepSec = MIN_TIME;
-  if (stepSec > MAX_TIME)
-    stepSec = MAX_TIME;
-  return stepSec;
+  return clampTeaDurationSec(stepSec);
 }
 
 void applyCurrentStepFromModel() {
   if (app.session.rinseActive) {
-    int rinse = app.session.rinseSec;
-    if (rinse < MIN_TIME)
-      rinse = MIN_TIME;
-    if (rinse > MAX_TIME)
-      rinse = MAX_TIME;
+    int rinse = clampTeaDurationSec(app.session.rinseSec);
     app.session.rinseSec = rinse;
     app.session.stepDurationSec = rinse;
     app.session.stepTotalSec = rinse;
@@ -90,46 +71,71 @@ bool advanceToNextSessionStep() {
   return true;
 }
 
-unsigned long sessionHoldStartMs = 0;
-bool sessionWasDown = false;
-bool sessionLongPressFired = false;
+LongPressTracker sessionLongPress;
+
+void ensureSessionStarted() {
+  if (app.session.started)
+    return;
+
+  app.session.started = true;
+  app.session.startedAt = clockCurrentEpochOrZero();
+}
+
+void markSessionSnapshotPersisted(int remaining) {
+  lastPersistedSnapshotRemaining = remaining;
+}
+
+void persistRunningSessionSnapshotIfNeeded(unsigned long nowMs, int remaining) {
+  if (!isSessionRunning() || !app.session.started)
+    return;
+
+  if (lastPersistedSnapshotRemaining >= 0 &&
+      remaining <= lastPersistedSnapshotRemaining &&
+      lastPersistedSnapshotRemaining - remaining <
+          appcfg::SESSION_RUNTIME_SNAPSHOT_INTERVAL_SEC) {
+    return;
+  }
+
+  persistSessionRuntimeSnapshot(nowMs);
+  markSessionSnapshotPersisted(remaining);
+}
 } // namespace
 
-void resetSessionFlowState() { lastRemaining = -1; }
+void resetSessionFlowState() {
+  lastRemaining = -1;
+  lastPersistedSnapshotRemaining = -1;
+}
 
 void resetSessionLongPressFlowState() {
-  sessionWasDown = false;
-  sessionLongPressFired = false;
+  sessionLongPress.reset();
 }
 
 void processSessionLongPressInput(bool down, unsigned long nowMs) {
-  if (down && !sessionWasDown) {
-    sessionWasDown = true;
-    sessionHoldStartMs = nowMs;
-    sessionLongPressFired = false;
-  }
+  if (sessionLongPress.update(down, nowMs, appcfg::SESSION_HOLD_MS) !=
+      LongPressEvent::LongPressed)
+    return;
 
-  if (!down && sessionWasDown) {
-    sessionWasDown = false;
-    sessionLongPressFired = false;
+  if (!app.session.rinseActive &&
+      app.session.stepIndex >= app.session.stepCount - 1) {
+    persistCompletedSessionJournalRecord(true);
+    app.session.stepIndex = app.session.stepCount;
+    setSessionStateCompleted();
+    clearSessionRuntimeSnapshot();
+    drawSessionComplete();
     return;
   }
-
-  if (!down || !sessionWasDown || sessionLongPressFired)
-    return;
-
-  if (nowMs - sessionHoldStartMs < appcfg::SESSION_HOLD_MS)
-    return;
-
-  sessionLongPressFired = true;
 
   if (!advanceToNextSessionStep()) {
+    persistCompletedSessionJournalRecord(true);
     setSessionStateCompleted();
+    clearSessionRuntimeSnapshot();
     drawSessionComplete();
     return;
   }
 
   setSessionStatePaused();
+  persistSessionRuntimeSnapshot(nowMs);
+  markSessionSnapshotPersisted(app.session.stepDurationSec);
   drawSessionRun(app.session.stepDurationSec);
 }
 
@@ -139,6 +145,8 @@ void loadSessionPresetByIndex(int presetIndex) {
 
   if (SESSION_PRESET_COUNT <= 0) {
     app.session.presetIndex = 0;
+    app.session.started = false;
+    app.session.startedAt = 0;
     app.session.stepCount = 0;
     app.session.rinseSec = 0;
     app.session.rinseActive = false;
@@ -153,9 +161,11 @@ void loadSessionPresetByIndex(int presetIndex) {
     presetIndex = 0;
 
   app.session.presetIndex = presetIndex;
+  app.session.started = false;
+  app.session.startedAt = 0;
 
   const SessionPreset &preset = SESSION_PRESETS[app.session.presetIndex];
-  app.session.rinseSec = clampRinseSec(preset.rinseSec);
+  app.session.rinseSec = clampOptionalTeaDurationSec(preset.rinseSec);
   app.session.rinseActive = (app.session.rinseSec > 0);
 
   int count = preset.stepCount;
@@ -167,7 +177,7 @@ void loadSessionPresetByIndex(int presetIndex) {
   app.session.stepCount = count;
 
   for (int i = 0; i < app.session.stepCount; i++) {
-    app.session.steps[i] = clampInfusionSec(preset.stepsSec[i]);
+    app.session.steps[i] = clampTeaDurationSec(preset.stepsSec[i]);
   }
   for (int i = app.session.stepCount; i < SESSION_MAX_STEPS; i++) {
     app.session.steps[i] = 0;
@@ -200,6 +210,8 @@ void enterSessionRunFromCurrentPreset() {
 
   app.session.stepIndex = 0;
   app.session.rinseActive = (app.session.rinseSec > 0);
+  app.session.started = false;
+  app.session.startedAt = 0;
   applyCurrentStepFromModel();
 
   setSessionStatePaused();
@@ -212,6 +224,7 @@ void updateSessionRun() {
     if (!hasCurrentSessionStep()) {
       if (!isSessionCompleted()) {
         setSessionStateCompleted();
+        clearSessionRuntimeSnapshot();
         drawSessionComplete();
       }
       return;
@@ -229,6 +242,7 @@ void updateSessionRun() {
 
     if (remaining != lastRemaining) {
       drawSessionRun(remaining);
+      persistRunningSessionSnapshotIfNeeded(millis(), remaining);
 
       if (isSessionRunning() && remaining <= 3 && remaining > 0) {
         pulseLedAndAudio(audioProfileCountdownFreq(),
@@ -257,12 +271,16 @@ void updateSessionRun() {
         setSessionStateCompleted();
         app.session.endConfirm.active = false;
         app.session.endConfirm.yesSelected = false;
+        persistCompletedSessionJournalRecord(false);
+        clearSessionRuntimeSnapshot();
         drawSessionComplete();
         lastRemaining = -999;
         return;
       }
 
       drawSessionRun(app.session.stepDurationSec);
+      persistSessionRuntimeSnapshot(millis());
+      markSessionSnapshotPersisted(app.session.stepDurationSec);
       lastRemaining = -1;
       return;
     }
@@ -273,6 +291,7 @@ void updateSessionRun() {
 
 void sessionToggleRunPauseAt(unsigned long nowMs) {
   if (!hasCurrentSessionStep()) {
+    clearSessionRuntimeSnapshot();
     navigateTo(SCREEN_MENU);
     drawMenu();
 
@@ -289,6 +308,8 @@ void sessionToggleRunPauseAt(unsigned long nowMs) {
 
     app.session.stepDurationSec = remaining;
     setSessionStatePaused();
+    persistSessionRuntimeSnapshot(nowMs);
+    markSessionSnapshotPersisted(app.session.stepDurationSec);
     drawSessionRun(app.session.stepDurationSec);
     return;
   }
@@ -298,8 +319,11 @@ void sessionToggleRunPauseAt(unsigned long nowMs) {
   if (app.session.stepTotalSec <= 0)
     app.session.stepTotalSec = app.session.stepDurationSec;
 
+  ensureSessionStarted();
   setSessionStateRunning();
   app.session.stepStartMs = nowMs;
+  persistSessionRuntimeSnapshot(nowMs);
+  markSessionSnapshotPersisted(app.session.stepDurationSec);
   drawSessionRun(app.session.stepDurationSec);
 }
 
@@ -320,8 +344,7 @@ void sessionAdjustPausedStepByDelta(int delta) {
     maxRemaining = MIN_TIME;
 
   int newRemaining = remaining + delta;
-  if (newRemaining < MIN_TIME)
-    newRemaining = MIN_TIME;
+  newRemaining = clampTeaDurationSec(newRemaining);
   if (newRemaining > maxRemaining)
     newRemaining = maxRemaining;
 
@@ -334,4 +357,7 @@ void sessionAdjustPausedStepByDelta(int delta) {
              app.session.stepIndex < app.session.stepCount) {
     app.session.steps[app.session.stepIndex] = app.session.stepTotalSec;
   }
+
+  persistSessionRuntimeSnapshot(millis());
+  markSessionSnapshotPersisted(app.session.stepDurationSec);
 }
