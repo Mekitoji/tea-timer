@@ -1,6 +1,7 @@
 #include <ui/settings/about.h>
 
 #include <Arduino.h>
+#include <app/app_config.h>
 #include <app/app_state.h>
 #include <ui/header.h>
 #include <ui/layout.h>
@@ -24,7 +25,8 @@ void drawAbout() {
 
   display.setCursor(0,
                     ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 3);
-  display.print("FW: v1.0.0");
+  display.print("FW: ");
+  display.print(appcfg::FIRMWARE_VERSION);
 
   display.display();
 }

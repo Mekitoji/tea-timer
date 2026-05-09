@@ -126,9 +126,10 @@ void drawDetails(const SessionJournal &journal,
   display.print(finishBuf);
 
   display.setCursor(0, 58);
-  display.print("Hold:Delete");
   if (record->finishedEarly)
-    display.print(" Early");
+    display.print("Early  ");
+
+  display.print("Hold:Delete");
 }
 } // namespace
 

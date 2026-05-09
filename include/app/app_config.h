@@ -5,6 +5,8 @@
 enum class BeepProfile : uint8_t { Soft = 0, Normal = 1, Loud = 2 };
 
 namespace appcfg {
+inline constexpr char FIRMWARE_VERSION[] = "1.0.0";
+
 inline constexpr char PREFS_NAMESPACE[] = "tea_timer";
 inline constexpr char PREFS_DURATION_KEY[] = "dur_sec";
 inline constexpr char PREFS_POWER_SAVE_KEY[] = "pwr_save";
@@ -28,8 +30,7 @@ inline constexpr unsigned long HISTORY_HOLD_MS = 1200;
 
 // Session snapshot
 inline constexpr uint8_t SESSION_RUNTIME_SNAPSHOT_VERSION = 1;
-inline constexpr char PREFS_SESSION_RUNTIME_SNAPSHOT_KEY[] =
-    "sess_snap"; // ESP32 Preferences keys must be 15 chars or shorter (!!!!!);
+inline constexpr char PREFS_SESSION_RUNTIME_SNAPSHOT_KEY[] = "sess_snap";
 inline constexpr int SESSION_RUNTIME_SNAPSHOT_INTERVAL_SEC = 5;
 
 inline constexpr bool ENABLE_LIGHT_SLEEP = true;
@@ -37,8 +38,8 @@ inline constexpr unsigned long LIGHT_SLEEP_IDLE_MS = 120000;
 
 inline constexpr unsigned long WIFI_RECONNECT_INTERVAL_MS = 8000;
 
-inline constexpr const char *PREFS_BEEP_PROFILE_KEY = "beep_profile";
-inline constexpr const char *PREFS_AUDIO_ENABLED_KEY = "audio_enabled";
+inline constexpr char PREFS_BEEP_PROFILE_KEY[] = "beep_profile";
+inline constexpr char PREFS_AUDIO_ENABLED_KEY[] = "audio_enabled";
 
 inline constexpr BeepProfile DEFAULT_BEEP_PROFILE = BeepProfile::Normal;
 inline constexpr bool DEFAULT_AUDIO_ENABLED = true;
@@ -47,13 +48,13 @@ inline constexpr unsigned long DEFAULT_DISPLAY_IDLE_OFF_MS = 60000;
 inline constexpr unsigned long MIN_DISPLAY_IDLE_OFF_MS = 10000;
 inline constexpr unsigned long MAX_DISPLAY_IDLE_OFF_MS = 600000;
 
-inline constexpr const char *PREFS_DISPLAY_IDLE_OFF_MS_KEY = "disp_off_ms";
+inline constexpr char PREFS_DISPLAY_IDLE_OFF_MS_KEY[] = "disp_off_ms";
 
 // Clock
-inline constexpr const char *PREFS_CLOCK_AUTO_SYNC_KEY = "clock_auto";
-inline constexpr const char *PREFS_CLOCK_SOURCE_KEY = "clock_src";
-inline constexpr const char *PREFS_CLOCK_VALID_KEY = "clock_valid";
-inline constexpr const char *PREFS_CLOCK_EPOCH_KEY = "clock_epoch";
+inline constexpr char PREFS_CLOCK_AUTO_SYNC_KEY[] = "clock_auto";
+inline constexpr char PREFS_CLOCK_SOURCE_KEY[] = "clock_src";
+inline constexpr char PREFS_CLOCK_VALID_KEY[] = "clock_valid";
+inline constexpr char PREFS_CLOCK_EPOCH_KEY[] = "clock_epoch";
 
 inline constexpr bool DEFAULT_CLOCK_AUTO_SYNC_ENABLED = true;
 inline constexpr char DEFAULT_CLOCK_TZ[] = "GET-4";

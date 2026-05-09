@@ -25,7 +25,7 @@ int stepSecAt(int index) {
 }
 
 bool hasCurrentSessionStep() {
-  if (app.session.rinseActive && app.session.rinseSec > 0)
+  if (app.session.rinseActive)
     return true;
   return app.session.stepIndex >= 0 &&
          app.session.stepIndex < app.session.stepCount;
@@ -37,12 +37,14 @@ int currentStepSecFromState() {
     stepSec = app.session.rinseActive ? app.session.rinseSec
                                       : stepSecAt(app.session.stepIndex);
   }
+  if (app.session.rinseActive)
+    return clampOptionalTeaDurationSec(stepSec);
   return clampTeaDurationSec(stepSec);
 }
 
 void applyCurrentStepFromModel() {
   if (app.session.rinseActive) {
-    int rinse = clampTeaDurationSec(app.session.rinseSec);
+    int rinse = clampOptionalTeaDurationSec(app.session.rinseSec);
     app.session.rinseSec = rinse;
     app.session.stepDurationSec = rinse;
     app.session.stepTotalSec = rinse;
@@ -166,7 +168,7 @@ void loadSessionPresetByIndex(int presetIndex) {
 
   const SessionPreset &preset = SESSION_PRESETS[app.session.presetIndex];
   app.session.rinseSec = clampOptionalTeaDurationSec(preset.rinseSec);
-  app.session.rinseActive = (app.session.rinseSec > 0);
+  app.session.rinseActive = true;
 
   int count = preset.stepCount;
   if (count < 0)
@@ -184,13 +186,7 @@ void loadSessionPresetByIndex(int presetIndex) {
   }
 
   app.session.stepIndex = 0;
-  if (app.session.rinseActive) {
-    app.session.stepDurationSec = app.session.rinseSec;
-  } else if (app.session.stepCount > 0) {
-    app.session.stepDurationSec = stepSecAt(0);
-  } else {
-    app.session.stepDurationSec = MIN_TIME;
-  }
+  app.session.stepDurationSec = app.session.rinseSec;
   app.session.stepTotalSec = app.session.stepDurationSec;
 
   setSessionStateStopped();
@@ -205,11 +201,11 @@ void enterSessionRunFromCurrentPreset() {
     loadSessionPresetByIndex(app.session.presetIndex);
   }
 
-  if (app.session.stepCount <= 0 && app.session.rinseSec <= 0)
+  if (app.session.stepCount <= 0)
     return;
 
   app.session.stepIndex = 0;
-  app.session.rinseActive = (app.session.rinseSec > 0);
+  app.session.rinseActive = true;
   app.session.started = false;
   app.session.startedAt = 0;
   applyCurrentStepFromModel();
@@ -319,6 +315,19 @@ void sessionToggleRunPauseAt(unsigned long nowMs) {
   if (app.session.stepTotalSec <= 0)
     app.session.stepTotalSec = app.session.stepDurationSec;
 
+  if (app.session.rinseActive && app.session.stepDurationSec <= 0) {
+    if (!advanceToNextSessionStep()) {
+      setSessionStateCompleted();
+      clearSessionRuntimeSnapshot();
+      drawSessionComplete();
+      return;
+    }
+
+    setSessionStatePaused();
+    drawSessionRun(app.session.stepDurationSec);
+    return;
+  }
+
   ensureSessionStarted();
   setSessionStateRunning();
   app.session.stepStartMs = nowMs;
@@ -339,12 +348,16 @@ void sessionAdjustPausedStepByDelta(int delta) {
   if (elapsed > MAX_TIME)
     elapsed = MAX_TIME;
 
+  int minRemaining = app.session.rinseActive ? 0 : MIN_TIME;
   int maxRemaining = MAX_TIME - elapsed;
-  if (maxRemaining < MIN_TIME)
-    maxRemaining = MIN_TIME;
+  if (maxRemaining < minRemaining)
+    maxRemaining = minRemaining;
 
   int newRemaining = remaining + delta;
-  newRemaining = clampTeaDurationSec(newRemaining);
+  if (newRemaining < minRemaining)
+    newRemaining = minRemaining;
+  if (newRemaining > MAX_TIME)
+    newRemaining = MAX_TIME;
   if (newRemaining > maxRemaining)
     newRemaining = maxRemaining;
 

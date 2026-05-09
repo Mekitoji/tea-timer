@@ -78,15 +78,10 @@ bool handleSessionBackInput() {
     setSessionStateStopped();
     app.session.started = false;
     app.session.startedAt = 0;
-    app.session.rinseActive = (app.session.rinseSec > 0);
+    app.session.rinseActive = true;
     app.session.stepIndex = 0;
-    if (app.session.rinseActive) {
-      app.session.stepDurationSec = clampTeaDurationSec(app.session.rinseSec);
-    } else if (app.session.stepCount > 0) {
-      app.session.stepDurationSec = clampTeaDurationSec(app.session.steps[0]);
-    } else {
-      app.session.stepDurationSec = MIN_TIME;
-    }
+    app.session.stepDurationSec =
+        clampOptionalTeaDurationSec(app.session.rinseSec);
     app.session.stepTotalSec = app.session.stepDurationSec;
     navigateTo(SCREEN_SESSION_PRESET);
     drawSessionPresetMenu();

@@ -49,14 +49,12 @@ const SessionPreset *currentPresetOrNull() {
   return &SESSION_PRESETS[index];
 }
 
-bool hasVisibleRinse() { return app.session.rinseSec > 0; }
-
 int currentTotalSec() {
   if (app.session.stepTotalSec > 0)
     return app.session.stepTotalSec;
   if (app.session.stepDurationSec > 0)
     return app.session.stepDurationSec;
-  if (app.session.rinseActive && app.session.rinseSec > 0)
+  if (app.session.rinseActive)
     return app.session.rinseSec;
   if (app.session.stepIndex >= 0 && app.session.stepIndex < app.session.stepCount)
     return app.session.steps[app.session.stepIndex];
@@ -152,7 +150,9 @@ void drawSessionRun(int remaining) {
   }
 
   int totalSec = currentTotalSec();
-  if (totalSec < MIN_TIME)
+  if (totalSec < 0)
+    totalSec = 0;
+  if (!app.session.rinseActive && totalSec < MIN_TIME)
     totalSec = MIN_TIME;
 
   if (remaining < 0)
@@ -181,7 +181,7 @@ void drawSessionRun(int remaining) {
     infusions = 0;
 
   display.setCursor(0, ui::layout::SESSION_RUN_STEP_Y);
-  if (app.session.rinseActive && hasVisibleRinse()) {
+  if (app.session.rinseActive) {
     display.print("Rinse 0/");
     display.print(infusions);
   } else {
@@ -230,8 +230,9 @@ void drawSessionRun(int remaining) {
   if (elapsed > totalSec)
     elapsed = totalSec;
 
-  int fill =
-      (elapsed * (ui::layout::PROGRESS_W - 2)) / (totalSec > 0 ? totalSec : 1);
+  int fill = 0;
+  if (totalSec > 0)
+    fill = (elapsed * (ui::layout::PROGRESS_W - 2)) / totalSec;
   if (fill < 0)
     fill = 0;
   if (fill > ui::layout::PROGRESS_W - 2)

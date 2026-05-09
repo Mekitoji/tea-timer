@@ -5,7 +5,7 @@
 
 namespace {
 bool hasRestorableStep(const SessionRuntimeSnapshot &snapshot) {
-  if (snapshot.rinseActive && snapshot.rinseSec > 0)
+  if (snapshot.rinseActive)
     return true;
 
   return snapshot.stepIndex >= 0 && snapshot.stepIndex < snapshot.stepCount;

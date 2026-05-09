@@ -2,6 +2,8 @@
 
 Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 128x64`), rotary encoder, dedicated back button, buzzer, and LED indicator.
 
+Current firmware version: `1.0.0`.
+
 ## Features
 
 - Main menu navigation with rotary encoder (`Sessions`, `Timer`, `History`,
@@ -17,7 +19,7 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
   - short press: start/pause/resume current step,
   - encoder in paused state: adjust current step duration,
   - long press: skip current step,
-  - rinse is a separate optional step (if `rinse=0`, rinse is not shown),
+  - rinse is always shown as step `0/N`; `0s` is allowed only for rinse,
   - after the first start, active session snapshot is persisted and restored
     after reboot/power loss directly to `Session Run` in `PAUSED` state,
   - while running, snapshot remaining time is refreshed at most every `5s`
@@ -50,7 +52,7 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
   - select opens/closes record details,
   - encoder switches selected record,
   - long press opens delete confirm for the selected record,
-  - back closes details/confirm or returns to Settings.
+  - back closes details/confirm or returns to Menu.
 - Runtime status labels in header (`RUNNING`, `PAUSED`, `STOP`/`READY`) with right-aligned header text.
 - Main menu header shows current time (`HH:MM`) on the right.
 - Before the first successful `NTP` sync or manual time set in the current boot, menu header shows `--:--` instead of exposing stale boot-time clock data.
@@ -88,6 +90,7 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
 - Explicit FSM layers:
   - `TimerState`: `Stopped/Running/Paused`,
   - `SessionState`: `Stopped/Running/Paused/Completed`.
+- About screen shows chip, flash, heap, and current firmware version.
 
 ## Requirements
 
