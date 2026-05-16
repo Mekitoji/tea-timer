@@ -16,9 +16,34 @@ enum class WifiProvisionFailReason {
   Unknown,
 };
 
+enum class WifiStaUiState {
+  Disconnected,
+  Connecting,
+  Connected,
+  ConnectFailed,
+  ConnectionLost,
+  NoSsid,
+  Unknown,
+};
+
+struct WifiFlowSnapshot {
+  bool hasSavedCredentials = false;
+  bool setupMode = true;
+  bool connected = false;
+  int rssi = 0;
+  WifiStaUiState staState = WifiStaUiState::Disconnected;
+  WifiProvisionUiState provisionState = WifiProvisionUiState::Idle;
+  WifiProvisionFailReason provisionFailReason = WifiProvisionFailReason::None;
+  const char *serviceName = "";
+  const char *pop = "";
+  const char *staSsid = "";
+  const char *staIp = "";
+};
+
 void wifiFlowEnterScreen();
 void wifiFlowExitScreen();
 void wifiFlowTick();
+WifiFlowSnapshot wifiFlowSnapshot();
 void wifiResetCredentialsAndStartProvisioning();
 void wifiInitOnBoot();
 void wifiMaintainConnection();

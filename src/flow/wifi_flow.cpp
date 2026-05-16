@@ -30,8 +30,10 @@ bool hasSavedCredentials = false;
 bool eventHandlerRegistered = false;
 bool provisioningSessionActive = false;
 unsigned long lastReconnectMs = 0;
+unsigned long connectAttemptStartedMs = 0;
 
 bool beginWithSystemCredentials();
+void refreshSavedCredentialsFlag();
 
 void copyToBuf(char *dst, size_t dstSize, const char *src) {
   if (!dst || dstSize == 0)
@@ -76,10 +78,52 @@ void setState(WifiProvisionUiState next) {
   WIFI_LOG("state=%d", static_cast<int>(provisionState));
 }
 
+void markConnectAttemptStarted() { connectAttemptStartedMs = millis(); }
+
+void clearConnectAttempt() { connectAttemptStartedMs = 0; }
+
+bool connectAttemptTimedOut(unsigned long now) {
+  return connectAttemptStartedMs != 0 &&
+         now - connectAttemptStartedMs >= appcfg::WIFI_CONNECT_TIMEOUT_MS;
+}
+
 bool provisionStateIsActive() {
   return provisionState == WifiProvisionUiState::WaitingCredentials ||
          provisionState == WifiProvisionUiState::Connecting ||
          provisionState == WifiProvisionUiState::Failed;
+}
+
+bool provisioningBlocksStaReconnect() {
+  return provisioningSessionActive ||
+         provisionState == WifiProvisionUiState::WaitingCredentials ||
+         provisionState == WifiProvisionUiState::Failed ||
+         provisionState == WifiProvisionUiState::NotSupported;
+}
+
+bool shouldStopProvisioningOnScreenExit() {
+  refreshSavedCredentialsFlag();
+  return provisioningBlocksStaReconnect() ||
+         (!hasSavedCredentials &&
+          provisionState == WifiProvisionUiState::Connecting);
+}
+
+WifiStaUiState mapStaStatus(wl_status_t status) {
+  switch (status) {
+  case WL_CONNECTED:
+    return WifiStaUiState::Connected;
+  case WL_CONNECT_FAILED:
+    return WifiStaUiState::ConnectFailed;
+  case WL_CONNECTION_LOST:
+    return WifiStaUiState::ConnectionLost;
+  case WL_NO_SSID_AVAIL:
+    return WifiStaUiState::NoSsid;
+  case WL_IDLE_STATUS:
+    return WifiStaUiState::Connecting;
+  case WL_DISCONNECTED:
+    return WifiStaUiState::Disconnected;
+  default:
+    return WifiStaUiState::Unknown;
+  }
 }
 
 void enterWaitingCredentials() {
@@ -130,6 +174,7 @@ void resetStoredWifiConfig() {
   bool erased = WiFi.eraseAP();
   bool disconnected = WiFi.disconnect(true, true);
   hasSavedCredentials = false;
+  clearConnectAttempt();
   WIFI_LOG("wifi_config_reset erase=%d disconnect=%d", erased ? 1 : 0,
            disconnected ? 1 : 0);
 }
@@ -181,6 +226,7 @@ void onProvisionEvent(arduino_event_t *event) {
 
   case ARDUINO_EVENT_PROV_CRED_FAIL:
     provisioningSessionActive = false;
+    clearConnectAttempt();
     provisionFailReason =
         mapProvisionFailReason(event->event_info.prov_fail_reason);
     setState(WifiProvisionUiState::Failed);
@@ -205,6 +251,7 @@ void onProvisionEvent(arduino_event_t *event) {
     refreshSavedCredentialsFlag();
 
     provisioningSessionActive = false;
+    clearConnectAttempt();
     if (app.clock.autoSyncEnabled) {
       clockRequestNtpSync();
     }
@@ -260,6 +307,7 @@ bool beginWithSystemCredentials() {
 
   setState(WifiProvisionUiState::Connecting);
   wl_status_t status = WiFi.begin();
+  markConnectAttemptStarted();
   WIFI_LOG("connect_with_system_creds ssid='%s' status=%d", staSsidBuf,
            static_cast<int>(status));
   return true;
@@ -284,14 +332,20 @@ void wifiInitOnBoot() {
 }
 
 void wifiMaintainConnection() {
-  if (currentScreen == SCREEN_WIFI || wifiProvisionIsActive())
+  if (provisioningBlocksStaReconnect())
     return;
   wl_status_t sta = WiFi.status();
-  if (sta == WL_CONNECTED || sta == WL_IDLE_STATUS)
+  if (sta == WL_CONNECTED) {
+    clearConnectAttempt();
     return;
+  }
 
   unsigned long now = millis();
-  if (now - lastReconnectMs < appcfg::WIFI_RECONNECT_INTERVAL_MS)
+  bool timedOut = connectAttemptTimedOut(now);
+  if (sta == WL_IDLE_STATUS && !timedOut)
+    return;
+
+  if (!timedOut && now - lastReconnectMs < appcfg::WIFI_RECONNECT_INTERVAL_MS)
     return;
   lastReconnectMs = now;
 
@@ -299,6 +353,15 @@ void wifiMaintainConnection() {
   if (!hasSavedCredentials) {
     WIFI_LOG("reconnect_skipped no_credentials");
     return;
+  }
+
+  if (timedOut) {
+    WIFI_LOG("connect_timeout status=%d elapsed=%lu", static_cast<int>(sta),
+             now - connectAttemptStartedMs);
+  }
+
+  if (connectAttemptStartedMs != 0) {
+    WiFi.disconnect(false, false);
   }
 
   WIFI_LOG("reconnect_attempt system_creds");
@@ -312,6 +375,7 @@ void wifiMaintainConnection() {
 static void wifiProvisionStart() {
   WIFI_LOG("start_ble");
 
+  clearConnectAttempt();
   clearRuntimeBuffers();
   refreshSavedCredentialsFlag();
   buildServiceName();
@@ -344,13 +408,14 @@ void wifiResetCredentialsAndStartProvisioning() {
 }
 
 static void wifiProvisionStop() {
+  if (!shouldStopProvisioningOnScreenExit())
+    return;
+
   WIFI_LOG("stop");
 
-  if (wifiProvisionIsActive()) {
 #if CONFIG_BLUEDROID_ENABLED
-    wifi_prov_mgr_deinit();
+  wifi_prov_mgr_deinit();
 #endif
-  }
 
   provisioningSessionActive = false;
   setState(WifiProvisionUiState::Idle);
@@ -385,6 +450,36 @@ void wifiFlowTick() {
   if (!hasSaved) {
     wifiProvisionUpdate();
   }
+}
+
+WifiFlowSnapshot wifiFlowSnapshot() {
+  refreshSavedCredentialsFlag();
+
+  wl_status_t sta = WiFi.status();
+  if (sta == WL_CONNECTED) {
+    cacheConnectedStaInfo(WiFi.localIP(), false);
+  }
+
+  WifiFlowSnapshot snapshot;
+  snapshot.hasSavedCredentials = hasSavedCredentials;
+  snapshot.setupMode = !hasSavedCredentials;
+  snapshot.connected =
+      sta == WL_CONNECTED || provisionState == WifiProvisionUiState::Connected;
+  snapshot.rssi = snapshot.connected ? WiFi.RSSI() : 0;
+  if (snapshot.connected) {
+    snapshot.staState = WifiStaUiState::Connected;
+  } else if (connectAttemptStartedMs != 0) {
+    snapshot.staState = WifiStaUiState::Connecting;
+  } else {
+    snapshot.staState = mapStaStatus(sta);
+  }
+  snapshot.provisionState = provisionState;
+  snapshot.provisionFailReason = provisionFailReason;
+  snapshot.serviceName = serviceNameBuf;
+  snapshot.pop = PROV_POP;
+  snapshot.staSsid = staSsidBuf;
+  snapshot.staIp = staIpBuf;
+  return snapshot;
 }
 
 bool wifiProvisionIsActive() {

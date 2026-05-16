@@ -1,7 +1,6 @@
 #include <ui/settings/wifi.h>
 
 #include <Arduino.h>
-#include <WiFi.h>
 #include <app/app_state.h>
 #include <flow/wifi_flow.h>
 #include <ui/confirm_overlay.h>
@@ -12,27 +11,28 @@ namespace {
 unsigned long wifiLastDrawMs = 0;
 constexpr unsigned long WIFI_DRAW_INTERVAL_MS = 250;
 
-const char *staStatusText(wl_status_t status) {
+const char *staStatusText(WifiStaUiState status) {
   switch (status) {
-  case WL_CONNECTED:
+  case WifiStaUiState::Connected:
     return "CONNECTED";
-  case WL_CONNECT_FAILED:
+  case WifiStaUiState::ConnectFailed:
     return "CONN_FAIL";
-  case WL_CONNECTION_LOST:
+  case WifiStaUiState::ConnectionLost:
     return "CONN_LOST";
-  case WL_NO_SSID_AVAIL:
+  case WifiStaUiState::NoSsid:
     return "NO_SSID";
-  case WL_IDLE_STATUS:
+  case WifiStaUiState::Connecting:
     return "CONNECTING";
-  case WL_DISCONNECTED:
+  case WifiStaUiState::Disconnected:
     return "DISCONNECTED";
+  case WifiStaUiState::Unknown:
   default:
     return "UNKNOWN";
   }
 }
 
-const char *setupBadge() {
-  switch (wifiProvisionState()) {
+const char *setupBadge(WifiProvisionUiState state) {
+  switch (state) {
   case WifiProvisionUiState::Connected:
     return "CONN";
   case WifiProvisionUiState::Failed:
@@ -44,10 +44,10 @@ const char *setupBadge() {
   }
 }
 
-const char *staBadge(wl_status_t sta) {
-  if (sta == WL_CONNECTED)
+const char *staBadge(WifiStaUiState sta) {
+  if (sta == WifiStaUiState::Connected)
     return "CONN";
-  if (sta == WL_IDLE_STATUS)
+  if (sta == WifiStaUiState::Connecting)
     return "CONN?";
   return "DISC";
 }
@@ -85,90 +85,74 @@ const char *provisionFailReasonText(WifiProvisionFailReason reason) {
 }
 
 void drawWiFiScreen() {
-  bool hasSaved = wifiProvisionHasSavedCredentials();
-  bool setupMode = !hasSaved;
-  wl_status_t sta = WiFi.status();
-  WifiProvisionUiState pstate = wifiProvisionState();
-  IPAddress localIp = WiFi.localIP();
-  bool connected =
-      (sta == WL_CONNECTED) || (pstate == WifiProvisionUiState::Connected);
-
-  String ssid = WiFi.SSID();
-  const char *cachedSsid = wifiProvisionStaSsid();
-  const char *cachedIp = wifiProvisionStaIp();
-  bool hasCachedSsid = (cachedSsid && cachedSsid[0] != '\0');
-  bool hasCachedIp = (cachedIp && cachedIp[0] != '\0');
+  WifiFlowSnapshot wifi = wifiFlowSnapshot();
+  bool hasSsid = wifi.staSsid && wifi.staSsid[0] != '\0';
+  bool hasIp = wifi.staIp && wifi.staIp[0] != '\0';
 
   display.clearDisplay();
-  drawHeader("Wi-Fi", setupMode ? setupBadge()
-                                : staBadge(connected ? WL_CONNECTED : sta));
+  drawHeader("Wi-Fi", wifi.setupMode ? setupBadge(wifi.provisionState)
+                                     : staBadge(wifi.staState));
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
 
   display.setCursor(0, ui::layout::INFO_ROW1_Y);
-  if (setupMode) {
+  if (wifi.setupMode) {
     display.print("BLE: ");
-    display.print(wifiProvisionApSsid());
+    display.print(wifi.serviceName);
   } else {
     display.print("SSID: ");
-    if (ssid.length() > 0) {
-      display.print(ssid.c_str());
-    } else if (hasCachedSsid) {
-      display.print(cachedSsid);
+    if (hasSsid) {
+      display.print(wifi.staSsid);
     } else {
       display.print("-");
     }
   }
 
   display.setCursor(0, ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y);
-  if (setupMode) {
+  if (wifi.setupMode) {
     display.print("POP: ");
-    display.print(wifiProvisionPop());
+    display.print(wifi.pop);
   } else {
     display.print("IP: ");
-    if (localIp != IPAddress(static_cast<uint32_t>(0)))
-      display.print(localIp);
-    else if (hasCachedIp)
-      display.print(cachedIp);
+    if (hasIp)
+      display.print(wifi.staIp);
     else
       display.print("-");
   }
 
   display.setCursor(0,
                     ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 2);
-  if (setupMode) {
+  if (wifi.setupMode) {
     display.print("State: ");
-    display.print(provisionStateText(pstate));
+    display.print(provisionStateText(wifi.provisionState));
   } else {
     display.print("State: ");
-    if (connected) {
+    if (wifi.connected) {
       display.print("CONNECTED");
     } else {
-      display.print(staStatusText(sta));
+      display.print(staStatusText(wifi.staState));
     }
   }
 
   display.setCursor(0,
                     ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 3);
-  if (setupMode) {
-    if (pstate == WifiProvisionUiState::Failed) {
-      const char *reason =
-          provisionFailReasonText(wifiProvisionFailureReason());
+  if (wifi.setupMode) {
+    if (wifi.provisionState == WifiProvisionUiState::Failed) {
+      const char *reason = provisionFailReasonText(wifi.provisionFailReason);
       display.print("Fail: ");
       display.print(reason);
-    } else if (pstate == WifiProvisionUiState::NotSupported) {
+    } else if (wifi.provisionState == WifiProvisionUiState::NotSupported) {
       display.print("BLE not supported");
     } else {
       display.print("Use ESP BLE app");
     }
   } else {
-    if (connected) {
-      int rssi = WiFi.RSSI();
+    if (wifi.connected) {
       display.print("RSSI: ");
-      if (rssi == 0) {
+      if (wifi.rssi == 0) {
         display.print("-");
       } else {
-        display.print(rssi);
+        display.print(wifi.rssi);
         display.print(" dBm");
       }
     } else {
@@ -177,9 +161,9 @@ void drawWiFiScreen() {
   }
 
   display.setCursor(0, 56);
-  if (setupMode && pstate == WifiProvisionUiState::Failed) {
+  if (wifi.setupMode && wifi.provisionState == WifiProvisionUiState::Failed) {
     display.print("Hold: retry");
-  } else if (setupMode) {
+  } else if (wifi.setupMode) {
     display.print("Back: menu");
   } else {
     display.print("Hold: reset");
