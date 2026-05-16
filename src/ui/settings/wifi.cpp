@@ -194,13 +194,7 @@ void drawWiFiScreen() {
 } // namespace
 
 void updateWiFiScreen() {
-  bool hasSaved = wifiProvisionHasSavedCredentials();
-  if (!hasSaved && !wifiProvisionIsActive()) {
-    wifiProvisionStart();
-  }
-  if (!hasSaved) {
-    wifiProvisionUpdate();
-  }
+  wifiFlowTick();
 
   unsigned long now = millis();
   if (now - wifiLastDrawMs >= WIFI_DRAW_INTERVAL_MS) {
@@ -210,12 +204,9 @@ void updateWiFiScreen() {
 }
 
 void drawWiFi() {
-  bool hasSaved = wifiProvisionHasSavedCredentials();
-  if (!hasSaved && !wifiProvisionIsActive()) {
-    wifiProvisionStart();
-  }
+  wifiFlowEnterScreen();
   wifiLastDrawMs = 0;
   drawWiFiScreen();
 }
 
-void stopWiFiProvisioning() { wifiProvisionStop(); }
+void stopWiFiProvisioning() { wifiFlowExitScreen(); }

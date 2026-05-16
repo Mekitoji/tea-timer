@@ -76,6 +76,29 @@ void setState(WifiProvisionUiState next) {
   WIFI_LOG("state=%d", static_cast<int>(provisionState));
 }
 
+bool provisionStateIsActive() {
+  return provisionState == WifiProvisionUiState::WaitingCredentials ||
+         provisionState == WifiProvisionUiState::Connecting ||
+         provisionState == WifiProvisionUiState::Failed;
+}
+
+void enterWaitingCredentials() {
+  provisioningSessionActive = true;
+  setState(WifiProvisionUiState::WaitingCredentials);
+}
+
+WifiProvisionFailReason mapProvisionFailReason(
+    wifi_prov_sta_fail_reason_t reason) {
+  switch (reason) {
+  case WIFI_PROV_STA_AUTH_ERROR:
+    return WifiProvisionFailReason::AuthError;
+  case WIFI_PROV_STA_AP_NOT_FOUND:
+    return WifiProvisionFailReason::ApNotFound;
+  default:
+    return WifiProvisionFailReason::Unknown;
+  }
+}
+
 bool hasSystemStaCredentials() {
   wifi_config_t conf = {};
 
@@ -120,14 +143,30 @@ void buildServiceName() {
                 b4, b5);
 }
 
+void cacheConnectedStaInfo(IPAddress ip, bool onlyMissing) {
+  if ((!onlyMissing || staIpBuf[0] == '\0') &&
+      ip != IPAddress(static_cast<uint32_t>(0))) {
+    copyToBuf(staIpBuf, sizeof(staIpBuf), ip.toString().c_str());
+  }
+
+  if (onlyMissing && staSsidBuf[0] != '\0')
+    return;
+
+  String connectedSsid = WiFi.SSID();
+  if (connectedSsid.length() > 0) {
+    copyToBuf(staSsidBuf, sizeof(staSsidBuf), connectedSsid.c_str());
+  } else if (pendingSsid[0] != '\0') {
+    copyToBuf(staSsidBuf, sizeof(staSsidBuf), pendingSsid);
+  }
+}
+
 void onProvisionEvent(arduino_event_t *event) {
   if (!event)
     return;
 
   switch (event->event_id) {
   case ARDUINO_EVENT_PROV_START:
-    provisioningSessionActive = true;
-    setState(WifiProvisionUiState::WaitingCredentials);
+    enterWaitingCredentials();
     WIFI_LOG("prov_start name=%s", serviceNameBuf);
     break;
 
@@ -142,15 +181,8 @@ void onProvisionEvent(arduino_event_t *event) {
 
   case ARDUINO_EVENT_PROV_CRED_FAIL:
     provisioningSessionActive = false;
-    if (event->event_info.prov_fail_reason == WIFI_PROV_STA_AUTH_ERROR) {
-      provisionFailReason = WifiProvisionFailReason::AuthError;
-    } else if (event->event_info.prov_fail_reason ==
-               WIFI_PROV_STA_AP_NOT_FOUND) {
-      provisionFailReason = WifiProvisionFailReason::ApNotFound;
-    } else {
-      provisionFailReason = WifiProvisionFailReason::Unknown;
-    }
-
+    provisionFailReason =
+        mapProvisionFailReason(event->event_info.prov_fail_reason);
     setState(WifiProvisionUiState::Failed);
     wifi_prov_mgr_reset_sm_state_on_failure();
     WIFI_LOG("cred_fail reason=%d",
@@ -169,13 +201,7 @@ void onProvisionEvent(arduino_event_t *event) {
 
   case ARDUINO_EVENT_WIFI_STA_GOT_IP: {
     IPAddress ip(event->event_info.got_ip.ip_info.ip.addr);
-    copyToBuf(staIpBuf, sizeof(staIpBuf), ip.toString().c_str());
-    String connectedSsid = WiFi.SSID();
-    if (connectedSsid.length() > 0) {
-      copyToBuf(staSsidBuf, sizeof(staSsidBuf), connectedSsid.c_str());
-    } else if (pendingSsid[0] != '\0') {
-      copyToBuf(staSsidBuf, sizeof(staSsidBuf), pendingSsid);
-    }
+    cacheConnectedStaInfo(ip, false);
     refreshSavedCredentialsFlag();
 
     provisioningSessionActive = false;
@@ -283,7 +309,7 @@ void wifiMaintainConnection() {
   WIFI_LOG("reconnect_skipped no_system_creds");
 }
 
-void wifiProvisionStart() {
+static void wifiProvisionStart() {
   WIFI_LOG("start_ble");
 
   clearRuntimeBuffers();
@@ -292,9 +318,7 @@ void wifiProvisionStart() {
   ensureEventHandlerRegistered();
 
 #if CONFIG_BLUEDROID_ENABLED
-  provisioningSessionActive = true;
-
-  setState(WifiProvisionUiState::WaitingCredentials);
+  enterWaitingCredentials();
 
   WiFiProv.beginProvision(
       WIFI_PROV_SCHEME_BLE, WIFI_PROV_SCHEME_HANDLER_NONE,
@@ -319,7 +343,7 @@ void wifiResetCredentialsAndStartProvisioning() {
   wifiProvisionStart();
 }
 
-void wifiProvisionStop() {
+static void wifiProvisionStop() {
   WIFI_LOG("stop");
 
   if (wifiProvisionIsActive()) {
@@ -332,29 +356,39 @@ void wifiProvisionStop() {
   setState(WifiProvisionUiState::Idle);
 }
 
-void wifiProvisionUpdate() {
+static void wifiProvisionUpdate() {
   if (provisionState != WifiProvisionUiState::Connecting)
     return;
 
   if (WiFi.status() == WL_CONNECTED) {
-    if (staIpBuf[0] == '\0') {
-      copyToBuf(staIpBuf, sizeof(staIpBuf), WiFi.localIP().toString().c_str());
-    }
-    if (staSsidBuf[0] == '\0') {
-      String connectedSsid = WiFi.SSID();
-      copyToBuf(staSsidBuf, sizeof(staSsidBuf), connectedSsid.c_str());
-    }
+    cacheConnectedStaInfo(WiFi.localIP(), true);
     provisioningSessionActive = false;
     setState(WifiProvisionUiState::Connected);
     return;
   }
 }
 
+static bool ensureProvisioningStartedForScreen() {
+  refreshSavedCredentialsFlag();
+  if (!hasSavedCredentials && !wifiProvisionIsActive()) {
+    wifiProvisionStart();
+  }
+  return hasSavedCredentials;
+}
+
+void wifiFlowEnterScreen() { ensureProvisioningStartedForScreen(); }
+
+void wifiFlowExitScreen() { wifiProvisionStop(); }
+
+void wifiFlowTick() {
+  bool hasSaved = ensureProvisioningStartedForScreen();
+  if (!hasSaved) {
+    wifiProvisionUpdate();
+  }
+}
+
 bool wifiProvisionIsActive() {
-  return provisioningSessionActive ||
-         provisionState == WifiProvisionUiState::WaitingCredentials ||
-         provisionState == WifiProvisionUiState::Connecting ||
-         provisionState == WifiProvisionUiState::Failed;
+  return provisioningSessionActive || provisionStateIsActive();
 }
 
 void wifiRetryFailedProvisioning() {
@@ -363,8 +397,7 @@ void wifiRetryFailedProvisioning() {
   }
 
   clearRuntimeBuffers();
-  provisioningSessionActive = true;
-  setState(WifiProvisionUiState::WaitingCredentials);
+  enterWaitingCredentials();
 }
 
 WifiProvisionUiState wifiProvisionState() { return provisionState; }
@@ -380,11 +413,6 @@ const char *wifiProvisionPop() { return PROV_POP; }
 const char *wifiProvisionStaSsid() { return staSsidBuf; }
 
 const char *wifiProvisionStaIp() { return staIpBuf; }
-
-bool wifiProvisionLoadSavedCredentials() {
-  refreshSavedCredentialsFlag();
-  return hasSavedCredentials;
-}
 
 bool wifiProvisionHasSavedCredentials() {
   refreshSavedCredentialsFlag();

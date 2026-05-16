@@ -16,9 +16,9 @@ enum class WifiProvisionFailReason {
   Unknown,
 };
 
-void wifiProvisionStart();
-void wifiProvisionStop();
-void wifiProvisionUpdate();
+void wifiFlowEnterScreen();
+void wifiFlowExitScreen();
+void wifiFlowTick();
 void wifiResetCredentialsAndStartProvisioning();
 void wifiInitOnBoot();
 void wifiMaintainConnection();
@@ -33,5 +33,4 @@ const char *wifiProvisionPop();
 const char *wifiProvisionStaSsid();
 const char *wifiProvisionStaIp();
 
-bool wifiProvisionLoadSavedCredentials();
 bool wifiProvisionHasSavedCredentials();
