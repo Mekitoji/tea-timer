@@ -55,6 +55,31 @@ void applyCurrentStepFromModel() {
   app.session.stepTotalSec = app.session.stepDurationSec;
 }
 
+void resetSessionStepStartTimes() {
+  app.session.rinseStartedAt = 0;
+  for (int i = 0; i < SESSION_MAX_STEPS; i++) {
+    app.session.stepStartedAt[i] = 0;
+  }
+}
+
+void markCurrentStepStartedAt() {
+  unsigned long startedAt = clockCurrentEpochOrZero();
+  if (startedAt == 0)
+    return;
+
+  if (app.session.rinseActive) {
+    if (app.session.rinseStartedAt == 0)
+      app.session.rinseStartedAt = startedAt;
+    return;
+  }
+
+  if (app.session.stepIndex < 0 || app.session.stepIndex >= SESSION_MAX_STEPS)
+    return;
+
+  if (app.session.stepStartedAt[app.session.stepIndex] == 0)
+    app.session.stepStartedAt[app.session.stepIndex] = startedAt;
+}
+
 bool advanceToNextSessionStep() {
   if (app.session.rinseActive) {
     app.session.rinseActive = false;
@@ -149,6 +174,7 @@ void loadSessionPresetByIndex(int presetIndex) {
     app.session.presetIndex = 0;
     app.session.started = false;
     app.session.startedAt = 0;
+    resetSessionStepStartTimes();
     app.session.stepCount = 0;
     app.session.rinseSec = 0;
     app.session.rinseActive = false;
@@ -165,6 +191,7 @@ void loadSessionPresetByIndex(int presetIndex) {
   app.session.presetIndex = presetIndex;
   app.session.started = false;
   app.session.startedAt = 0;
+  resetSessionStepStartTimes();
 
   const SessionPreset &preset = SESSION_PRESETS[app.session.presetIndex];
   app.session.rinseSec = clampOptionalTeaDurationSec(preset.rinseSec);
@@ -208,6 +235,7 @@ void enterSessionRunFromCurrentPreset() {
   app.session.rinseActive = true;
   app.session.started = false;
   app.session.startedAt = 0;
+  resetSessionStepStartTimes();
   applyCurrentStepFromModel();
 
   setSessionStatePaused();
@@ -329,6 +357,7 @@ void sessionToggleRunPauseAt(unsigned long nowMs) {
   }
 
   ensureSessionStarted();
+  markCurrentStepStartedAt();
   setSessionStateRunning();
   app.session.stepStartMs = nowMs;
   persistSessionRuntimeSnapshot(nowMs);

@@ -68,9 +68,11 @@ bool buildSessionLogRecord(bool finishedEarly, SessionLogRecord &record) {
   record.finishedEarly = finishedEarly;
   record.completedInfusionCount = completedInfusions;
   record.rinseSec = app.session.rinseSec;
+  record.rinseStartedAt = app.session.rinseStartedAt;
 
   for (int i = 0; i < completedInfusions; i++) {
     record.infusionSec[i] = app.session.steps[i];
+    record.infusionStartedAt[i] = app.session.stepStartedAt[i];
   }
 
   return true;

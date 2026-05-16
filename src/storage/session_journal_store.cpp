@@ -110,6 +110,7 @@ bool readRecord(JsonObject recordObj, SessionLogRecord &record) {
   record.finishedEarly = recordObj["finishedEarly"] | false;
   record.completedInfusionCount = recordObj["completedInfusionCount"] | 0;
   record.rinseSec = recordObj["rinseSec"] | 0;
+  record.rinseStartedAt = recordObj["rinseStartedAt"] | 0UL;
 
   if (record.completedInfusionCount < 0)
     record.completedInfusionCount = 0;
@@ -123,6 +124,16 @@ bool readRecord(JsonObject recordObj, SessionLogRecord &record) {
         infusionIndex >= SESSION_MAX_STEPS)
       break;
     record.infusionSec[infusionIndex++] = value.as<int>();
+  }
+
+  JsonArray infusionStarts = recordObj["infusionStartedAt"].as<JsonArray>();
+  int infusionStartIndex = 0;
+  for (JsonVariant value : infusionStarts) {
+    if (infusionStartIndex >= record.completedInfusionCount ||
+        infusionStartIndex >= SESSION_MAX_STEPS)
+      break;
+    record.infusionStartedAt[infusionStartIndex++] =
+        value.as<unsigned long>();
   }
 
   return true;
@@ -139,6 +150,7 @@ void writeRecord(JsonArray records, const SessionLogRecord &record) {
   recordObj["finishedEarly"] = record.finishedEarly;
   recordObj["completedInfusionCount"] = record.completedInfusionCount;
   recordObj["rinseSec"] = record.rinseSec;
+  recordObj["rinseStartedAt"] = record.rinseStartedAt;
 
   JsonArray infusions = recordObj.createNestedArray("infusionSec");
   for (int infusionIndex = 0;
@@ -146,6 +158,14 @@ void writeRecord(JsonArray records, const SessionLogRecord &record) {
        infusionIndex < SESSION_MAX_STEPS;
        infusionIndex++) {
     infusions.add(record.infusionSec[infusionIndex]);
+  }
+
+  JsonArray infusionStarts = recordObj.createNestedArray("infusionStartedAt");
+  for (int infusionIndex = 0;
+       infusionIndex < record.completedInfusionCount &&
+       infusionIndex < SESSION_MAX_STEPS;
+       infusionIndex++) {
+    infusionStarts.add(record.infusionStartedAt[infusionIndex]);
   }
 }
 } // namespace

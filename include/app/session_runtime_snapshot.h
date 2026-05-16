@@ -17,6 +17,8 @@ struct SessionRuntimeSnapshot {
   int presetIndex = 0;
   bool sessionStarted = false;
   unsigned long startedAt = 0;
+  unsigned long rinseStartedAt = 0;
+  unsigned long stepStartedAt[SESSION_MAX_STEPS] = {0};
 
   bool rinseActive = false;
   int rinseSec = 0;

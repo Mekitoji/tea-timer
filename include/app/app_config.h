@@ -5,7 +5,7 @@
 enum class BeepProfile : uint8_t { Soft = 0, Normal = 1, Loud = 2 };
 
 namespace appcfg {
-inline constexpr char FIRMWARE_VERSION[] = "1.1.0";
+inline constexpr char FIRMWARE_VERSION[] = "1.1.1-dev";
 
 inline constexpr char PREFS_NAMESPACE[] = "tea_timer";
 inline constexpr char PREFS_DURATION_KEY[] = "dur_sec";
@@ -29,7 +29,7 @@ inline constexpr unsigned long WIFI_HOLD_MS = 1200;
 inline constexpr unsigned long HISTORY_HOLD_MS = 1200;
 
 // Session snapshot
-inline constexpr uint8_t SESSION_RUNTIME_SNAPSHOT_VERSION = 1;
+inline constexpr uint8_t SESSION_RUNTIME_SNAPSHOT_VERSION = 2;
 inline constexpr char PREFS_SESSION_RUNTIME_SNAPSHOT_KEY[] = "sess_snap";
 inline constexpr int SESSION_RUNTIME_SNAPSHOT_INTERVAL_SEC = 5;
 

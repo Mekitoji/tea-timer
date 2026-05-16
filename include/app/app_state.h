@@ -55,6 +55,8 @@ struct SessionStateModel {
   int presetIndex = 0;
   bool started = false;
   unsigned long startedAt = 0;
+  unsigned long rinseStartedAt = 0;
+  unsigned long stepStartedAt[SESSION_MAX_STEPS] = {0};
   int stepIndex = 0;
   unsigned long stepStartMs = 0;
   int stepDurationSec = 0;

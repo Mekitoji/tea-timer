@@ -15,6 +15,8 @@ struct SessionLogRecord {
 
   int completedInfusionCount = 0;
   int infusionSec[SESSION_MAX_STEPS] = {0};
+  unsigned long infusionStartedAt[SESSION_MAX_STEPS] = {0};
 
   int rinseSec = 0;
+  unsigned long rinseStartedAt = 0;
 };

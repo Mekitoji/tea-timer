@@ -21,6 +21,7 @@ buildSessionRuntimeSnapshot(const SessionStateModel &session,
       .presetIndex = session.presetIndex,
       .sessionStarted = session.started,
       .startedAt = session.startedAt,
+      .rinseStartedAt = session.rinseStartedAt,
       .rinseActive = session.rinseActive,
       .rinseSec = session.rinseSec,
       .stepIndex = session.stepIndex,
@@ -38,6 +39,9 @@ buildSessionRuntimeSnapshot(const SessionStateModel &session,
 
   for (int i = 0; i < snapshot.stepCount; i++) {
     snapshot.stepsSec[i] = session.steps[i];
+  }
+  for (int i = 0; i < SESSION_MAX_STEPS; i++) {
+    snapshot.stepStartedAt[i] = session.stepStartedAt[i];
   }
 
   return snapshot;
@@ -63,6 +67,7 @@ bool applySessionRuntimeSnapshot(const SessionRuntimeSnapshot &snapshot,
   session.presetIndex = snapshot.presetIndex;
   session.started = true;
   session.startedAt = snapshot.startedAt;
+  session.rinseStartedAt = snapshot.rinseStartedAt;
   session.rinseActive = snapshot.rinseActive;
   session.rinseSec = snapshot.rinseSec;
   session.stepIndex = snapshot.stepIndex;
@@ -70,6 +75,8 @@ bool applySessionRuntimeSnapshot(const SessionRuntimeSnapshot &snapshot,
 
   for (int i = 0; i < SESSION_MAX_STEPS; i++) {
     session.steps[i] = i < snapshot.stepCount ? snapshot.stepsSec[i] : 0;
+    session.stepStartedAt[i] =
+        i < snapshot.stepCount ? snapshot.stepStartedAt[i] : 0;
   }
 
   session.stepDurationSec =
