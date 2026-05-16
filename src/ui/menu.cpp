@@ -23,7 +23,7 @@ void drawMenuHeader() {
   int hour = 0;
   int minute = 0;
   if (readCurrentMenuTime(hour, minute)) {
-    if (!app.clock.timeFreshThisBoot) {
+    if (!app.clock.timeValid) {
       drawHeader("MENU", "--:--");
       return;
     }

@@ -10,11 +10,15 @@
 #include <ui.h>
 
 namespace {
+#define CLOCK_LOG(fmt, ...) Serial.printf("[clock] " fmt "\n", ##__VA_ARGS__)
+
 constexpr unsigned long CLOCK_NTP_SYNC_TIMEOUT_MS = 15000;
+constexpr unsigned long CLOCK_NTP_BOOT_RETRY_INTERVAL_MS = 5000;
 constexpr unsigned long CLOCK_NTP_RETRY_INTERVAL_MS = 30000;
 constexpr unsigned long CLOCK_NTP_RESYNC_INTERVAL_MS = 21600000;
 
 bool ntpSyncInProgress = false;
+bool ntpSyncCompleted = false;
 unsigned long ntpSyncStartedMs = 0;
 unsigned long ntpNextAttemptMs = 0;
 
@@ -35,12 +39,34 @@ bool hasReachedTime(unsigned long now, unsigned long target) {
   return static_cast<long>(now - target) >= 0;
 }
 
+unsigned long ntpRetryInterval() {
+  return app.clock.timeFreshThisBoot ? CLOCK_NTP_RETRY_INTERVAL_MS
+                                     : CLOCK_NTP_BOOT_RETRY_INTERVAL_MS;
+}
+
+void scheduleNtpRetry(unsigned long now) {
+  ntpNextAttemptMs = now + ntpRetryInterval();
+}
+
+void onNtpTimeSynced(timeval *) { ntpSyncCompleted = true; }
+
+bool hasNtpSyncCompleted() {
+  return ntpSyncCompleted ||
+         sntp_get_sync_status() == SNTP_SYNC_STATUS_COMPLETED;
+}
+
 void startNtpSync() {
   clockConfigureTimezone();
-  configTzTime(appcfg::DEFAULT_CLOCK_TZ, "pool.ntp.org", "time.nist.gov");
+  if (esp_sntp_enabled()) {
+    esp_sntp_stop();
+  }
+  ntpSyncCompleted = false;
+  sntp_set_time_sync_notification_cb(onNtpTimeSynced);
   sntp_set_sync_status(SNTP_SYNC_STATUS_RESET);
+  configTzTime(appcfg::DEFAULT_CLOCK_TZ, "pool.ntp.org", "time.nist.gov");
   ntpSyncInProgress = true;
   ntpSyncStartedMs = millis();
+  CLOCK_LOG("ntp_start");
 }
 } // namespace
 
@@ -53,6 +79,7 @@ void clockPersistState(time_t epoch) {
 
 void clockCancelNtpSync() {
   ntpSyncInProgress = false;
+  ntpSyncCompleted = false;
   ntpNextAttemptMs = 0;
   if (esp_sntp_enabled()) {
     esp_sntp_stop();
@@ -127,11 +154,12 @@ void updateClockRuntime() {
     return;
   }
 
-  if (sntp_get_sync_status() == SNTP_SYNC_STATUS_COMPLETED) {
+  if (hasNtpSyncCompleted()) {
     time_t epoch = 0;
     if (!clockReadSystemEpoch(epoch)) {
       ntpSyncInProgress = false;
-      ntpNextAttemptMs = now + CLOCK_NTP_RETRY_INTERVAL_MS;
+      scheduleNtpRetry(now);
+      CLOCK_LOG("ntp_complete_no_epoch retry_in=%lu", ntpRetryInterval());
       return;
     }
 
@@ -153,11 +181,15 @@ void updateClockRuntime() {
       }
 
       ntpNextAttemptMs = now + CLOCK_NTP_RESYNC_INTERVAL_MS;
+      CLOCK_LOG("ntp_ok epoch=%llu", static_cast<unsigned long long>(epoch));
     } else {
-      ntpNextAttemptMs = now + CLOCK_NTP_RETRY_INTERVAL_MS;
+      scheduleNtpRetry(now);
+      CLOCK_LOG("ntp_invalid_epoch epoch=%llu retry_in=%lu",
+                static_cast<unsigned long long>(epoch), ntpRetryInterval());
     }
 
     ntpSyncInProgress = false;
+    ntpSyncCompleted = false;
     return;
   }
 
@@ -166,7 +198,9 @@ void updateClockRuntime() {
       esp_sntp_stop();
     }
     ntpSyncInProgress = false;
-    ntpNextAttemptMs = now + CLOCK_NTP_RETRY_INTERVAL_MS;
+    ntpSyncCompleted = false;
+    scheduleNtpRetry(now);
+    CLOCK_LOG("ntp_timeout retry_in=%lu", ntpRetryInterval());
   }
 }
 
