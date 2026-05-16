@@ -102,6 +102,15 @@ void refreshSavedCredentialsFlag() {
   hasSavedCredentials = hasSystemStaCredentials();
 }
 
+void resetStoredWifiConfig() {
+  WiFi.mode(WIFI_STA);
+  bool erased = WiFi.eraseAP();
+  bool disconnected = WiFi.disconnect(true, true);
+  hasSavedCredentials = false;
+  WIFI_LOG("wifi_config_reset erase=%d disconnect=%d", erased ? 1 : 0,
+           disconnected ? 1 : 0);
+}
+
 void buildServiceName() {
   uint64_t chipId = ESP.getEfuseMac();
   uint8_t b3 = static_cast<uint8_t>((chipId >> 16) & 0xFF);
@@ -218,7 +227,6 @@ bool beginWithSystemCredentials() {
     return false;
 
   WiFi.mode(WIFI_STA);
-  WiFi.setSleep(false);
   if (esp_wifi_set_config(WIFI_IF_STA, &conf) != ESP_OK) {
     WIFI_LOG("connect_with_system_creds set_config_failed");
     return false;
@@ -237,7 +245,6 @@ void wifiInitOnBoot() {
   ensureEventHandlerRegistered();
 
   WiFi.mode(WIFI_STA);
-  WiFi.setSleep(false);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
 
@@ -251,7 +258,7 @@ void wifiInitOnBoot() {
 }
 
 void wifiMaintainConnection() {
-  if (provisioningSessionActive)
+  if (currentScreen == SCREEN_WIFI || wifiProvisionIsActive())
     return;
   wl_status_t sta = WiFi.status();
   if (sta == WL_CONNECTED || sta == WL_IDLE_STATUS)
@@ -290,7 +297,7 @@ void wifiProvisionStart() {
   setState(WifiProvisionUiState::WaitingCredentials);
 
   WiFiProv.beginProvision(
-      WIFI_PROV_SCHEME_BLE, WIFI_PROV_SCHEME_HANDLER_FREE_BTDM,
+      WIFI_PROV_SCHEME_BLE, WIFI_PROV_SCHEME_HANDLER_NONE,
       WIFI_PROV_SECURITY_1, PROV_POP, serviceNameBuf, nullptr, nullptr, true);
   WiFiProv.printQR(serviceNameBuf, PROV_POP, "ble");
   WIFI_LOG("ble_started name=%s", serviceNameBuf);
@@ -304,11 +311,7 @@ void wifiProvisionStart() {
 void wifiResetCredentialsAndStartProvisioning() {
   WIFI_LOG("reset_credentials");
 
-#if CONFIG_BLUEDROID_ENABLED
-  wifi_prov_mgr_deinit();
-#endif
-
-  WiFi.disconnect(true, true);
+  resetStoredWifiConfig();
   clearRuntimeBuffers();
   provisioningSessionActive = false;
   setState(WifiProvisionUiState::Idle);
@@ -319,9 +322,11 @@ void wifiResetCredentialsAndStartProvisioning() {
 void wifiProvisionStop() {
   WIFI_LOG("stop");
 
+  if (wifiProvisionIsActive()) {
 #if CONFIG_BLUEDROID_ENABLED
-  wifi_prov_mgr_deinit();
+    wifi_prov_mgr_deinit();
 #endif
+  }
 
   provisioningSessionActive = false;
   setState(WifiProvisionUiState::Idle);
@@ -357,16 +362,9 @@ void wifiRetryFailedProvisioning() {
     return;
   }
 
-#if CONFIG_BLUEDROID_ENABLED
-  wifi_prov_mgr_deinit();
-#endif
-
-  WiFi.disconnect(true, true);
   clearRuntimeBuffers();
-  provisioningSessionActive = false;
-  setState(WifiProvisionUiState::Idle);
-  refreshSavedCredentialsFlag();
-  wifiProvisionStart();
+  provisioningSessionActive = true;
+  setState(WifiProvisionUiState::WaitingCredentials);
 }
 
 WifiProvisionUiState wifiProvisionState() { return provisionState; }
