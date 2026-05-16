@@ -8,6 +8,7 @@
 #include <controllers/settings_controller.h>
 #include <controllers/timer_controller.h>
 #include <controllers/wifi_controller.h>
+#include <flow/cloud_settings_flow.h>
 #include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
 #include <hw/input.h>
@@ -105,6 +106,7 @@ void handleSelectButton() {
 void handleLongPress() {
   handleSessionLongPressInput();
   handleWiFiLongPressInput();
+  cloudSettingsHandleLongPressInput();
   handleHistoryLongPressInput();
   handleTimerLongPressInput();
 }

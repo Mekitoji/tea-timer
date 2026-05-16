@@ -2,9 +2,12 @@
 #include <Wire.h>
 #include <app/app_controller.h>
 #include <app/app_state.h>
+#include <app/device_identity.h>
 #include <app/tea_config.h>
 #include <esp_system.h>
 #include <flow/clock_runtime.h>
+#include <flow/device_pairing_flow.h>
+#include <flow/device_sync_flow.h>
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
 #include <flow/session_runtime_snapshot_flow.h>
@@ -14,6 +17,7 @@
 #include <hw/input.h>
 #include <hw/pins.h>
 #include <storage/session_journal_store.h>
+#include <storage/device_auth_store.h>
 #include <storage/settings_store.h>
 #include <ui.h>
 
@@ -39,7 +43,11 @@ void setup() {
   digitalWrite(BUZZER_PIN, LOW);
 
   settingsStoreBegin();
+  deviceAuthStoreBegin();
   sessionJournalStoreBegin();
+  deviceIdentityInit();
+  devicePairingFlowInit();
+  deviceSyncFlowInit();
 
   app.power.enabled = settingsStoreLoadPowerSaveEnabled();
   app.power.displayOffTimeoutMs = settingsStoreLoadDisplayIdleOffMs();
@@ -84,10 +92,15 @@ void loop() {
   if (currentScreen == SCREEN_WIFI) {
     updateWiFiScreen();
   }
+  if (currentScreen == SCREEN_CLOUD) {
+    updateCloudScreen();
+  }
 
   updateMenuClock();
   updateClockRuntime();
   updateClockScreen();
+  updateDevicePairingFlow();
+  updateDeviceSyncFlow();
 
   updateSingleTimer();
   updateSessionRun();

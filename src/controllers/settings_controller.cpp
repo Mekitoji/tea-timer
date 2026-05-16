@@ -2,6 +2,7 @@
 
 #include <app/app_state.h>
 #include <flow/audio_settings_flow.h>
+#include <flow/cloud_settings_flow.h>
 #include <flow/clock_flow.h>
 #include <flow/navigation_flow.h>
 #include <flow/power_settings_flow.h>
@@ -11,6 +12,10 @@ namespace {
 void handleSettingsSelect() {
   if (app.ui.settingsSelected == SETTINGS_WIFI) {
     showWiFiScreen();
+  } else if (app.ui.settingsSelected == SETTINGS_CLOUD) {
+    cloudSettingsEnter();
+    showCloudScreen();
+    return;
   } else if (app.ui.settingsSelected == SETTINGS_ABOUT) {
     showAboutScreen();
   } else if (app.ui.settingsSelected == SETTINGS_AUDIO) {
@@ -55,6 +60,11 @@ bool handleSettingsEncoderInput(bool stepPlus, bool stepMinus) {
     return true;
   }
 
+  if (currentScreen == SCREEN_CLOUD) {
+    cloudSettingsHandleEncoder(stepPlus, stepMinus);
+    return true;
+  }
+
   return false;
 }
 
@@ -81,6 +91,11 @@ bool handleSettingsSelectInput() {
 
   if (currentScreen == SCREEN_CLOCK) {
     clockHandleSelect();
+    return true;
+  }
+
+  if (currentScreen == SCREEN_CLOUD) {
+    cloudSettingsHandleSelect();
     return true;
   }
 
@@ -111,6 +126,11 @@ bool handleSettingsBackInput() {
 
   if (currentScreen == SCREEN_CLOCK) {
     clockHandleBack();
+    return true;
+  }
+
+  if (currentScreen == SCREEN_CLOUD) {
+    cloudSettingsHandleBack();
     return true;
   }
 

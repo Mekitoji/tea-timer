@@ -9,6 +9,7 @@ void showMenuScreen();
 void showSettingsScreen();
 void showAboutScreen();
 void showWiFiScreen();
+void showCloudScreen();
 void showPowerSaveScreen();
 void showAudioScreen();
 void showClockScreen();

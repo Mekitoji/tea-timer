@@ -6,10 +6,20 @@ enum class BeepProfile : uint8_t { Soft = 0, Normal = 1, Loud = 2 };
 
 namespace appcfg {
 inline constexpr char FIRMWARE_VERSION[] = "1.1.1-dev";
+inline constexpr char DEVICE_MODEL[] = "ESP32-C3 Tea Timer";
+inline constexpr char DEVICE_DEFAULT_NAME[] = "Tea Timer";
+
+#ifndef TEA_API_BASE_URL
+#define TEA_API_BASE_URL "http://localhost:3000/api/v1"
+#endif
+inline constexpr char API_BASE_URL[] = TEA_API_BASE_URL;
 
 inline constexpr char PREFS_NAMESPACE[] = "tea_timer";
 inline constexpr char PREFS_DURATION_KEY[] = "dur_sec";
 inline constexpr char PREFS_POWER_SAVE_KEY[] = "pwr_save";
+inline constexpr char DEVICE_AUTH_PREFS_NAMESPACE[] = "tea_device";
+inline constexpr char PREFS_DEVICE_ID_KEY[] = "device_id";
+inline constexpr char PREFS_DEVICE_TOKEN_KEY[] = "device_token";
 
 inline constexpr int DEFAULT_TIMER_DURATION = 10;
 inline constexpr bool DEFAULT_POWER_SAVE_ENABLED = true;
@@ -27,6 +37,12 @@ inline constexpr int ENC_STEP_FAST = 10;
 inline constexpr unsigned long SESSION_HOLD_MS = 1200;
 inline constexpr unsigned long WIFI_HOLD_MS = 1200;
 inline constexpr unsigned long HISTORY_HOLD_MS = 1200;
+inline constexpr unsigned long CLOUD_HOLD_MS = 1200;
+inline constexpr unsigned long CLOUD_HTTP_TIMEOUT_MS = 8000;
+inline constexpr unsigned long CLOUD_SYNC_RETRY_MS = 30000;
+inline constexpr unsigned long CLOUD_SYNC_MAX_RETRY_MS = 300000;
+inline constexpr unsigned long CLOUD_SYNC_IDLE_SCAN_MS = 10000;
+inline constexpr unsigned long CLOUD_PAIRING_DEFAULT_POLL_MS = 3000;
 
 // Session snapshot
 inline constexpr uint8_t SESSION_RUNTIME_SNAPSHOT_VERSION = 2;

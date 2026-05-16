@@ -2,6 +2,7 @@
 
 #include <app/app_state.h>
 #include <flow/audio_settings_flow.h>
+#include <flow/cloud_settings_flow.h>
 #include <flow/clock_flow.h>
 #include <flow/power_settings_flow.h>
 #include <flow/session_history_flow.h>
@@ -39,6 +40,11 @@ void showWiFiScreen() {
   drawWiFi();
 }
 
+void showCloudScreen() {
+  navigateTo(SCREEN_CLOUD);
+  cloudSettingsRender();
+}
+
 void showPowerSaveScreen() {
   navigateTo(SCREEN_POWER_SAVE);
   powerSettingsRender();
@@ -55,6 +61,7 @@ bool goBackAndRender() {
   case SCREEN_POWER_SAVE:
   case SCREEN_AUDIO:
   case SCREEN_CLOCK:
+  case SCREEN_CLOUD:
   case SCREEN_WIFI:
     showSettingsScreen();
     return true;

@@ -10,7 +10,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 const char *menuItems[] = {"Sessions", "Timer", "History", "Settings"};
 const int menuCount = sizeof(menuItems) / sizeof(menuItems[0]);
 
-const char *settingsItems[] = {"WiFi", "Clock", "Power Save", "Audio",
+const char *settingsItems[] = {"WiFi", "Cloud", "Clock", "Power Save", "Audio",
                                "About"};
 const int settingsMenuCount = sizeof(settingsItems) / sizeof(settingsItems[0]);
 

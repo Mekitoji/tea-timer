@@ -21,6 +21,7 @@ enum ScreenState {
   SCREEN_SETTINGS,
   SCREEN_ABOUT,
   SCREEN_WIFI,
+  SCREEN_CLOUD,
   SCREEN_CLOCK,
   SCREEN_TIMER,
   SCREEN_SESSION_PRESET,
@@ -34,6 +35,7 @@ enum MenuIndex { MENU_SESSION, MENU_TIMER, MENU_HISTORY, MENU_SETTINGS };
 
 enum SettingsMenuIndex {
   SETTINGS_WIFI,
+  SETTINGS_CLOUD,
   SETTINGS_CLOCK,
   SETTINGS_POWER_SAVE,
   SETTINGS_AUDIO,
@@ -69,6 +71,10 @@ struct SessionStateModel {
 
 struct WiFiStateModel {
   ConfirmState resetConfirm;
+};
+
+struct CloudStateModel {
+  ConfirmState unpairConfirm;
 };
 
 struct SessionHistoryStateModel {
@@ -146,6 +152,7 @@ struct AppState {
   SessionStateModel session;
   SessionHistoryStateModel history;
   WiFiStateModel wifi;
+  CloudStateModel cloud;
   UiStateModel ui;
   PowerStateModel power;
   AudioStateModel audio;

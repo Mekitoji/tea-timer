@@ -2,7 +2,7 @@
 
 Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 128x64`), rotary encoder, dedicated back button, buzzer, and LED indicator.
 
-Current firmware version: `1.0.0`.
+Current firmware version: `1.1.1-dev`.
 
 ## Features
 
@@ -47,6 +47,19 @@ Current firmware version: `1.0.0`.
     `/session_journal.bak`, then `/session_journal.tmp`; readable fallback
     files are restored to the main journal path when possible,
   - parse/version/open errors do not delete journal files automatically.
+- Cloud pairing and sync:
+  - `Settings -> Cloud` shows stable device UID and pairing/sync status,
+  - unpaired devices can create a server pairing request and show the fallback
+    user code for the mobile/web client,
+  - after client claim, the device polls pairing status and stores
+    `deviceId/deviceToken` in NVS,
+  - paired devices sync pending/failed session journal records with
+    `POST /api/v1/device-sync/session-journal`,
+  - sync payload includes `rinseStartedAt` and `infusionStartedAt` when the
+    local clock was valid during the session,
+  - sync success marks the local journal `synced`; errors mark it `failed` and
+    retry with bounded backoff,
+  - long press on the Cloud screen opens local unpair confirmation.
 - Session History screen (`Menu -> History`):
   - shows stored completed session records,
   - select opens/closes record details,
@@ -161,6 +174,26 @@ Notes:
 - `Back` exits Wi-Fi screen.
 - Saved credentials are reused on next boot (best-effort reconnect).
 - To reprovision, long-press on Wi-Fi screen, confirm reset, then run BLE setup again.
+
+## Cloud Setup
+
+The firmware uses `/api/v1` endpoints from `tea-server`. Configure the server
+URL at build time so the ESP32 can reach it on the local network:
+
+```ini
+build_flags =
+    -D TEA_API_BASE_URL=\"http://192.168.1.10:3000/api/v1\"
+```
+
+Pairing flow:
+
+1. Connect Wi-Fi first.
+2. Open `Settings -> Cloud`.
+3. Press select to create a pairing request.
+4. Enter the shown user code in the authenticated client claim screen.
+5. Keep the Cloud screen open or wait in the background until status becomes
+   paired.
+6. Completed session records sync automatically while Wi-Fi is connected.
 
 ## Potential Improvements
 
