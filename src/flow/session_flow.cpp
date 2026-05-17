@@ -42,7 +42,7 @@ int currentStepSecFromState() {
   return clampTeaDurationSec(stepSec);
 }
 
-void applyCurrentStepFromModel() {
+void applyCurrentStepFromModel(int minStepSec = 0) {
   if (app.session.rinseActive) {
     int rinse = clampOptionalTeaDurationSec(app.session.rinseSec);
     app.session.rinseSec = rinse;
@@ -51,8 +51,13 @@ void applyCurrentStepFromModel() {
     return;
   }
 
-  app.session.stepDurationSec = stepSecAt(app.session.stepIndex);
-  app.session.stepTotalSec = app.session.stepDurationSec;
+  int stepSec = stepSecAt(app.session.stepIndex);
+  if (minStepSec > stepSec)
+    stepSec = clampTeaDurationSec(minStepSec);
+
+  app.session.steps[app.session.stepIndex] = stepSec;
+  app.session.stepDurationSec = stepSec;
+  app.session.stepTotalSec = stepSec;
 }
 
 void resetSessionStepStartTimes() {
@@ -90,11 +95,15 @@ bool advanceToNextSessionStep() {
     return true;
   }
 
+  int previousStepSec = app.session.stepTotalSec;
+  if (previousStepSec <= 0)
+    previousStepSec = stepSecAt(app.session.stepIndex);
+
   app.session.stepIndex++;
   if (app.session.stepIndex >= app.session.stepCount)
     return false;
 
-  applyCurrentStepFromModel();
+  applyCurrentStepFromModel(previousStepSec);
   return true;
 }
 

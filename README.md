@@ -2,8 +2,6 @@
 
 Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 128x64`), rotary encoder, dedicated back button, buzzer, and LED indicator.
 
-Current firmware version: `1.0.0`.
-
 ## Features
 
 - Main menu navigation with rotary encoder (`Sessions`, `Timer`, `History`,
@@ -164,4 +162,4 @@ Notes:
 
 ## Potential Improvements
 
-- Add a battery-backed RTC module such as `DS3231` to keep accurate time across full power loss and remove the need to hide boot-time clock as `--:--` before Wi-Fi sync.
+- Add a battery-backed RTC module such as `DS3231` to keep accurate time across full power loss.

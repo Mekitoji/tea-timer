@@ -5,7 +5,7 @@
 enum class BeepProfile : uint8_t { Soft = 0, Normal = 1, Loud = 2 };
 
 namespace appcfg {
-inline constexpr char FIRMWARE_VERSION[] = "1.1.1-dev";
+inline constexpr char FIRMWARE_VERSION[] = "1.1.2-dev";
 
 inline constexpr char PREFS_NAMESPACE[] = "tea_timer";
 inline constexpr char PREFS_DURATION_KEY[] = "dur_sec";
