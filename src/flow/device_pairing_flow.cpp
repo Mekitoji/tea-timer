@@ -18,6 +18,7 @@ DevicePairingFlowState pairingState = DevicePairingFlowState::Idle;
 char pairingId[48] = {};
 char pairingSecret[128] = {};
 char userCode[16] = {};
+char verificationUri[160] = {};
 char lastMessage[48] = {};
 int pollIntervalSec = appcfg::CLOUD_PAIRING_DEFAULT_POLL_MS / 1000;
 unsigned long nextPollMs = 0;
@@ -38,6 +39,7 @@ void clearPairingRuntime() {
   pairingId[0] = '\0';
   pairingSecret[0] = '\0';
   userCode[0] = '\0';
+  verificationUri[0] = '\0';
   pollIntervalSec = appcfg::CLOUD_PAIRING_DEFAULT_POLL_MS / 1000;
   nextPollMs = 0;
 }
@@ -97,9 +99,11 @@ bool parseCreateResponse(const ApiResponse &response) {
   const char *id = doc["pairingId"] | "";
   const char *secret = doc["pairingSecret"] | "";
   const char *code = doc["userCode"] | "";
+  const char *uri = doc["verificationUri"] | "";
   int interval = doc["pollIntervalSec"] | pollIntervalSec;
 
-  if (id[0] == '\0' || secret[0] == '\0' || code[0] == '\0') {
+  if (id[0] == '\0' || secret[0] == '\0' || code[0] == '\0' ||
+      uri[0] == '\0') {
     setMessage("Missing pairing data");
     return false;
   }
@@ -107,6 +111,7 @@ bool parseCreateResponse(const ApiResponse &response) {
   copyCString(pairingId, sizeof(pairingId), id);
   copyCString(pairingSecret, sizeof(pairingSecret), secret);
   copyCString(userCode, sizeof(userCode), code);
+  copyCString(verificationUri, sizeof(verificationUri), uri);
 
   if (interval <= 0)
     interval = appcfg::CLOUD_PAIRING_DEFAULT_POLL_MS / 1000;
@@ -262,6 +267,8 @@ void devicePairingSnapshot(DevicePairingSnapshot &snapshot) {
               deviceIdentityUid());
   snapshot.state = pairingState;
   copyCString(snapshot.userCode, sizeof(snapshot.userCode), userCode);
+  copyCString(snapshot.verificationUri, sizeof(snapshot.verificationUri),
+              verificationUri);
   copyCString(snapshot.message, sizeof(snapshot.message), lastMessage);
   snapshot.pollIntervalSec = pollIntervalSec;
 

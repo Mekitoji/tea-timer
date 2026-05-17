@@ -5,7 +5,7 @@
 enum class BeepProfile : uint8_t { Soft = 0, Normal = 1, Loud = 2 };
 
 namespace appcfg {
-inline constexpr char FIRMWARE_VERSION[] = "1.1.1-dev";
+inline constexpr char FIRMWARE_VERSION[] = "1.2.0-dev";
 inline constexpr char DEVICE_MODEL[] = "ESP32-C3 Tea Timer";
 inline constexpr char DEVICE_DEFAULT_NAME[] = "Tea Timer";
 

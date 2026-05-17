@@ -50,7 +50,7 @@ Current firmware version: `1.1.1-dev`.
 - Cloud pairing and sync:
   - `Settings -> Cloud` shows stable device UID and pairing/sync status,
   - unpaired devices can create a server pairing request and show the fallback
-    user code for the mobile/web client,
+    QR code plus fallback user code for the mobile/web client,
   - after client claim, the device polls pairing status and stores
     `deviceId/deviceToken` in NVS,
   - paired devices sync pending/failed session journal records with
@@ -190,7 +190,8 @@ Pairing flow:
 1. Connect Wi-Fi first.
 2. Open `Settings -> Cloud`.
 3. Press select to create a pairing request.
-4. Enter the shown user code in the authenticated client claim screen.
+4. Scan the QR code or enter the shown user code in the authenticated client
+   claim screen.
 5. Keep the Cloud screen open or wait in the background until status becomes
    paired.
 6. Completed session records sync automatically while Wi-Fi is connected.

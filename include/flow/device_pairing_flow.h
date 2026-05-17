@@ -18,6 +18,7 @@ struct DevicePairingSnapshot {
   char deviceId[48] = {};
   DevicePairingFlowState state = DevicePairingFlowState::Idle;
   char userCode[16] = {};
+  char verificationUri[160] = {};
   char message[48] = {};
   int pollIntervalSec = 0;
 };

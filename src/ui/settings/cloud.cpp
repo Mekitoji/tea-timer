@@ -4,6 +4,7 @@
 #include <app/app_state.h>
 #include <flow/device_pairing_flow.h>
 #include <flow/device_sync_flow.h>
+#include <lib/tea_qrcode.h>
 #include <ui/confirm_overlay.h>
 #include <ui/header.h>
 #include <ui/layout.h>
@@ -79,6 +80,35 @@ const char *tail(const char *value, size_t maxLen) {
   return value + len - maxLen;
 }
 
+bool drawQrCode(const char *text) {
+  if (!text || text[0] == '\0')
+    return false;
+
+  TeaQRCode qrCode;
+  uint8_t qrData[tea_qrcode_getBufferSize(6)];
+  if (tea_qrcode_initText(&qrCode, qrData, 6, TEA_QR_ECC_LOW, text) != 0)
+    return false;
+
+  const int size = qrCode.size;
+  const int quietZone = 2;
+  const int qrX = 0;
+  const int qrY = ui::layout::UI_HEADER_LINE_Y + 1;
+
+  display.fillRect(qrX, qrY, size + quietZone * 2, size + quietZone * 2,
+                   SSD1306_WHITE);
+
+  for (int y = 0; y < size; y++) {
+    for (int x = 0; x < size; x++) {
+      if (tea_qrcode_getModule(&qrCode, x, y)) {
+        display.drawPixel(qrX + quietZone + x, qrY + quietZone + y,
+                          SSD1306_BLACK);
+      }
+    }
+  }
+
+  return true;
+}
+
 void drawCloudScreen() {
   DevicePairingSnapshot pairing;
   DeviceSyncSnapshot sync;
@@ -89,6 +119,24 @@ void drawCloudScreen() {
   drawHeader("CLOUD", pairingBadge(pairing, sync));
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
+
+  if (!pairing.paired && pairing.state == DevicePairingFlowState::Pending &&
+      pairing.verificationUri[0] != '\0' && drawQrCode(pairing.verificationUri)) {
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(56, ui::layout::INFO_ROW1_Y);
+    display.print("Scan");
+
+    display.setCursor(56,
+                      ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y);
+    display.print(pairing.userCode);
+
+    display.setCursor(56, ui::layout::INFO_ROW1_Y +
+                              ui::layout::INFO_ROW_STEP_Y * 2);
+    display.print("Sel:cancel");
+
+    display.display();
+    return;
+  }
 
   display.setCursor(0, ui::layout::INFO_ROW1_Y);
   display.print("UID: ");
