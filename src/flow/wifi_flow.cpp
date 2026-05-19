@@ -78,7 +78,16 @@ void setState(WifiProvisionUiState next) {
   WIFI_LOG("state=%d", static_cast<int>(provisionState));
 }
 
-void markConnectAttemptStarted() { connectAttemptStartedMs = millis(); }
+void markConnectAttemptStarted(const char *reason) {
+  connectAttemptStartedMs = millis();
+  WIFI_LOG("attempt_start reason=%s", reason ? reason : "-");
+}
+
+void ensureConnectAttemptStarted(const char *reason) {
+  if (connectAttemptStartedMs == 0) {
+    markConnectAttemptStarted(reason);
+  }
+}
 
 void clearConnectAttempt() { connectAttemptStartedMs = 0; }
 
@@ -221,6 +230,7 @@ void onProvisionEvent(arduino_event_t *event) {
         reinterpret_cast<const char *>(event->event_info.prov_cred_recv.ssid));
     copyToBuf(staSsidBuf, sizeof(staSsidBuf), pendingSsid);
     setState(WifiProvisionUiState::Connecting);
+    markConnectAttemptStarted("prov_cred_recv");
     WIFI_LOG("cred_recv ssid='%s'", pendingSsid);
     break;
 
@@ -239,6 +249,7 @@ void onProvisionEvent(arduino_event_t *event) {
     provisioningSessionActive = false;
     refreshSavedCredentialsFlag();
     setState(WifiProvisionUiState::Connecting);
+    ensureConnectAttemptStarted("prov_cred_success");
     WIFI_LOG("cred_success saved=%d", hasSavedCredentials ? 1 : 0);
     if (hasSavedCredentials) {
       beginWithSystemCredentials();
@@ -261,11 +272,12 @@ void onProvisionEvent(arduino_event_t *event) {
   }
 
   case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
+    const uint8_t reason = event->event_info.wifi_sta_disconnected.reason;
     if (provisionState == WifiProvisionUiState::Connected ||
         provisionState == WifiProvisionUiState::Connecting) {
       setState(WifiProvisionUiState::Connecting);
+      ensureConnectAttemptStarted("sta_disconnected");
     }
-    const uint8_t reason = event->event_info.wifi_sta_disconnected.reason;
     WIFI_LOG("sta_disconnected reason=%d %s", static_cast<int>(reason),
              disconnectReasonName(reason));
     break;
@@ -296,18 +308,20 @@ void clearRuntimeBuffers() {
 
 bool beginWithSystemCredentials() {
   wifi_config_t conf = {};
-  if (!loadSystemStaCredentials(conf))
+  if (!loadSystemStaCredentials(conf)) {
+    WIFI_LOG("begin_failed no_system_creds");
     return false;
+  }
 
   WiFi.mode(WIFI_STA);
   if (esp_wifi_set_config(WIFI_IF_STA, &conf) != ESP_OK) {
-    WIFI_LOG("connect_with_system_creds set_config_failed");
+    WIFI_LOG("begin_failed set_config_failed");
     return false;
   }
 
   setState(WifiProvisionUiState::Connecting);
   wl_status_t status = WiFi.begin();
-  markConnectAttemptStarted();
+  markConnectAttemptStarted("begin_system_creds");
   WIFI_LOG("connect_with_system_creds ssid='%s' status=%d", staSsidBuf,
            static_cast<int>(status));
   return true;
@@ -342,15 +356,18 @@ void wifiMaintainConnection() {
 
   unsigned long now = millis();
   bool timedOut = connectAttemptTimedOut(now);
-  if (sta == WL_IDLE_STATUS && !timedOut)
+  bool idleWithoutAttempt = sta == WL_IDLE_STATUS && connectAttemptStartedMs == 0;
+  if (sta == WL_IDLE_STATUS && connectAttemptStartedMs != 0 && !timedOut)
     return;
 
-  if (!timedOut && now - lastReconnectMs < appcfg::WIFI_RECONNECT_INTERVAL_MS)
+  if (!idleWithoutAttempt && !timedOut &&
+      now - lastReconnectMs < appcfg::WIFI_RECONNECT_INTERVAL_MS)
     return;
   lastReconnectMs = now;
 
   refreshSavedCredentialsFlag();
   if (!hasSavedCredentials) {
+    clearConnectAttempt();
     WIFI_LOG("reconnect_skipped no_credentials");
     return;
   }
@@ -358,9 +375,12 @@ void wifiMaintainConnection() {
   if (timedOut) {
     WIFI_LOG("connect_timeout status=%d elapsed=%lu", static_cast<int>(sta),
              now - connectAttemptStartedMs);
+  } else if (idleWithoutAttempt) {
+    WIFI_LOG("idle_without_attempt status=%d", static_cast<int>(sta));
   }
 
-  if (connectAttemptStartedMs != 0) {
+  if (connectAttemptStartedMs != 0 || idleWithoutAttempt) {
+    WIFI_LOG("disconnect_before_retry status=%d", static_cast<int>(sta));
     WiFi.disconnect(false, false);
   }
 
@@ -418,6 +438,7 @@ static void wifiProvisionStop() {
 #endif
 
   provisioningSessionActive = false;
+  clearConnectAttempt();
   setState(WifiProvisionUiState::Idle);
 }
 
