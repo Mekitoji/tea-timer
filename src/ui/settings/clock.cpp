@@ -1,10 +1,30 @@
 #include <ui/settings/clock.h>
 
 #include <app/app_state.h>
+#include <flow/clock_runtime.h>
 #include <cstdio>
 #include <ui/header.h>
 
 namespace {
+const char *syncStatusBadge(ClockSyncUiState state) {
+  switch (state) {
+  case ClockSyncUiState::Off:
+    return "OFF";
+  case ClockSyncUiState::Synced:
+    return "OK";
+  case ClockSyncUiState::Syncing:
+    return "SYNC";
+  case ClockSyncUiState::WaitingWifi:
+    return "WIFI?";
+  case ClockSyncUiState::Failed:
+    return "FAIL";
+  case ClockSyncUiState::WaitingRetry:
+  case ClockSyncUiState::Waiting:
+  default:
+    return "WAIT";
+  }
+}
+
 void formatTime(char *buf, size_t bufSize) {
   std::snprintf(buf, bufSize, "%02d:%02d", app.clock.draftHour,
                 app.clock.draftMinute);
@@ -18,7 +38,8 @@ void formatDate(char *buf, size_t bufSize) {
 
 void drawClock() {
   display.clearDisplay();
-  drawHeader("CLOCK", app.clock.editMode ? "EDIT" : "");
+  drawHeader("CLOCK",
+             app.clock.editMode ? "EDIT" : syncStatusBadge(clockSyncUiState()));
 
   auto drawRow = [&](int y, const char *label, const char *value,
                      bool selected) {

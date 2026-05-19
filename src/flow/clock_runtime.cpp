@@ -19,6 +19,7 @@ constexpr unsigned long CLOCK_NTP_RESYNC_INTERVAL_MS = 21600000;
 
 bool ntpSyncInProgress = false;
 bool ntpSyncCompleted = false;
+bool ntpLastAttemptFailed = false;
 unsigned long ntpSyncStartedMs = 0;
 unsigned long ntpNextAttemptMs = 0;
 
@@ -61,6 +62,7 @@ void startNtpSync() {
     esp_sntp_stop();
   }
   ntpSyncCompleted = false;
+  ntpLastAttemptFailed = false;
   sntp_set_time_sync_notification_cb(onNtpTimeSynced);
   sntp_set_sync_status(SNTP_SYNC_STATUS_RESET);
   configTzTime(appcfg::DEFAULT_CLOCK_TZ, "pool.ntp.org", "time.nist.gov");
@@ -80,10 +82,27 @@ void clockPersistState(time_t epoch) {
 void clockCancelNtpSync() {
   ntpSyncInProgress = false;
   ntpSyncCompleted = false;
+  ntpLastAttemptFailed = false;
   ntpNextAttemptMs = 0;
   if (esp_sntp_enabled()) {
     esp_sntp_stop();
   }
+}
+
+ClockSyncUiState clockSyncUiState() {
+  if (!app.clock.autoSyncEnabled)
+    return ClockSyncUiState::Off;
+  if (ntpSyncInProgress)
+    return ClockSyncUiState::Syncing;
+  if (app.clock.timeFreshThisBoot && app.clock.source == ClockSource::Ntp)
+    return ClockSyncUiState::Synced;
+  if (WiFi.status() != WL_CONNECTED)
+    return ClockSyncUiState::WaitingWifi;
+  if (ntpLastAttemptFailed)
+    return ClockSyncUiState::Failed;
+  if (ntpNextAttemptMs != 0 && !hasReachedTime(millis(), ntpNextAttemptMs))
+    return ClockSyncUiState::WaitingRetry;
+  return ClockSyncUiState::Waiting;
 }
 
 void clockRefreshStateFromSystemTime() {
@@ -158,6 +177,7 @@ void updateClockRuntime() {
     time_t epoch = 0;
     if (!clockReadSystemEpoch(epoch)) {
       ntpSyncInProgress = false;
+      ntpLastAttemptFailed = true;
       scheduleNtpRetry(now);
       CLOCK_LOG("ntp_complete_no_epoch retry_in=%lu", ntpRetryInterval());
       return;
@@ -174,6 +194,7 @@ void updateClockRuntime() {
         clockCopyStateToDraft(app.clock);
       }
       clockPersistState(epoch);
+      ntpLastAttemptFailed = false;
 
       if (currentScreen == SCREEN_CLOCK && !app.clock.editMode &&
           !hasUnsavedDraft) {
@@ -183,6 +204,7 @@ void updateClockRuntime() {
       ntpNextAttemptMs = now + CLOCK_NTP_RESYNC_INTERVAL_MS;
       CLOCK_LOG("ntp_ok epoch=%llu", static_cast<unsigned long long>(epoch));
     } else {
+      ntpLastAttemptFailed = true;
       scheduleNtpRetry(now);
       CLOCK_LOG("ntp_invalid_epoch epoch=%llu retry_in=%lu",
                 static_cast<unsigned long long>(epoch), ntpRetryInterval());
@@ -199,14 +221,20 @@ void updateClockRuntime() {
     }
     ntpSyncInProgress = false;
     ntpSyncCompleted = false;
+    ntpLastAttemptFailed = true;
     scheduleNtpRetry(now);
     CLOCK_LOG("ntp_timeout retry_in=%lu", ntpRetryInterval());
   }
 }
 
 void updateClockScreen() {
-  if (currentScreen != SCREEN_CLOCK)
+  static bool hasLastSyncState = false;
+  static ClockSyncUiState lastSyncState = ClockSyncUiState::Waiting;
+
+  if (currentScreen != SCREEN_CLOCK) {
+    hasLastSyncState = false;
     return;
+  }
   if (app.clock.editMode)
     return;
   if (clockHasUnsavedDraft(app.clock))
@@ -214,10 +242,15 @@ void updateClockScreen() {
 
   ClockStateModel previous = app.clock;
   clockRefreshStateFromSystemTime();
+  ClockSyncUiState syncState = clockSyncUiState();
+  bool syncStateChanged = !hasLastSyncState || lastSyncState != syncState;
 
   if (previous.year != app.clock.year || previous.month != app.clock.month ||
       previous.day != app.clock.day || previous.hour != app.clock.hour ||
-      previous.minute != app.clock.minute) {
+      previous.minute != app.clock.minute || syncStateChanged) {
     drawClock();
   }
+
+  lastSyncState = syncState;
+  hasLastSyncState = true;
 }
