@@ -6,6 +6,7 @@
 #include <flow/session_flow.h>
 #include <flow/session_history_flow.h>
 #include <flow/timer_flow.h>
+#include <presentation/timer_presenter.h>
 
 bool handleMenuEncoderInput(bool stepPlus, bool stepMinus) {
   if (currentScreen != SCREEN_MENU)

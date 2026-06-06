@@ -7,31 +7,13 @@
 #include <app/tea_config.h>
 #include <flow/audio_profile_flow.h>
 #include <hw/feedback.h>
+#include <presentation/timer_presenter.h>
 #include <storage/settings_store.h>
-#include <ui/timer.h>
 
 namespace {
 int lastRemaining = -1;
 LongPressTracker timerLongPress;
-
-const char *timerStatusText() {
-  if (isTimerRunning())
-    return "RUNNING";
-  if (isTimerPaused())
-    return "PAUSED";
-  return "STOP";
-}
 } // namespace
-
-void timerRender(int secondsLeft) {
-  TimerView view;
-  view.title = "Timer";
-  view.status = timerStatusText();
-  view.secondsLeft = secondsLeft;
-  view.totalSeconds = app.timer.timerTotalSec;
-  view.showProgress = !isTimerStopped();
-  drawTimerScreen(view);
-}
 
 int normalizeTimerPresetSec(int sec) { return clampTeaDurationSec(sec); }
 
