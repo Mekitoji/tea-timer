@@ -1,5 +1,6 @@
 #include <flow/navigation_flow.h>
 
+#include <Arduino.h>
 #include <app/app_state.h>
 #include <flow/menu_flow.h>
 #include <flow/session_flow.h>
@@ -11,6 +12,17 @@
 #include <presentation/power_settings_presenter.h>
 #include <presentation/session_presenter.h>
 #include <presentation/wifi_presenter.h>
+
+namespace {
+constexpr unsigned long ABOUT_HEAP_POLL_MS = 1000;
+unsigned long lastAboutHeap = 0;
+unsigned long lastAboutHeapPollMs = 0;
+
+void renderAboutScreen() {
+  lastAboutHeap = ESP.getFreeHeap();
+  aboutRender(lastAboutHeap);
+}
+} // namespace
 
 void navigateTo(ScreenState screen) {
   if (currentScreen == screen)
@@ -42,7 +54,26 @@ void showClockScreen() {
 
 void showAboutScreen() {
   navigateTo(SCREEN_ABOUT);
-  aboutRender();
+  lastAboutHeapPollMs = millis();
+  renderAboutScreen();
+}
+
+void updateAboutScreen() {
+  if (currentScreen != SCREEN_ABOUT) {
+    lastAboutHeapPollMs = 0;
+    return;
+  }
+
+  unsigned long now = millis();
+  if (now - lastAboutHeapPollMs < ABOUT_HEAP_POLL_MS)
+    return;
+  lastAboutHeapPollMs = now;
+
+  unsigned long freeHeap = ESP.getFreeHeap();
+  if (freeHeap == lastAboutHeap)
+    return;
+
+  renderAboutScreen();
 }
 
 void showAudioScreen() {

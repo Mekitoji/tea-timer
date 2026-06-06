@@ -8,6 +8,7 @@ bool goBackAndRender();
 void showMenuScreen();
 void showSettingsScreen();
 void showAboutScreen();
+void updateAboutScreen();
 void showWiFiScreen();
 void showPowerSaveScreen();
 void showAudioScreen();

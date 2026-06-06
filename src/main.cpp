@@ -10,6 +10,7 @@
 // flow
 #include <flow/clock_runtime.h>
 #include <flow/menu_flow.h>
+#include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
 #include <flow/session_runtime_snapshot_flow.h>
@@ -94,6 +95,7 @@ void loop() {
   updateMenuClock();
   updateClockRuntime();
   updateClockScreen();
+  updateAboutScreen();
 
   updateSingleTimer();
   updateSessionRun();
