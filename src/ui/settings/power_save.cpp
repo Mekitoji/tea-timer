@@ -2,6 +2,7 @@
 
 #include <app/app_state.h>
 #include <cstdio>
+#include <hw/display.h>
 #include <ui/header.h>
 
 namespace {

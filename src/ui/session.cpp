@@ -4,6 +4,7 @@
 #include <app/app_state.h>
 #include <app/tea_config.h>
 #include <cstdio>
+#include <hw/display.h>
 #include <ui/confirm_overlay.h>
 #include <ui/header.h>
 #include <ui/layout.h>
@@ -56,7 +57,8 @@ int currentTotalSec() {
     return app.session.stepDurationSec;
   if (app.session.rinseActive)
     return app.session.rinseSec;
-  if (app.session.stepIndex >= 0 && app.session.stepIndex < app.session.stepCount)
+  if (app.session.stepIndex >= 0 &&
+      app.session.stepIndex < app.session.stepCount)
     return app.session.steps[app.session.stepIndex];
   return MIN_TIME;
 }
@@ -144,7 +146,8 @@ void drawSessionComplete() {
 }
 
 void drawSessionRun(int remaining) {
-  if (!app.session.rinseActive && app.session.stepIndex >= app.session.stepCount) {
+  if (!app.session.rinseActive &&
+      app.session.stepIndex >= app.session.stepCount) {
     drawSessionComplete();
     return;
   }

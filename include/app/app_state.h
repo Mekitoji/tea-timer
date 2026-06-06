@@ -1,14 +1,10 @@
 #pragma once
 
-#include <Adafruit_SSD1306.h>
-
 #include <app/app_config.h>
 #include <app/confirm_state.h>
 #include <app/session_presets.h>
 #include <app/session_state.h>
 #include <app/timer_state.h>
-
-extern Adafruit_SSD1306 display;
 
 // ui/menu
 extern const char *menuItems[];

@@ -1,6 +1,7 @@
 #include <ui/settings/audio.h>
 
 #include <app/app_state.h>
+#include <hw/display.h>
 #include <ui/header.h>
 
 namespace {

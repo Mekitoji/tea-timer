@@ -8,6 +8,8 @@
 #include <flow/wifi_flow.h>
 #include <hw/pins.h>
 
+#include <hw/display.h>
+
 namespace {
 unsigned long lastActivityMs = 0;
 bool displaySleeping = false;
@@ -45,7 +47,7 @@ void markUserActivity() {
   lastActivityMs = millis();
 
   if (displaySleeping) {
-    display.ssd1306_command(SSD1306_DISPLAYON);
+    displayWake();
     displaySleeping = false;
   }
 }
@@ -57,7 +59,7 @@ void updatePowerSaving() {
   if (currentScreen == SCREEN_WIFI && wifiProvisionIsActive()) {
     lastActivityMs = millis();
     if (displaySleeping) {
-      display.ssd1306_command(SSD1306_DISPLAYON);
+      displayWake();
       displaySleeping = false;
     }
     return;
@@ -69,7 +71,7 @@ void updatePowerSaving() {
   if (isTimerRunning() || isSessionRunning()) {
     lastActivityMs = millis();
     if (displaySleeping) {
-      display.ssd1306_command(SSD1306_DISPLAYON);
+      displayWake();
       displaySleeping = false;
     }
     return;
@@ -78,7 +80,7 @@ void updatePowerSaving() {
   unsigned long idleMs = millis() - lastActivityMs;
 
   if (!displaySleeping && idleMs >= displayIdleOffTimeoutMs) {
-    display.ssd1306_command(SSD1306_DISPLAYOFF);
+    displaySleep();
     displaySleeping = true;
   }
 
@@ -97,7 +99,7 @@ void updatePowerSaving() {
   lastActivityMs = millis();
 
   if (displaySleeping) {
-    display.ssd1306_command(SSD1306_DISPLAYON);
+    displayWake();
     displaySleeping = false;
   }
 }
@@ -121,7 +123,7 @@ void setPowerSavingEnabled(bool enabled) {
 
   if (!powerSavingEnabled) {
     if (displaySleeping) {
-      display.ssd1306_command(SSD1306_DISPLAYON);
+      displayWake();
       displaySleeping = false;
     }
   }

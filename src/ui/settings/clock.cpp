@@ -1,8 +1,9 @@
 #include <ui/settings/clock.h>
 
 #include <app/app_state.h>
-#include <flow/clock_runtime.h>
 #include <cstdio>
+#include <flow/clock_runtime.h>
+#include <hw/display.h>
 #include <ui/header.h>
 
 namespace {
