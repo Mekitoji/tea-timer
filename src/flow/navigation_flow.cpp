@@ -8,6 +8,7 @@
 #include <flow/clock_flow.h>
 #include <flow/menu_flow.h>
 #include <flow/power_settings_flow.h>
+#include <flow/session_flow.h>
 #include <flow/session_history_flow.h>
 #include <flow/wifi_flow.h>
 #include <ui.h>
@@ -89,7 +90,7 @@ bool goBackAndRender() {
     return true;
   case SCREEN_SESSION_RUN:
     navigateTo(SCREEN_SESSION_PRESET);
-    drawSessionPresetMenu();
+    sessionPresetRender();
     return true;
   default:
     return false;

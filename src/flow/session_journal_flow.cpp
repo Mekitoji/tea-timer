@@ -57,9 +57,10 @@ bool buildSessionLogRecord(bool finishedEarly, SessionLogRecord &record) {
 
   record.presetIndex = app.session.presetIndex;
 
-  if (SESSION_PRESET_COUNT > 0 && app.session.presetIndex >= 0 &&
-      app.session.presetIndex < SESSION_PRESET_COUNT) {
-    std::strncpy(record.presetName, SESSION_PRESETS[app.session.presetIndex].name,
+  if (SESSION_PRESET_TOTAL_COUNT > 0 && app.session.presetIndex >= 0 &&
+      app.session.presetIndex < SESSION_PRESET_TOTAL_COUNT) {
+    std::strncpy(record.presetName,
+                 SESSION_PRESETS[app.session.presetIndex].name,
                  sizeof(record.presetName) - 1);
   }
 

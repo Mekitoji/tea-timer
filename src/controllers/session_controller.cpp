@@ -10,17 +10,16 @@
 #include <flow/session_journal_flow.h>
 #include <flow/session_runtime_snapshot_flow.h>
 #include <hw/pins.h>
-#include <ui.h>
 
 bool handleSessionEncoderInput(bool stepPlus, bool stepMinus) {
   if (currentScreen == SCREEN_SESSION_PRESET) {
-    if (SESSION_PRESET_COUNT > 0) {
+    if (SESSION_PRESET_TOTAL_COUNT > 0) {
       app.session.presetIndex += stepPlus ? 1 : -1;
       if (app.session.presetIndex < 0)
-        app.session.presetIndex = SESSION_PRESET_COUNT - 1;
-      if (app.session.presetIndex >= SESSION_PRESET_COUNT)
+        app.session.presetIndex = SESSION_PRESET_TOTAL_COUNT - 1;
+      if (app.session.presetIndex >= SESSION_PRESET_TOTAL_COUNT)
         app.session.presetIndex = 0;
-      drawSessionPresetMenu();
+      sessionPresetRender();
     }
 
     return true;
@@ -32,15 +31,16 @@ bool handleSessionEncoderInput(bool stepPlus, bool stepMinus) {
         setConfirmChoice(app.session.endConfirm, true);
       if (stepMinus)
         setConfirmChoice(app.session.endConfirm, false);
-      drawSessionRun(app.session.stepDurationSec);
+      sessionRunRender(app.session.stepDurationSec);
 
       return true;
     }
 
     if (!isSessionRunning() &&
-        (app.session.rinseActive || app.session.stepIndex < app.session.stepCount)) {
+        (app.session.rinseActive ||
+         app.session.stepIndex < app.session.stepCount)) {
       sessionAdjustPausedStepByDelta(stepPlus ? 1 : -1);
-      drawSessionRun(app.session.stepDurationSec);
+      sessionRunRender(app.session.stepDurationSec);
     }
 
     return true;
@@ -60,18 +60,18 @@ bool handleSessionBackInput() {
   if (currentScreen == SCREEN_SESSION_RUN) {
     if (app.session.endConfirm.active) {
       closeConfirm(app.session.endConfirm);
-      drawSessionRun(app.session.stepDurationSec);
+      sessionRunRender(app.session.stepDurationSec);
       return true;
     }
 
-    const bool hasActiveStep =
-        app.session.rinseActive || app.session.stepIndex < app.session.stepCount;
+    const bool hasActiveStep = app.session.rinseActive ||
+                               app.session.stepIndex < app.session.stepCount;
     if (!isSessionCompleted() && hasActiveStep) {
       if (isSessionRunning()) {
         sessionToggleRunPauseAt(millis());
       }
       openConfirm(app.session.endConfirm);
-      drawSessionRun(app.session.stepDurationSec);
+      sessionRunRender(app.session.stepDurationSec);
       return true;
     }
 
@@ -85,7 +85,7 @@ bool handleSessionBackInput() {
         clampOptionalTeaDurationSec(app.session.rinseSec);
     app.session.stepTotalSec = app.session.stepDurationSec;
     navigateTo(SCREEN_SESSION_PRESET);
-    drawSessionPresetMenu();
+    sessionPresetRender();
     return true;
   }
 
@@ -109,10 +109,10 @@ bool handleSessionSelectInput() {
         setSessionStateCompleted();
         app.session.stepIndex = app.session.stepCount;
         clearSessionRuntimeSnapshot();
-        drawSessionComplete();
+        sessionCompleteRender();
       } else {
         closeConfirm(app.session.endConfirm);
-        drawSessionRun(app.session.stepDurationSec);
+        sessionRunRender(app.session.stepDurationSec);
       }
     } else {
       sessionToggleRunPauseAt(millis());

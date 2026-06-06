@@ -54,8 +54,8 @@ bool applySessionRuntimeSnapshot(const SessionRuntimeSnapshot &snapshot,
   if (snapshot.state == SessionState::Stopped ||
       snapshot.state == SessionState::Completed)
     return false;
-  if (SESSION_PRESET_COUNT <= 0 || snapshot.presetIndex < 0 ||
-      snapshot.presetIndex >= SESSION_PRESET_COUNT)
+  if (SESSION_PRESET_TOTAL_COUNT <= 0 || snapshot.presetIndex < 0 ||
+      snapshot.presetIndex >= SESSION_PRESET_TOTAL_COUNT)
     return false;
   if (snapshot.stepCount < 0 || snapshot.stepCount > SESSION_MAX_STEPS)
     return false;
