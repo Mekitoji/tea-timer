@@ -304,7 +304,6 @@ void updateSessionRun() {
         persistCompletedSessionJournalRecord(false);
         clearSessionRuntimeSnapshot();
         sessionCompleteRender();
-        lastRemaining = -999;
         return;
       }
 
