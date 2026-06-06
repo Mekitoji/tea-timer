@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <app/app_config.h>
 #include <app/app_state.h>
-#include <controllers/wifi_controller.h>
 #include <flow/audio_settings_flow.h>
 #include <flow/clock_flow.h>
 #include <flow/menu_flow.h>
@@ -11,6 +10,7 @@
 #include <flow/session_flow.h>
 #include <flow/session_history_flow.h>
 #include <flow/wifi_flow.h>
+#include <presentation/wifi_presenter.h>
 #include <ui/settings/about.h>
 
 void navigateTo(ScreenState screen) {
