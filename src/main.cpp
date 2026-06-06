@@ -9,6 +9,7 @@
 
 // flow
 #include <flow/clock_runtime.h>
+#include <flow/menu_flow.h>
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
 #include <flow/session_runtime_snapshot_flow.h>
@@ -23,8 +24,6 @@
 // storage
 #include <storage/session_journal_store.h>
 #include <storage/settings_store.h>
-
-#include <ui.h>
 
 void setup() {
   Serial.begin(115200);
@@ -71,7 +70,7 @@ void setup() {
 
   bool sessionRestored = restoreSessionRuntimeSnapshotOnBoot();
   if (!sessionRestored) {
-    drawMenu();
+    menuRender();
   }
 
   initPowerSaving();

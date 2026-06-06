@@ -1,6 +1,7 @@
 #include <controllers/menu_controller.h>
 
 #include <app/app_state.h>
+#include <flow/menu_flow.h>
 #include <flow/navigation_flow.h>
 #include <flow/session_history_flow.h>
 #include <flow/timer_flow.h>
@@ -15,7 +16,7 @@ bool handleMenuEncoderInput(bool stepPlus, bool stepMinus) {
     app.ui.menuSelected = menuCount - 1;
   if (app.ui.menuSelected >= menuCount)
     app.ui.menuSelected = 0;
-  drawMenu();
+  menuRender();
 
   return true;
 }
@@ -41,7 +42,7 @@ bool handleMenuSelectInput() {
   case MENU_SETTINGS:
     navigateTo(SCREEN_SETTINGS);
     app.ui.settingsSelected = 0;
-    drawSettingsMenu();
+    settingsMenuRender();
     break;
 
   case MENU_HISTORY:
