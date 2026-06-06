@@ -13,9 +13,13 @@ void drawAbout(const AboutView &view) {
   display.print(view.chip);
 
   display.setCursor(0, ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y);
-  display.print("Flash: ");
-  display.print(view.flashMb);
-  display.print("MB");
+  display.print("FS free: ");
+  if (view.storageAvailable) {
+    display.print(view.storageFreeKb);
+    display.print("KB");
+  } else {
+    display.print("N/A");
+  }
 
   display.setCursor(0,
                     ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 2);

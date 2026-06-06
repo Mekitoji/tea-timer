@@ -172,6 +172,17 @@ void writeRecord(JsonArray records, const SessionLogRecord &record) {
 
 bool sessionJournalStoreBegin() { return ensureMounted(); }
 
+bool sessionJournalStoreSpace(size_t &totalBytes, size_t &usedBytes) {
+  totalBytes = 0;
+  usedBytes = 0;
+  if (!ensureMounted())
+    return false;
+
+  totalBytes = LittleFS.totalBytes();
+  usedBytes = LittleFS.usedBytes();
+  return true;
+}
+
 SessionJournal &sessionJournalStoreScratch() { return scratchJournal; }
 
 bool sessionJournalExists() {

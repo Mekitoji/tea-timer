@@ -1,8 +1,11 @@
 #pragma once
 
+#include <cstddef>
+
 #include <storage/session_journal_types.h>
 
 bool sessionJournalStoreBegin();
+bool sessionJournalStoreSpace(size_t &totalBytes, size_t &usedBytes);
 bool sessionJournalLoad(SessionJournal &journal);
 bool sessionJournalSave(const SessionJournal &journal);
 bool sessionJournalDelete();

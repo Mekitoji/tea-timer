@@ -1,3 +1,3 @@
 #pragma once
 
-void aboutRender();
+void aboutRender(unsigned long freeHeap);

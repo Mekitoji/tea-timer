@@ -88,7 +88,7 @@ Firmware project for a tea timer on `ESP32-C3` with an OLED display (`SSD1306 12
 - Explicit FSM layers:
   - `TimerState`: `Stopped/Running/Paused`,
   - `SessionState`: `Stopped/Running/Paused/Completed`.
-- About screen shows chip, flash, heap, and current firmware version.
+- About screen shows chip, free LittleFS space, live heap, and current firmware version.
 
 ## Requirements
 
