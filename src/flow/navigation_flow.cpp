@@ -1,7 +1,5 @@
 #include <flow/navigation_flow.h>
 
-#include <Arduino.h>
-#include <app/app_config.h>
 #include <app/app_state.h>
 #include <flow/audio_settings_flow.h>
 #include <flow/clock_flow.h>
@@ -10,8 +8,8 @@
 #include <flow/session_flow.h>
 #include <flow/session_history_flow.h>
 #include <flow/wifi_flow.h>
+#include <presentation/about_presenter.h>
 #include <presentation/wifi_presenter.h>
-#include <ui/settings/about.h>
 
 void navigateTo(ScreenState screen) {
   if (currentScreen == screen)
@@ -43,12 +41,7 @@ void showClockScreen() {
 
 void showAboutScreen() {
   navigateTo(SCREEN_ABOUT);
-  AboutView view;
-  view.chip = "ESP32-C3";
-  view.flashMb = ESP.getFlashChipSize() / 1024 / 1024;
-  view.freeHeap = ESP.getFreeHeap();
-  view.firmwareVersion = appcfg::FIRMWARE_VERSION;
-  drawAbout(view);
+  aboutRender();
 }
 
 void showAudioScreen() {
