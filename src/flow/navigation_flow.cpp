@@ -6,6 +6,7 @@
 #include <controllers/wifi_controller.h>
 #include <flow/audio_settings_flow.h>
 #include <flow/clock_flow.h>
+#include <flow/menu_flow.h>
 #include <flow/power_settings_flow.h>
 #include <flow/session_history_flow.h>
 #include <flow/wifi_flow.h>
@@ -26,12 +27,12 @@ void navigateTo(ScreenState screen) {
 
 void showMenuScreen() {
   navigateTo(SCREEN_MENU);
-  drawMenu();
+  menuRender();
 }
 
 void showSettingsScreen() {
   navigateTo(SCREEN_SETTINGS);
-  drawSettingsMenu();
+  settingsMenuRender();
 }
 
 void showClockScreen() {

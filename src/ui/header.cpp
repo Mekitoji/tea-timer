@@ -1,6 +1,5 @@
 #include <ui/header.h>
 
-#include <app/app_state.h>
 #include <hw/display.h>
 #include <ui/layout.h>
 

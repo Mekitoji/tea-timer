@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
+#include <flow/menu_flow.h>
 #include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
@@ -52,7 +53,7 @@ bool handleSessionBackInput() {
   if (currentScreen == SCREEN_SESSION_PRESET) {
     closeConfirm(app.session.endConfirm);
     navigateTo(SCREEN_MENU);
-    drawMenu();
+    menuRender();
     return true;
   }
 

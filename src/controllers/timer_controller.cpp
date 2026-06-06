@@ -3,12 +3,12 @@
 #include <Arduino.h>
 #include <app/app_config.h>
 #include <app/app_state.h>
+#include <flow/menu_flow.h>
 #include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
 #include <flow/timer_flow.h>
 #include <hw/pins.h>
 #include <storage/settings_store.h>
-#include <ui.h>
 
 namespace {
 int encoderAccelStepForTimestamp(unsigned long nowMs) {
@@ -50,7 +50,7 @@ bool handleTimerBackInput() {
   app.timer.timerIgnoreReleaseAfterEnter = false;
   resetTimerLongPressFlowState();
   navigateTo(SCREEN_MENU);
-  drawMenu();
+  menuRender();
 
   return true;
 }

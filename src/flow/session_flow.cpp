@@ -8,6 +8,7 @@
 #include <app/session_presets.h>
 #include <app/tea_config.h>
 #include <flow/audio_profile_flow.h>
+#include <flow/menu_flow.h>
 #include <flow/navigation_flow.h>
 #include <flow/session_journal_flow.h>
 #include <flow/session_runtime_snapshot_flow.h>
@@ -326,7 +327,7 @@ void sessionToggleRunPauseAt(unsigned long nowMs) {
   if (!hasCurrentSessionStep()) {
     clearSessionRuntimeSnapshot();
     navigateTo(SCREEN_MENU);
-    drawMenu();
+    menuRender();
 
     return;
   }

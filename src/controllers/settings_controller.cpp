@@ -3,9 +3,9 @@
 #include <app/app_state.h>
 #include <flow/audio_settings_flow.h>
 #include <flow/clock_flow.h>
+#include <flow/menu_flow.h>
 #include <flow/navigation_flow.h>
 #include <flow/power_settings_flow.h>
-#include <ui.h>
 
 namespace {
 void handleSettingsSelect() {
@@ -36,7 +36,7 @@ bool handleSettingsEncoderInput(bool stepPlus, bool stepMinus) {
       app.ui.settingsSelected = settingsMenuCount - 1;
     if (app.ui.settingsSelected >= settingsMenuCount)
       app.ui.settingsSelected = 0;
-    drawSettingsMenu();
+    settingsMenuRender();
     return true;
   }
 
