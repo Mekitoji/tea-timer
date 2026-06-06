@@ -3,10 +3,6 @@
 void loadSessionPresetByIndex(int presetIndex);
 void enterSessionRunFromCurrentPreset();
 
-void sessionPresetRender();
-void sessionCompleteRender();
-void sessionRunRender(int remaining);
-
 void updateSessionRun();
 void resetSessionFlowState();
 

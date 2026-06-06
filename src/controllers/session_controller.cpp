@@ -10,6 +10,7 @@
 #include <flow/session_journal_flow.h>
 #include <flow/session_runtime_snapshot_flow.h>
 #include <hw/pins.h>
+#include <presentation/session_presenter.h>
 
 bool handleSessionEncoderInput(bool stepPlus, bool stepMinus) {
   if (currentScreen == SCREEN_SESSION_PRESET) {

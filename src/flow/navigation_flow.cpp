@@ -9,6 +9,7 @@
 #include <presentation/audio_settings_presenter.h>
 #include <presentation/clock_presenter.h>
 #include <presentation/power_settings_presenter.h>
+#include <presentation/session_presenter.h>
 #include <presentation/wifi_presenter.h>
 
 void navigateTo(ScreenState screen) {
