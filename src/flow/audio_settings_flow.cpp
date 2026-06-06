@@ -2,8 +2,8 @@
 
 #include <app/app_state.h>
 #include <flow/navigation_flow.h>
+#include <presentation/audio_settings_presenter.h>
 #include <storage/settings_store.h>
-#include <ui/settings/audio.h>
 
 namespace {
 AudioRow nextRow(AudioRow row, bool plus) {
@@ -22,30 +22,7 @@ BeepProfile nextProfile(BeepProfile p, bool plus) {
   return static_cast<BeepProfile>(v);
 }
 
-const char *beepProfileText(BeepProfile profile) {
-  switch (profile) {
-  case BeepProfile::Soft:
-    return "Soft";
-  case BeepProfile::Loud:
-    return "Loud";
-  case BeepProfile::Normal:
-  default:
-    return "Normal";
-  }
-}
-
-AudioSettingsView buildAudioSettingsView() {
-  AudioSettingsView view;
-  view.enabled = app.audio.draftAudioEnabled;
-  view.profile = beepProfileText(app.audio.draftProfile);
-  view.enabledSelected = app.audio.selectedRow == AudioRow::Enabled;
-  view.profileSelected = app.audio.selectedRow == AudioRow::Profile;
-  view.editMode = app.audio.editMode;
-  return view;
-}
 } // namespace
-
-void audioSettingsRender() { drawAudio(buildAudioSettingsView()); }
 
 void audioSettingsEnter() {
   app.audio.selectedRow = AudioRow::Enabled;

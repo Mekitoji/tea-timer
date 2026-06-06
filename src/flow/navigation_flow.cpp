@@ -1,14 +1,14 @@
 #include <flow/navigation_flow.h>
 
 #include <app/app_state.h>
-#include <flow/audio_settings_flow.h>
-#include <flow/clock_flow.h>
 #include <flow/menu_flow.h>
-#include <flow/power_settings_flow.h>
 #include <flow/session_flow.h>
 #include <flow/session_history_flow.h>
 #include <flow/wifi_flow.h>
 #include <presentation/about_presenter.h>
+#include <presentation/audio_settings_presenter.h>
+#include <presentation/clock_presenter.h>
+#include <presentation/power_settings_presenter.h>
 #include <presentation/wifi_presenter.h>
 
 void navigateTo(ScreenState screen) {
