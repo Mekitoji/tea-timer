@@ -4,6 +4,7 @@
 #include <app/app_state.h>
 #include <ctime>
 #include <flow/wifi_flow.h>
+#include <hw/display.h>
 #include <ui/header.h>
 #include <ui/layout.h>
 

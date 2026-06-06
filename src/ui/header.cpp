@@ -1,6 +1,7 @@
 #include <ui/header.h>
 
 #include <app/app_state.h>
+#include <hw/display.h>
 #include <ui/layout.h>
 
 namespace {
@@ -14,9 +15,7 @@ void drawHeaderBase(const char *title) {
 }
 } // namespace
 
-void drawHeader(const char *title) {
-  drawHeaderBase(title);
-}
+void drawHeader(const char *title) { drawHeaderBase(title); }
 
 void drawHeader(const char *title, const char *rightText) {
   drawHeaderBase(title);

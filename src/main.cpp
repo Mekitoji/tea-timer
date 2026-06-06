@@ -1,20 +1,28 @@
 #include <Arduino.h>
-#include <Wire.h>
+#include <esp_system.h>
+
+// app
 #include <app/app_controller.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
-#include <esp_system.h>
+
+// flow
 #include <flow/clock_runtime.h>
 #include <flow/power_flow.h>
 #include <flow/session_flow.h>
 #include <flow/session_runtime_snapshot_flow.h>
 #include <flow/timer_flow.h>
 #include <flow/wifi_flow.h>
-#include <hw/display_config.h>
+
+// hw
+#include <hw/display.h>
 #include <hw/input.h>
 #include <hw/pins.h>
+
+// storage
 #include <storage/session_journal_store.h>
 #include <storage/settings_store.h>
+
 #include <ui.h>
 
 void setup() {
@@ -23,9 +31,7 @@ void setup() {
   Serial.printf("[boot] setup reset_reason=%d\n",
                 static_cast<int>(esp_reset_reason()));
 
-  Wire.begin(SDA_PIN, SCL_PIN);
-  display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
-  display.setRotation(0);
+  displayBegin();
 
   pinMode(ENC_A, INPUT_PULLUP);
   pinMode(ENC_B, INPUT_PULLUP);

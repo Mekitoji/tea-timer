@@ -1,5 +1,6 @@
 #include <app/clock_time.h>
 
+#include <cstdio>
 #include <cstring>
 #include <sys/time.h>
 

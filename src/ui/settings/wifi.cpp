@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <app/app_state.h>
 #include <flow/wifi_flow.h>
+#include <hw/display.h>
 #include <ui/confirm_overlay.h>
 #include <ui/header.h>
 #include <ui/layout.h>

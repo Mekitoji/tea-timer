@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <cstdio>
 #include <ctime>
+#include <hw/display.h>
 #include <ui/confirm_overlay.h>
 #include <ui/header.h>
 #include <ui/layout.h>

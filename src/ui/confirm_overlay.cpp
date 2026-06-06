@@ -1,6 +1,7 @@
 #include <ui/confirm_overlay.h>
 
 #include <app/app_state.h>
+#include <hw/display.h>
 
 void drawConfirmOverlay(const char *title, const ConfirmState &state) {
   const int x = 10;

@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <app/app_state.h>
 #include <cstdio>
+#include <hw/display.h>
 #include <ui/header.h>
 #include <ui/layout.h>
 
