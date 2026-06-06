@@ -8,7 +8,6 @@
 #include <flow/navigation_flow.h>
 #include <flow/session_flow.h>
 #include <storage/session_runtime_store.h>
-#include <ui.h>
 
 namespace {
 unsigned long remainingSecForSnapshot(unsigned long nowMs) {
@@ -42,7 +41,7 @@ bool restoreSessionRuntimeSnapshotOnBoot() {
   resetSessionFlowState();
   resetSessionLongPressFlowState();
   navigateTo(SCREEN_SESSION_RUN);
-  drawSessionRun(app.session.stepDurationSec);
+  sessionRunRender(app.session.stepDurationSec);
   return true;
 }
 

@@ -6,6 +6,7 @@
 #include <ui/models/menu_view.h>
 #include <ui/models/power_settings_view.h>
 #include <ui/models/session_history_view.h>
+#include <ui/models/session_view.h>
 #include <ui/models/timer_view.h>
 #include <ui/models/wifi_settings_view.h>
 
@@ -15,9 +16,9 @@ void drawAbout(const AboutView &view);
 
 void drawTimerScreen(const TimerView &view);
 
-void drawSessionPresetMenu();
-void drawSessionComplete();
-void drawSessionRun(int remaining);
+void drawSessionPresetMenu(const SessionPresetView &view);
+void drawSessionComplete(const SessionCompleteView &view);
+void drawSessionRun(const SessionRunView &view);
 void drawSessionHistory(const SessionHistoryView &view);
 
 void drawAudio(const AudioSettingsView &view);

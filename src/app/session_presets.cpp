@@ -61,5 +61,5 @@ const SessionPreset SESSION_PRESETS[] = {
      (int)(sizeof(STEPS_HEICHA) / sizeof(STEPS_HEICHA[0]))},
 };
 
-const int SESSION_PRESET_COUNT =
+const int SESSION_PRESET_TOTAL_COUNT =
     (int)(sizeof(SESSION_PRESETS) / sizeof(SESSION_PRESETS[0]));

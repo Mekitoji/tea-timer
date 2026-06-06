@@ -12,4 +12,4 @@ struct SessionPreset {
 };
 
 extern const SessionPreset SESSION_PRESETS[];
-extern const int SESSION_PRESET_COUNT;
+extern const int SESSION_PRESET_TOTAL_COUNT;
