@@ -1,3 +1,5 @@
 #pragma once
 
-void drawAbout();
+#include <ui/models/about_view.h>
+
+void drawAbout(const AboutView &view);

@@ -6,8 +6,8 @@
 
 #include <app/app_state.h>
 #include <app/clock_time.h>
+#include <flow/clock_flow.h>
 #include <storage/settings_store.h>
-#include <ui.h>
 
 namespace {
 #define CLOCK_LOG(fmt, ...) Serial.printf("[clock] " fmt "\n", ##__VA_ARGS__)
@@ -198,7 +198,7 @@ void updateClockRuntime() {
 
       if (currentScreen == SCREEN_CLOCK && !app.clock.editMode &&
           !hasUnsavedDraft) {
-        drawClock();
+        clockRender();
       }
 
       ntpNextAttemptMs = now + CLOCK_NTP_RESYNC_INTERVAL_MS;
@@ -248,7 +248,7 @@ void updateClockScreen() {
   if (previous.year != app.clock.year || previous.month != app.clock.month ||
       previous.day != app.clock.day || previous.hour != app.clock.hour ||
       previous.minute != app.clock.minute || syncStateChanged) {
-    drawClock();
+    clockRender();
   }
 
   lastSyncState = syncState;

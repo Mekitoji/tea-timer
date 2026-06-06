@@ -1,5 +1,5 @@
 #pragma once
 
-#include <app/app_state.h>
+#include <ui/models/audio_settings_view.h>
 
-void drawAudio(const AudioStateModel &audioState);
+void drawAudio(const AudioSettingsView &view);

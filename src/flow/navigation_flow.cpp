@@ -1,6 +1,9 @@
 #include <flow/navigation_flow.h>
 
+#include <Arduino.h>
+#include <app/app_config.h>
 #include <app/app_state.h>
+#include <controllers/wifi_controller.h>
 #include <flow/audio_settings_flow.h>
 #include <flow/clock_flow.h>
 #include <flow/power_settings_flow.h>
@@ -38,7 +41,12 @@ void showClockScreen() {
 
 void showAboutScreen() {
   navigateTo(SCREEN_ABOUT);
-  drawAbout();
+  AboutView view;
+  view.chip = "ESP32-C3";
+  view.flashMb = ESP.getFlashChipSize() / 1024 / 1024;
+  view.freeHeap = ESP.getFreeHeap();
+  view.firmwareVersion = appcfg::FIRMWARE_VERSION;
+  drawAbout(view);
 }
 
 void showAudioScreen() {
@@ -48,7 +56,7 @@ void showAudioScreen() {
 
 void showWiFiScreen() {
   navigateTo(SCREEN_WIFI);
-  drawWiFi();
+  wifiRender();
 }
 
 void showPowerSaveScreen() {
