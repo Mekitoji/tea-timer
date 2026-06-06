@@ -7,6 +7,7 @@
 #include <app/tea_config.h>
 #include <flow/navigation_flow.h>
 #include <flow/session_flow.h>
+#include <presentation/session_presenter.h>
 #include <storage/session_runtime_store.h>
 
 namespace {
