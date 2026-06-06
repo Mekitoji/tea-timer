@@ -14,13 +14,13 @@
 #include <presentation/wifi_presenter.h>
 
 namespace {
-constexpr unsigned long ABOUT_HEAP_POLL_MS = 1000;
-unsigned long lastAboutHeap = 0;
-unsigned long lastAboutHeapPollMs = 0;
+constexpr unsigned long ABOUT_POLL_MS = 1000;
+unsigned long lastAboutUptimeSeconds = 0;
+unsigned long lastAboutPollMs = 0;
 
 void renderAboutScreen() {
-  lastAboutHeap = ESP.getFreeHeap();
-  aboutRender(lastAboutHeap);
+  lastAboutUptimeSeconds = millis() / 1000UL;
+  aboutRender(ESP.getFreeHeap());
 }
 } // namespace
 
@@ -54,23 +54,23 @@ void showClockScreen() {
 
 void showAboutScreen() {
   navigateTo(SCREEN_ABOUT);
-  lastAboutHeapPollMs = millis();
+  lastAboutPollMs = millis();
   renderAboutScreen();
 }
 
 void updateAboutScreen() {
   if (currentScreen != SCREEN_ABOUT) {
-    lastAboutHeapPollMs = 0;
+    lastAboutPollMs = 0;
     return;
   }
 
   unsigned long now = millis();
-  if (now - lastAboutHeapPollMs < ABOUT_HEAP_POLL_MS)
+  if (now - lastAboutPollMs < ABOUT_POLL_MS)
     return;
-  lastAboutHeapPollMs = now;
+  lastAboutPollMs = now;
 
-  unsigned long freeHeap = ESP.getFreeHeap();
-  if (freeHeap == lastAboutHeap)
+  unsigned long uptimeSeconds = now / 1000UL;
+  if (uptimeSeconds == lastAboutUptimeSeconds)
     return;
 
   renderAboutScreen();
