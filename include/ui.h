@@ -1,12 +1,26 @@
 #pragma once
 
-#include <ui/confirm_overlay.h>
-#include <ui/menu.h>
-#include <ui/session.h>
-#include <ui/session_history.h>
-#include <ui/settings/about.h>
-#include <ui/settings/audio.h>
-#include <ui/settings/clock.h>
-#include <ui/settings/power_save.h>
-#include <ui/settings/wifi.h>
-#include <ui/timer.h>
+struct AudioStateModel;
+struct PowerStateModel;
+struct SessionHistoryStateModel;
+struct SessionJournal;
+
+void drawMenu();
+void drawSettingsMenu();
+void drawAbout();
+
+void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds);
+
+void drawSessionPresetMenu();
+void drawSessionComplete();
+void drawSessionRun(int remaining);
+void drawSessionHistory(const SessionJournal &journal,
+                        const SessionHistoryStateModel &state);
+
+void drawAudio(const AudioStateModel &audioState);
+void drawClock();
+void drawPowerSave(const PowerStateModel &powerState);
+
+void drawWiFi();
+
+void updateMenuClock();

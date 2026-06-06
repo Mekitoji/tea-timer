@@ -5,6 +5,7 @@
 #include <app/app_controller.h>
 #include <app/app_state.h>
 #include <app/tea_config.h>
+#include <controllers/wifi_controller.h>
 
 // flow
 #include <flow/clock_runtime.h>
@@ -87,10 +88,7 @@ void loop() {
 
   wifiMaintainConnection();
 
-  if (currentScreen == SCREEN_WIFI) {
-    updateWiFiScreen();
-  }
-
+  updateWiFiScreen();
   updateMenuClock();
   updateClockRuntime();
   updateClockScreen();

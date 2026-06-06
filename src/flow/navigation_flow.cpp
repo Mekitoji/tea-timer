@@ -5,9 +5,21 @@
 #include <flow/clock_flow.h>
 #include <flow/power_settings_flow.h>
 #include <flow/session_history_flow.h>
+#include <flow/wifi_flow.h>
 #include <ui.h>
 
-void navigateTo(ScreenState screen) { currentScreen = screen; }
+void navigateTo(ScreenState screen) {
+  if (currentScreen == screen)
+    return;
+
+  if (currentScreen == SCREEN_WIFI)
+    wifiFlowExitScreen();
+
+  currentScreen = screen;
+
+  if (currentScreen == SCREEN_WIFI)
+    wifiFlowEnterScreen();
+}
 
 void showMenuScreen() {
   navigateTo(SCREEN_MENU);

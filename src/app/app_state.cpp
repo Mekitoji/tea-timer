@@ -1,7 +1,5 @@
 #include <app/app_state.h>
 
-#include <ui.h>
-
 // menu state
 const char *menuItems[] = {"Sessions", "Timer", "History", "Settings"};
 const int menuCount = sizeof(menuItems) / sizeof(menuItems[0]);
