@@ -8,7 +8,7 @@
 #include <flow/power_flow.h>
 #include <flow/wifi_flow.h>
 #include <hw/pins.h>
-#include <ui.h>
+#include <ui/settings/wifi.h>
 
 #include <cstdio>
 

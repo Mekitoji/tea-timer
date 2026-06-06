@@ -4,7 +4,7 @@
 #include <app/clock_time.h>
 #include <flow/navigation_flow.h>
 #include <flow/clock_runtime.h>
-#include <ui.h>
+#include <ui/settings/clock.h>
 
 #include <cstdio>
 

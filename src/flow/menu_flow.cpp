@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <ctime>
 #include <flow/wifi_flow.h>
-#include <ui.h>
+#include <ui/menu.h>
 
 namespace {
 constexpr unsigned long MENU_WIFI_STATUS_POLL_MS = 250;

@@ -3,7 +3,7 @@
 #include <app/app_state.h>
 #include <flow/navigation_flow.h>
 #include <storage/settings_store.h>
-#include <ui.h>
+#include <ui/settings/audio.h>
 
 namespace {
 AudioRow nextRow(AudioRow row, bool plus) {
