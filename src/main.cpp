@@ -31,7 +31,10 @@ void setup() {
   Serial.printf("[boot] setup reset_reason=%d\n",
                 static_cast<int>(esp_reset_reason()));
 
-  displayBegin();
+  if (!displayBegin()) {
+    Serial.println("[display] initialization failed");
+    abort();
+  }
 
   pinMode(ENC_A, INPUT_PULLUP);
   pinMode(ENC_B, INPUT_PULLUP);

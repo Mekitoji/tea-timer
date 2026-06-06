@@ -4,6 +4,6 @@
 
 extern Adafruit_SSD1306 display;
 
-void displayBegin();
+bool displayBegin();
 void displaySleep();
 void displayWake();
