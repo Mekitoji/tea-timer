@@ -7,10 +7,13 @@
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-void displayBegin() {
+bool displayBegin() {
   Wire.begin(SDA_PIN, SCL_PIN);
-  display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR))
+    return false;
+
   display.setRotation(0);
+  return true;
 }
 
 void displaySleep() { display.ssd1306_command(SSD1306_DISPLAYOFF); }
