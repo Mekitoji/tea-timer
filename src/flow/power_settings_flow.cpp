@@ -3,10 +3,8 @@
 #include <app/app_state.h>
 #include <flow/navigation_flow.h>
 #include <flow/power_flow.h>
+#include <presentation/power_settings_presenter.h>
 #include <storage/settings_store.h>
-#include <ui/settings/power_save.h>
-
-#include <cstdio>
 
 namespace {
 constexpr unsigned long TIMEOUT_OPTIONS_MS[] = {15000UL, 30000UL, 60000UL,
@@ -50,31 +48,7 @@ unsigned long nextTimeoutMs(unsigned long currentMs, bool plus) {
   return TIMEOUT_OPTIONS_MS[index];
 }
 
-void formatTimeoutLabel(unsigned long timeoutMs, char *buf, size_t bufSize) {
-  unsigned long sec = timeoutMs / 1000UL;
-  if (sec % 60UL == 0) {
-    std::snprintf(buf, bufSize, "%lum", sec / 60UL);
-  } else {
-    std::snprintf(buf, bufSize, "%lus", sec);
-  }
-}
-
-PowerSettingsView buildPowerSettingsView() {
-  static char timeout[12];
-  formatTimeoutLabel(app.power.draftDisplayOffTimeoutMs, timeout,
-                     sizeof(timeout));
-
-  PowerSettingsView view;
-  view.enabled = app.power.draftEnabled;
-  view.timeout = timeout;
-  view.enabledSelected = app.power.selectedRow == PowerRow::Enabled;
-  view.timeoutSelected = app.power.selectedRow == PowerRow::Timeout;
-  view.editMode = app.power.editMode;
-  return view;
-}
 } // namespace
-
-void powerSettingsRender() { drawPowerSave(buildPowerSettingsView()); }
 
 void powerSettingsEnter() {
   app.power.selectedRow = PowerRow::Enabled;
