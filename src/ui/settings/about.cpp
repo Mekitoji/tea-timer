@@ -50,9 +50,6 @@ void drawAbout(const AboutView &view) {
   display.setCursor(0,
                     ui::layout::INFO_ROW1_Y + ui::layout::INFO_ROW_STEP_Y * 3);
 
-  display.print("FW: ");
-  display.print(view.firmwareVersion);
-
   char uptimeBuf[16];
   formatUptime(view.uptimeSeconds, uptimeBuf, sizeof(uptimeBuf));
   display.setCursor(0,
