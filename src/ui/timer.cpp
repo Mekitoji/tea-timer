@@ -1,22 +1,11 @@
 #include <ui/timer.h>
 
-#include <Arduino.h>
-#include <app/app_state.h>
 #include <cstdio>
 #include <hw/display.h>
 #include <ui/header.h>
 #include <ui/layout.h>
 
 namespace {
-const char *timerStatusText() {
-  if (isTimerRunning())
-    return "RUNNING";
-  if (isTimerPaused())
-    return "PAUSED";
-  return "STOP";
-}
-} // namespace
-
 void drawProgressBar(int remaining, int total) {
   if (total < 1)
     total = 1;
@@ -45,15 +34,16 @@ void drawProgressBar(int remaining, int total) {
   display.fillRect(ui::layout::PROGRESS_X + 1, ui::layout::TIMER_PROGRESS_Y + 1,
                    fill, ui::layout::PROGRESS_H - 2, SSD1306_WHITE);
 }
+} // namespace
 
-void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds) {
+void drawTimerScreen(const TimerView &view) {
   display.clearDisplay();
-  drawHeader(title, timerStatusText());
+  drawHeader(view.title, view.status);
 
   display.setTextSize(3);
   display.setCursor(ui::layout::TIMER_VALUE_X, ui::layout::TIMER_VALUE_Y);
 
-  int shown = secondsLeft;
+  int shown = view.secondsLeft;
   if (shown < 0)
     shown = 0;
   if (shown > 999)
@@ -63,9 +53,9 @@ void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds) {
   snprintf(secBuf, sizeof(secBuf), "%3d", shown); // fix w, maybe %03d ?
   display.print(secBuf);
 
-  if (!isTimerStopped()) {
+  if (view.showProgress) {
     display.setTextSize(1);
-    drawProgressBar(secondsLeft, totalSeconds);
+    drawProgressBar(view.secondsLeft, view.totalSeconds);
   }
 
   display.display();

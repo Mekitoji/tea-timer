@@ -5,13 +5,14 @@
 #include <ui/models/clock_settings_view.h>
 #include <ui/models/power_settings_view.h>
 #include <ui/models/session_history_view.h>
+#include <ui/models/timer_view.h>
 #include <ui/models/wifi_settings_view.h>
 
 void drawMenu();
 void drawSettingsMenu();
 void drawAbout(const AboutView &view);
 
-void drawTimerScreen(const char *title, int secondsLeft, int totalSeconds);
+void drawTimerScreen(const TimerView &view);
 
 void drawSessionPresetMenu();
 void drawSessionComplete();
