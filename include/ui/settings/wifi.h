@@ -1,3 +1,5 @@
 #pragma once
 
-void drawWiFi();
+#include <ui/models/wifi_settings_view.h>
+
+void drawWiFi(const WifiSettingsView &view);

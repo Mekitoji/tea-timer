@@ -21,9 +21,31 @@ BeepProfile nextProfile(BeepProfile p, bool plus) {
     v = static_cast<int>(BeepProfile::Loud);
   return static_cast<BeepProfile>(v);
 }
+
+const char *beepProfileText(BeepProfile profile) {
+  switch (profile) {
+  case BeepProfile::Soft:
+    return "Soft";
+  case BeepProfile::Loud:
+    return "Loud";
+  case BeepProfile::Normal:
+  default:
+    return "Normal";
+  }
+}
+
+AudioSettingsView buildAudioSettingsView() {
+  AudioSettingsView view;
+  view.enabled = app.audio.draftAudioEnabled;
+  view.profile = beepProfileText(app.audio.draftProfile);
+  view.enabledSelected = app.audio.selectedRow == AudioRow::Enabled;
+  view.profileSelected = app.audio.selectedRow == AudioRow::Profile;
+  view.editMode = app.audio.editMode;
+  return view;
+}
 } // namespace
 
-void audioSettingsRender() { drawAudio(app.audio); }
+void audioSettingsRender() { drawAudio(buildAudioSettingsView()); }
 
 void audioSettingsEnter() {
   app.audio.selectedRow = AudioRow::Enabled;

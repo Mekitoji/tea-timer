@@ -1,50 +1,15 @@
 #include <ui/settings/clock.h>
 
-#include <app/app_state.h>
-#include <cstdio>
-#include <flow/clock_runtime.h>
 #include <hw/display.h>
 #include <ui/header.h>
 
-namespace {
-const char *syncStatusBadge(ClockSyncUiState state) {
-  switch (state) {
-  case ClockSyncUiState::Off:
-    return "OFF";
-  case ClockSyncUiState::Synced:
-    return "OK";
-  case ClockSyncUiState::Syncing:
-    return "SYNC";
-  case ClockSyncUiState::WaitingWifi:
-    return "WIFI?";
-  case ClockSyncUiState::Failed:
-    return "FAIL";
-  case ClockSyncUiState::WaitingRetry:
-  case ClockSyncUiState::Waiting:
-  default:
-    return "WAIT";
-  }
-}
-
-void formatTime(char *buf, size_t bufSize) {
-  std::snprintf(buf, bufSize, "%02d:%02d", app.clock.draftHour,
-                app.clock.draftMinute);
-}
-
-void formatDate(char *buf, size_t bufSize) {
-  std::snprintf(buf, bufSize, "%02d-%02d-%04d", app.clock.draftDay,
-                app.clock.draftMonth, app.clock.draftYear);
-}
-} // namespace
-
-void drawClock() {
+void drawClock(const ClockSettingsView &view) {
   display.clearDisplay();
-  drawHeader("CLOCK",
-             app.clock.editMode ? "EDIT" : syncStatusBadge(clockSyncUiState()));
+  drawHeader("CLOCK", view.editMode ? "EDIT" : view.badge);
 
   auto drawRow = [&](int y, const char *label, const char *value,
                      bool selected) {
-    if (selected && !app.clock.editMode) {
+    if (selected && !view.editMode) {
       display.fillRect(0, y - 1, 128, 9, SSD1306_WHITE);
       display.setTextColor(SSD1306_BLACK);
     } else {
@@ -61,7 +26,7 @@ void drawClock() {
     if (valueX < 2)
       valueX = 2;
 
-    if (selected && app.clock.editMode) {
+    if (selected && view.editMode) {
       display.drawRect(valueX - 2, y - 1, (int)w + 4, 9, SSD1306_WHITE);
     }
 
@@ -69,19 +34,12 @@ void drawClock() {
     display.print(value);
   };
 
-  char timeBuf[8];
-  char dateBuf[16];
-  formatTime(timeBuf, sizeof(timeBuf));
-  formatDate(dateBuf, sizeof(dateBuf));
-
-  drawRow(20, "Time", timeBuf, app.clock.selectedRow == ClockRow::Time);
-  drawRow(32, "Date", dateBuf, app.clock.selectedRow == ClockRow::Date);
-  drawRow(44, "Auto Sync", app.clock.draftAutoSyncEnabled ? "ON" : "OFF",
-          app.clock.selectedRow == ClockRow::AutoSync);
+  drawRow(20, "Time", view.time, view.timeSelected);
+  drawRow(32, "Date", view.date, view.dateSelected);
+  drawRow(44, "Auto Sync", view.autoSync, view.autoSyncSelected);
 
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 56);
-  display.print(app.clock.editMode ? "Rot:Edit Sel:Done"
-                                   : "Sel:Edit Back:Exit");
+  display.print(view.editMode ? "Rot:Edit Sel:Done" : "Sel:Edit Back:Exit");
   display.display();
 }

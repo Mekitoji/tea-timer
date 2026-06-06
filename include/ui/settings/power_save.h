@@ -1,5 +1,5 @@
 #pragma once
 
-#include <app/app_state.h>
+#include <ui/models/power_settings_view.h>
 
-void drawPowerSave(const PowerStateModel &powerState);
+void drawPowerSave(const PowerSettingsView &view);

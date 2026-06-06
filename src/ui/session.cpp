@@ -252,7 +252,7 @@ void drawSessionRun(int remaining) {
     display.print("Press:Start Hold:Skip");
 
   if (app.session.endConfirm.active) {
-    drawConfirmOverlay("End session?", app.session.endConfirm);
+    drawConfirmOverlay("End session?", app.session.endConfirm.yesSelected);
   }
 
   display.display();

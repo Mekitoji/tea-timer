@@ -1,9 +1,8 @@
 #include <ui/confirm_overlay.h>
 
-#include <app/app_state.h>
 #include <hw/display.h>
 
-void drawConfirmOverlay(const char *title, const ConfirmState &state) {
+void drawConfirmOverlay(const char *title, bool yesSelected) {
   const int x = 10;
   const int y = 19;
   const int w = 108;
@@ -17,7 +16,7 @@ void drawConfirmOverlay(const char *title, const ConfirmState &state) {
   display.setCursor(x + 6, y + 4);
   display.print(title);
   display.setCursor(x + 6, y + 14);
-  if (state.yesSelected)
+  if (yesSelected)
     display.print("No [YES]");
   else
     display.print("[NO] Yes");

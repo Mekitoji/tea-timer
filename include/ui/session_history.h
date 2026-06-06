@@ -1,7 +1,5 @@
 #pragma once
 
-#include <app/app_state.h>
-#include <storage/session_journal_types.h>
+#include <ui/models/session_history_view.h>
 
-void drawSessionHistory(const SessionJournal &journal,
-                        const SessionHistoryStateModel &state);
+void drawSessionHistory(const SessionHistoryView &view);

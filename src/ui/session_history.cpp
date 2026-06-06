@@ -1,8 +1,6 @@
 #include <ui/session_history.h>
 
-#include <Arduino.h>
 #include <cstdio>
-#include <ctime>
 #include <hw/display.h>
 #include <ui/confirm_overlay.h>
 #include <ui/header.h>
@@ -10,29 +8,6 @@
 
 namespace {
 constexpr int VISIBLE_ROWS = 5;
-
-const SessionLogRecord *selectedRecordOrNull(const SessionJournal &journal,
-                                             int selectedIndex) {
-  if (selectedIndex < 0 || selectedIndex >= journal.recordCount)
-    return nullptr;
-  return &journal.records[selectedIndex];
-}
-
-void formatEpoch(unsigned long epoch, char *out, size_t outSize) {
-  if (!out || outSize == 0)
-    return;
-
-  if (epoch == 0) {
-    std::snprintf(out, outSize, "--");
-    return;
-  }
-
-  time_t value = static_cast<time_t>(epoch);
-  std::tm tmValue = {};
-  localtime_r(&value, &tmValue);
-  std::snprintf(out, outSize, "%02d/%02d %02d:%02d", tmValue.tm_mday,
-                tmValue.tm_mon + 1, tmValue.tm_hour, tmValue.tm_min);
-}
 
 void drawEmpty() {
   drawHeader("HISTORY", "0");
@@ -44,30 +19,29 @@ void drawEmpty() {
   display.print("Back:Settings");
 }
 
-void drawList(const SessionJournal &journal,
-              const SessionHistoryStateModel &state) {
+void drawList(const SessionHistoryView &view) {
   char headerRight[12];
   std::snprintf(headerRight, sizeof(headerRight), "%d/%d",
-                state.selectedIndex + 1, journal.recordCount);
+                view.selectedIndex + 1, view.itemCount);
   drawHeader("HISTORY", headerRight);
 
-  int first = state.selectedIndex - VISIBLE_ROWS / 2;
+  int first = view.selectedIndex - VISIBLE_ROWS / 2;
   if (first < 0)
     first = 0;
-  if (first > journal.recordCount - VISIBLE_ROWS)
-    first = journal.recordCount - VISIBLE_ROWS;
+  if (first > view.itemCount - VISIBLE_ROWS)
+    first = view.itemCount - VISIBLE_ROWS;
   if (first < 0)
     first = 0;
 
   display.setTextSize(1);
   for (int row = 0; row < VISIBLE_ROWS; row++) {
     int index = first + row;
-    if (index >= journal.recordCount)
+    if (index >= view.itemCount)
       break;
 
-    const SessionLogRecord &record = journal.records[index];
+    const SessionHistoryItemView &item = view.items[index];
     int y = ui::layout::MENU_LIST_START_Y + row * ui::layout::MENU_LIST_STEP_Y;
-    bool selected = (index == state.selectedIndex);
+    bool selected = (index == view.selectedIndex);
 
     if (selected) {
       display.fillRect(ui::layout::MENU_ITEM_BG_X, y - 1,
@@ -81,73 +55,61 @@ void drawList(const SessionJournal &journal,
     display.setCursor(ui::layout::MENU_ITEM_X, y);
     display.print(index + 1);
     display.print(" ");
-    display.print(record.presetName[0] ? record.presetName : "Session");
+    display.print(item.title);
     display.print(" ");
-    display.print(record.completedInfusionCount);
-    if (record.finishedEarly)
+    display.print(item.completedInfusions);
+    if (item.finishedEarly)
       display.print("E");
   }
 }
 
-void drawDetails(const SessionJournal &journal,
-                 const SessionHistoryStateModel &state) {
+void drawDetails(const SessionHistoryView &view) {
   char headerRight[12];
   std::snprintf(headerRight, sizeof(headerRight), "%d/%d",
-                state.selectedIndex + 1, journal.recordCount);
+                view.selectedIndex + 1, view.itemCount);
   drawHeader("DETAIL", headerRight);
-
-  const SessionLogRecord *record =
-      selectedRecordOrNull(journal, state.selectedIndex);
-  if (!record)
-    return;
-
-  char startBuf[14];
-  char finishBuf[14];
-  formatEpoch(record->startedAt, startBuf, sizeof(startBuf));
-  formatEpoch(record->finishedAt, finishBuf, sizeof(finishBuf));
 
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
 
   display.setCursor(0, 18);
-  display.print(record->presetName[0] ? record->presetName : "Session");
+  display.print(view.detail.title);
 
   display.setCursor(0, 28);
   display.print("Inf:");
-  display.print(record->completedInfusionCount);
+  display.print(view.detail.completedInfusions);
   display.print(" Rinse:");
-  display.print(record->rinseSec);
+  display.print(view.detail.rinseSec);
 
   display.setCursor(0, 38);
   display.print("Start:");
-  display.print(startBuf);
+  display.print(view.detail.startedAt);
 
   display.setCursor(0, 48);
   display.print("End:");
-  display.print(finishBuf);
+  display.print(view.detail.finishedAt);
 
   display.setCursor(0, 58);
-  if (record->finishedEarly)
+  if (view.detail.finishedEarly)
     display.print("Early  ");
 
   display.print("Hold:Delete");
 }
 } // namespace
 
-void drawSessionHistory(const SessionJournal &journal,
-                        const SessionHistoryStateModel &state) {
+void drawSessionHistory(const SessionHistoryView &view) {
   display.clearDisplay();
 
-  if (journal.recordCount <= 0) {
+  if (view.itemCount <= 0) {
     drawEmpty();
-  } else if (state.detailOpen) {
-    drawDetails(journal, state);
+  } else if (view.detailOpen) {
+    drawDetails(view);
   } else {
-    drawList(journal, state);
+    drawList(view);
   }
 
-  if (state.deleteConfirm.active)
-    drawConfirmOverlay("Delete record?", state.deleteConfirm);
+  if (view.deleteConfirmActive)
+    drawConfirmOverlay("Delete record?", view.deleteConfirmYesSelected);
 
   display.display();
 }
