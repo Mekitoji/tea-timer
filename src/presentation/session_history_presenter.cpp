@@ -1,5 +1,6 @@
 #include <presentation/session_history_presenter.h>
 
+#include <app/session_log.h>
 #include <cstdio>
 #include <ctime>
 #include <ui/session_history.h>
