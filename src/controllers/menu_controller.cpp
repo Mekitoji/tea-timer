@@ -1,12 +1,10 @@
-#include <flow/navigation_flow.h>
-#include <flow/session_history_flow.h>
-#include <flow/timer_flow.h>
-#include <ui/session.h>
-#include <ui/timer.h>
 #include <controllers/menu_controller.h>
 
 #include <app/app_state.h>
-#include <ui/menu.h>
+#include <flow/navigation_flow.h>
+#include <flow/session_history_flow.h>
+#include <flow/timer_flow.h>
+#include <ui.h>
 
 bool handleMenuEncoderInput(bool stepPlus, bool stepMinus) {
   if (currentScreen != SCREEN_MENU)

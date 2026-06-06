@@ -1,6 +1,5 @@
 #include <ui/settings/wifi.h>
 
-#include <Arduino.h>
 #include <app/app_state.h>
 #include <flow/wifi_flow.h>
 #include <hw/display.h>
@@ -9,9 +8,6 @@
 #include <ui/layout.h>
 
 namespace {
-unsigned long wifiLastDrawMs = 0;
-constexpr unsigned long WIFI_DRAW_INTERVAL_MS = 250;
-
 const char *staStatusText(WifiStaUiState status) {
   switch (status) {
   case WifiStaUiState::Connected:
@@ -178,20 +174,4 @@ void drawWiFiScreen() {
 }
 } // namespace
 
-void updateWiFiScreen() {
-  wifiFlowTick();
-
-  unsigned long now = millis();
-  if (now - wifiLastDrawMs >= WIFI_DRAW_INTERVAL_MS) {
-    drawWiFiScreen();
-    wifiLastDrawMs = now;
-  }
-}
-
-void drawWiFi() {
-  wifiFlowEnterScreen();
-  wifiLastDrawMs = 0;
-  drawWiFiScreen();
-}
-
-void stopWiFiProvisioning() { wifiFlowExitScreen(); }
+void drawWiFi() { drawWiFiScreen(); }

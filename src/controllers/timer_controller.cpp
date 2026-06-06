@@ -8,7 +8,7 @@
 #include <flow/timer_flow.h>
 #include <hw/pins.h>
 #include <storage/settings_store.h>
-#include <ui/menu.h>
+#include <ui.h>
 
 namespace {
 int encoderAccelStepForTimestamp(unsigned long nowMs) {

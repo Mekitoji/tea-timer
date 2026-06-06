@@ -12,6 +12,8 @@
 
 namespace {
 LongPressTracker wifiLongPress;
+unsigned long wifiLastDrawMs = 0;
+constexpr unsigned long WIFI_DRAW_INTERVAL_MS = 250;
 
 void resetWiFiLongPressFlowState() {
   wifiLongPress.reset();
@@ -43,7 +45,6 @@ bool handleWiFiBackInput() {
     return true;
   }
 
-  stopWiFiProvisioning();
   showSettingsScreen();
   return true;
 }
@@ -99,4 +100,24 @@ void handleWiFiLongPressInput() {
 
   openConfirm(app.wifi.resetConfirm);
   drawWiFi();
+}
+
+void updateWiFiScreen() {
+  if (currentScreen != SCREEN_WIFI) {
+    wifiLastDrawMs = 0;
+    return;
+  }
+
+  wifiFlowTick();
+
+  unsigned long now = millis();
+  if (wifiLastDrawMs == 0) {
+    wifiLastDrawMs = now;
+    return;
+  }
+  if (now - wifiLastDrawMs < WIFI_DRAW_INTERVAL_MS)
+    return;
+
+  drawWiFi();
+  wifiLastDrawMs = now;
 }
