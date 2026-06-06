@@ -2,10 +2,9 @@
 
 #include <Arduino.h>
 #include <app/app_state.h>
-#include <cstdio>
 #include <ctime>
 #include <flow/wifi_flow.h>
-#include <ui/menu.h>
+#include <presentation/menu_presenter.h>
 
 namespace {
 constexpr unsigned long MENU_WIFI_STATUS_POLL_MS = 250;
@@ -23,61 +22,46 @@ bool readCurrentMenuTime(int &hour, int &minute) {
   return true;
 }
 
-MenuWifiIconState readMenuWifiIconState() {
+MenuPresenterWifiState readMenuWifiState() {
   WifiFlowSnapshot wifi = wifiFlowSnapshot();
   if (wifi.connected)
-    return MenuWifiIconState::Connected;
+    return MenuPresenterWifiState::Connected;
   if (wifi.staState == WifiStaUiState::Connecting ||
       wifi.provisionState == WifiProvisionUiState::Connecting)
-    return MenuWifiIconState::Connecting;
-  return MenuWifiIconState::Disconnected;
+    return MenuPresenterWifiState::Connecting;
+  return MenuPresenterWifiState::Disconnected;
 }
 
-int menuWifiIconPhase(MenuWifiIconState state) {
-  if (state != MenuWifiIconState::Connecting)
+int menuWifiIconPhase(MenuPresenterWifiState state) {
+  if (state != MenuPresenterWifiState::Connecting)
     return 0;
   return (millis() / MENU_WIFI_CONNECTING_PHASE_MS) % 3;
 }
 
-MenuView buildMenuView() {
-  static char timeBuf[6];
-
-  MenuView view;
-  view.title = "MENU";
-  view.items = menuItems;
-  view.itemCount = menuCount;
-  view.selectedIndex = app.ui.menuSelected;
-  view.showWifiIcon = true;
-  view.wifiIconState = readMenuWifiIconState();
-  view.wifiIconPhase = menuWifiIconPhase(view.wifiIconState);
-
-  int hour = 0;
-  int minute = 0;
-  if (readCurrentMenuTime(hour, minute)) {
-    if (!app.clock.timeValid) {
-      view.rightText = "--:--";
-    } else {
-      std::snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", hour, minute);
-      view.rightText = timeBuf;
-    }
-  }
-
-  return view;
+MenuPresenterState menuPresenterState() {
+  MenuPresenterState state;
+  state.items = menuItems;
+  state.itemCount = menuCount;
+  state.selectedIndex = app.ui.menuSelected;
+  state.timeValid = app.clock.timeValid;
+  state.hasTime = readCurrentMenuTime(state.hour, state.minute);
+  state.wifiState = readMenuWifiState();
+  state.wifiPhase = menuWifiIconPhase(state.wifiState);
+  return state;
 }
 
-MenuView buildSettingsMenuView() {
-  MenuView view;
-  view.title = "SETTINGS";
-  view.items = settingsItems;
-  view.itemCount = settingsMenuCount;
-  view.selectedIndex = app.ui.settingsSelected;
-  return view;
+SettingsMenuPresenterState settingsMenuPresenterState() {
+  SettingsMenuPresenterState state;
+  state.items = settingsItems;
+  state.itemCount = settingsMenuCount;
+  state.selectedIndex = app.ui.settingsSelected;
+  return state;
 }
 } // namespace
 
-void menuRender() { drawMenu(buildMenuView()); }
+void menuRender() { menuPresent(menuPresenterState()); }
 
-void settingsMenuRender() { drawSettingsMenu(buildSettingsMenuView()); }
+void settingsMenuRender() { settingsMenuPresent(settingsMenuPresenterState()); }
 
 void updateMenuClock() {
   if (currentScreen != SCREEN_MENU)
@@ -87,7 +71,8 @@ void updateMenuClock() {
   static int lastHour = -1;
   static bool lastFreshThisBoot = false;
   static bool hasLastWifiIcon = false;
-  static MenuWifiIconState lastWifiIconState = MenuWifiIconState::Disconnected;
+  static MenuPresenterWifiState lastWifiState =
+      MenuPresenterWifiState::Disconnected;
   static int lastWifiIconPhase = 0;
   static unsigned long lastWifiPollMs = 0;
 
@@ -107,12 +92,12 @@ void updateMenuClock() {
   unsigned long now = millis();
   if (now - lastWifiPollMs >= MENU_WIFI_STATUS_POLL_MS) {
     lastWifiPollMs = now;
-    MenuWifiIconState wifiIconState = readMenuWifiIconState();
-    int wifiIconPhase = menuWifiIconPhase(wifiIconState);
+    MenuPresenterWifiState wifiState = readMenuWifiState();
+    int wifiIconPhase = menuWifiIconPhase(wifiState);
 
-    if (!hasLastWifiIcon || wifiIconState != lastWifiIconState ||
+    if (!hasLastWifiIcon || wifiState != lastWifiState ||
         wifiIconPhase != lastWifiIconPhase) {
-      lastWifiIconState = wifiIconState;
+      lastWifiState = wifiState;
       lastWifiIconPhase = wifiIconPhase;
       hasLastWifiIcon = true;
       shouldDraw = true;
