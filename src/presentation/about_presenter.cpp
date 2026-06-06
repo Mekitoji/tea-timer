@@ -10,13 +10,13 @@ void aboutRender(unsigned long freeHeap) {
   size_t storageUsedBytes = 0;
 
   AboutView view;
-  view.chip = "ESP32-C3";
   view.storageAvailable =
       sessionJournalStoreSpace(storageTotalBytes, storageUsedBytes);
   if (view.storageAvailable && storageTotalBytes >= storageUsedBytes) {
     view.storageFreeKb = (storageTotalBytes - storageUsedBytes) / 1024;
   }
   view.freeHeap = freeHeap;
+  view.uptimeSeconds = millis() / 1000UL;
   view.firmwareVersion = appcfg::FIRMWARE_VERSION;
   drawAbout(view);
 }
