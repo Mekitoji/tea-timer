@@ -13,7 +13,25 @@
 namespace {
 int lastRemaining = -1;
 LongPressTracker timerLongPress;
+
+const char *timerStatusText() {
+  if (isTimerRunning())
+    return "RUNNING";
+  if (isTimerPaused())
+    return "PAUSED";
+  return "STOP";
+}
 } // namespace
+
+void timerRender(int secondsLeft) {
+  TimerView view;
+  view.title = "Timer";
+  view.status = timerStatusText();
+  view.secondsLeft = secondsLeft;
+  view.totalSeconds = app.timer.timerTotalSec;
+  view.showProgress = !isTimerStopped();
+  drawTimerScreen(view);
+}
 
 int normalizeTimerPresetSec(int sec) { return clampTeaDurationSec(sec); }
 
@@ -40,7 +58,7 @@ void timerLongResetToPreset() {
   applyTimerPresetSec(app.timer.timerTotalSec);
   settingsStoreSaveTimerDurationSec(app.timer.timerDuration);
   resetSingleTimerRuntimeState();
-  drawTimerScreen("Timer", app.timer.editTimeValue, app.timer.timerTotalSec);
+  timerRender(app.timer.editTimeValue);
 }
 
 void timerPauseAt(unsigned long nowMs) {
@@ -52,7 +70,7 @@ void timerPauseAt(unsigned long nowMs) {
   setTimerStatePaused();
   app.timer.timerDuration = remaining;
   app.timer.editTimeValue = remaining;
-  drawTimerScreen("Timer", remaining, app.timer.timerTotalSec);
+  timerRender(remaining);
 }
 
 void timerStartOrResumeAt(unsigned long nowMs) {
@@ -62,7 +80,7 @@ void timerStartOrResumeAt(unsigned long nowMs) {
 
     app.timer.timerTotalSec = app.timer.editTimeValue;
     app.timer.timerDuration = app.timer.editTimeValue;
-    drawTimerScreen("Timer", app.timer.timerDuration, app.timer.timerTotalSec);
+    timerRender(app.timer.timerDuration);
   }
 
   if (app.timer.timerDuration <= 0) {
@@ -85,7 +103,7 @@ void updateSingleTimer() {
       remaining = 0;
 
     if (remaining != lastRemaining) {
-      drawTimerScreen("Timer", remaining, app.timer.timerTotalSec);
+      timerRender(remaining);
 
       if (remaining <= 3 && remaining > 0) {
         pulseLedAndAudio(audioProfileCountdownFreq(),
@@ -117,7 +135,7 @@ void timerAdjustByEncoderDelta(int delta) {
         clampTeaDurationSec(app.timer.editTimeValue + delta);
 
     app.timer.timerTotalSec = app.timer.editTimeValue;
-    drawTimerScreen("Timer", app.timer.editTimeValue, app.timer.timerTotalSec);
+    timerRender(app.timer.editTimeValue);
     return;
   }
 
@@ -138,7 +156,7 @@ void timerAdjustByEncoderDelta(int delta) {
   app.timer.timerDuration = newRemaining;
   app.timer.editTimeValue = newRemaining;
   app.timer.timerTotalSec = elapsed + newRemaining;
-  drawTimerScreen("Timer", app.timer.timerDuration, app.timer.timerTotalSec);
+  timerRender(app.timer.timerDuration);
 }
 
 void processTimerLongPressInput(bool down, unsigned long nowMs) {

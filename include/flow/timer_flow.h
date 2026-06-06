@@ -2,6 +2,7 @@
 
 void updateSingleTimer();
 void resetSingleTimerFlowState();
+void timerRender(int secondsLeft);
 
 int normalizeTimerPresetSec(int sec);
 void applyTimerPresetSec(int sec);

@@ -30,7 +30,7 @@ bool handleMenuSelectInput() {
     applyTimerPresetSec(app.timer.timerDuration);
     resetSingleTimerRuntimeState();
     app.timer.timerIgnoreReleaseAfterEnter = true;
-    drawTimerScreen("Timer", app.timer.editTimeValue, app.timer.timerTotalSec);
+    timerRender(app.timer.editTimeValue);
     break;
 
   case MENU_SESSION:
