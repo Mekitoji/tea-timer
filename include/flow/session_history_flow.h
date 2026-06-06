@@ -1,7 +1,18 @@
 #pragma once
 
+#include <app/session_log.h>
+
+struct SessionHistorySnapshot {
+  const SessionLogRecord *records = nullptr;
+  int recordCount = 0;
+  int selectedIndex = 0;
+  bool detailOpen = false;
+  bool deleteConfirmActive = false;
+  bool deleteConfirmYesSelected = false;
+};
+
 void sessionHistoryEnter();
-void sessionHistoryRender();
+SessionHistorySnapshot sessionHistorySnapshot();
 void sessionHistoryHandleEncoder(bool stepPlus, bool stepMinus);
 void sessionHistoryHandleSelect();
 void sessionHistoryHandleBack();

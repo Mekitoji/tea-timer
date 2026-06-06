@@ -60,8 +60,7 @@ void showPowerSaveScreen() {
 }
 
 void showSessionHistoryScreen() {
-  navigateTo(SCREEN_SESSION_HISTORY);
-  sessionHistoryRender();
+  sessionHistoryEnter();
 }
 
 bool goBackAndRender() {

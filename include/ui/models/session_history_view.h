@@ -1,5 +1,7 @@
 #pragma once
 
+inline constexpr int SESSION_HISTORY_VIEW_MAX_ITEMS = 128;
+
 struct SessionHistoryItemView {
   const char *title = "";
   int completedInfusions = 0;
