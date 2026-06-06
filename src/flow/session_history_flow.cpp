@@ -7,7 +7,7 @@
 #include <app/long_press.h>
 #include <flow/navigation_flow.h>
 #include <storage/session_journal_store.h>
-#include <ui.h>
+#include <ui/session_history.h>
 
 #include <cstdio>
 #include <cstring>

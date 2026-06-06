@@ -8,7 +8,7 @@
 #include <flow/audio_profile_flow.h>
 #include <hw/feedback.h>
 #include <storage/settings_store.h>
-#include <ui.h>
+#include <ui/timer.h>
 
 namespace {
 int lastRemaining = -1;

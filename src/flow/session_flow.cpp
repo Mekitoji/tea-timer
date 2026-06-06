@@ -13,7 +13,7 @@
 #include <flow/session_journal_flow.h>
 #include <flow/session_runtime_snapshot_flow.h>
 #include <hw/feedback.h>
-#include <ui.h>
+#include <ui/session.h>
 
 namespace {
 int lastRemaining = -1;

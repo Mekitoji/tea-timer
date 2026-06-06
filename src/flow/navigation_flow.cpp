@@ -11,7 +11,7 @@
 #include <flow/session_flow.h>
 #include <flow/session_history_flow.h>
 #include <flow/wifi_flow.h>
-#include <ui.h>
+#include <ui/settings/about.h>
 
 void navigateTo(ScreenState screen) {
   if (currentScreen == screen)
